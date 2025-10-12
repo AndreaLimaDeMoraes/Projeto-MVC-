@@ -1,0 +1,97 @@
+-- =========================================
+-- INSERÇÃO DE DADOS DE TESTE
+-- =========================================
+
+-- ===== CURSOS =====
+INSERT INTO curso (nome, campus, periodo, duracao, ativo) VALUES
+('Análise e Desenvolvimento de Sistemas', 'Guarulhos', 'Noturno', 6, TRUE),
+('Gestão Empresarial', 'Guarulhos', 'Matutino', 6, TRUE),
+('Moda e Design', 'São Paulo', 'Vespertino', 8, TRUE);
+
+-- ===== TURMAS =====
+INSERT INTO turma (idCurso, semestreInicio, ativo) VALUES
+(1, '2025/1', TRUE),
+(2, '2025/1', TRUE),
+(3, '2025/1', TRUE);
+
+-- ===== DISCIPLINAS =====
+-- Curso 1: Análise e Desenvolvimento de Sistemas (semestres 1, 2, 3)
+INSERT INTO disciplina (idCurso, nome, semestre, ativo) VALUES
+(1, 'Introdução à Programação', '1º', TRUE),
+(1, 'Matemática Discreta', '1º', TRUE),
+(1, 'Estruturas de Dados', '2º', TRUE),
+(1, 'Algoritmos Avançados', '2º', TRUE),
+(1, 'Banco de Dados', '3º', TRUE),
+(1, 'Programação Web', '3º', TRUE);
+
+-- Curso 2: Gestão Empresarial (semestres 1, 2, 3)
+INSERT INTO disciplina (idCurso, nome, semestre, ativo) VALUES
+(2, 'Fundamentos de Administração', '1º', TRUE),
+(2, 'Economia', '1º', TRUE),
+(2, 'Administração Financeira', '2º', TRUE),
+(2, 'Gestão de Pessoas', '2º', TRUE),
+(2, 'Marketing', '3º', TRUE),
+(2, 'Gestão Estratégica', '3º', TRUE);
+
+-- Curso 3: Moda e Design (semestres 1, 2, 3)
+INSERT INTO disciplina (idCurso, nome, semestre, ativo) VALUES
+(3, 'História da Moda', '1º', TRUE),
+(3, 'Introdução ao Design', '1º', TRUE),
+(3, 'Design Têxtil', '2º', TRUE),
+(3, 'Estamparia', '2º', TRUE),
+(3, 'Moda Contemporânea', '3º', TRUE),
+(3, 'Marketing de Moda', '3º', TRUE);
+
+-- ===== ALUNOS =====
+INSERT INTO aluno (ra, nome, dataNascimento, cpf, email, endereco, municipio, uf, celular, ativo) VALUES
+('2025001', 'Lucas Barros', '2000-01-10', '123.456.789-00', 'lucas.barros@email.com', 'Rua das Flores, 120 - Apt 5', 'Guarulhos', 'SP', '(11)99999-0001', TRUE),
+('2025002', 'Mariana Silva', '1999-02-20', '123.456.789-01', 'mariana.silva@email.com', 'Av. Central, 55', 'Guarulhos', 'SP', '(11)99999-0002', TRUE),
+('2025003', 'Pedro Santos', '2001-03-15', '123.456.789-02', 'pedro.santos@email.com', 'Rua Azul, 45', 'São Paulo', 'SP', '(11)99999-0003', TRUE),
+('2025004', 'Ana Costa', '2000-05-22', '123.456.789-03', 'ana.costa@email.com', 'Rua Verde, 99', 'Guarulhos', 'SP', '(11)99999-0004', TRUE),
+('2025005', 'João Oliveira', '2002-07-30', '123.456.789-04', 'joao.oliveira@email.com', 'Rua dos Pinheiros, 33', 'São Paulo', 'SP', '(11)99999-0005', TRUE),
+('2025006', 'Beatriz Souza', '1998-04-18', '123.456.789-05', 'beatriz.souza@email.com', 'Av. Paulista, 1000', 'São Paulo', 'SP', '(11)99999-0006', TRUE),
+('2025007', 'Carlos Lima', '2001-06-25', '123.456.789-06', 'carlos.lima@email.com', 'Rua do Sol, 15', 'Guarulhos', 'SP', '(11)99999-0007', TRUE),
+('2025008', 'Fernanda Rocha', '1999-11-11', '123.456.789-07', 'fernanda.rocha@email.com', 'Rua Marfim, 77', 'São Paulo', 'SP', '(11)99999-0008', TRUE),
+('2025009', 'Rafael Mendes', '2000-09-09', '123.456.789-08', 'rafael.mendes@email.com', 'Rua das Acácias, 10', 'Guarulhos', 'SP', '(11)99999-0009', TRUE),
+('2025010', 'Juliana Pereira', '2002-10-01', '123.456.789-09', 'juliana.pereira@email.com', 'Rua das Violetas, 88', 'São Paulo', 'SP', '(11)99999-0010', TRUE);
+
+-- ===== MATRÍCULAS =====
+INSERT INTO matricula (idAluno, idCurso, ativo) VALUES
+(1, 1, TRUE),
+(2, 1, TRUE),
+(3, 1, TRUE),
+(4, 1, TRUE),
+(5, 2, TRUE),
+(6, 2, TRUE),
+(7, 2, TRUE),
+(8, 3, TRUE),
+(9, 3, TRUE),
+(10, 3, TRUE);
+
+-- ===== MATRÍCULA DISCIPLINA =====
+INSERT INTO matriculaDisciplina (idMatricula, faltas, semestreAtual, nota, ativo) VALUES
+-- Curso 1
+(1, 2, '2025/1', 8.5, TRUE),
+(1, 0, '2025/1', 8.0, TRUE),
+(2, 1, '2025/1', 6.5, TRUE),
+(2, 3, '2025/1', 8.25, TRUE),
+(3, 0, '2025/1', 9.25, TRUE),
+(3, 2, '2025/1', 7.5, TRUE),
+(4, 4, '2025/1', 7.0, TRUE),
+(4, 1, '2025/1', 8.25, TRUE),
+
+-- Curso 2
+(5, 2, '2025/1', 7.5, TRUE),
+(5, 0, '2025/1', 9.25, TRUE),
+(6, 1, '2025/1', 6.75, TRUE),
+(6, 3, '2025/1', 8.5, TRUE),
+(7, 2, '2025/1', 7.75, TRUE),
+(7, 1, '2025/1', 6.75, TRUE),
+
+-- Curso 3
+(8, 0, '2025/1', 8.75, TRUE),
+(8, 1, '2025/1', 9.25, TRUE),
+(9, 3, '2025/1', 7.5, TRUE),
+(9, 0, '2025/1', 7.0, TRUE),
+(10, 1, '2025/1', 8.25, TRUE),
+(10, 2, '2025/1', 9.25, TRUE);

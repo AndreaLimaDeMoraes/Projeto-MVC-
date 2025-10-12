@@ -1,0 +1,78 @@
+-- =========================================
+-- LIMPEZA DO BANCO (DROP TABLES)
+-- =========================================
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS matriculaDisciplina;
+DROP TABLE IF EXISTS matricula;
+DROP TABLE IF EXISTS turma;
+DROP TABLE IF EXISTS disciplina;
+DROP TABLE IF EXISTS curso;
+DROP TABLE IF EXISTS aluno;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- =========================================
+-- CRIAÇÃO DAS TABELAS
+-- =========================================
+
+CREATE TABLE aluno (
+    idAluno INT AUTO_INCREMENT PRIMARY KEY,
+    ra VARCHAR(20) NOT NULL UNIQUE,
+    nome VARCHAR(100) NOT NULL,
+    dataNascimento DATE NOT NULL,
+    cpf VARCHAR(14) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    endereco VARCHAR(200) NOT NULL,
+    municipio VARCHAR(100) NOT NULL,
+    uf CHAR(2) NOT NULL,
+    celular VARCHAR(15) NOT NULL,
+    ativo BOOLEAN NOT NULL
+);
+
+CREATE TABLE curso (
+    idCurso INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    campus VARCHAR(100) NOT NULL,
+    periodo VARCHAR(20) NOT NULL,
+    duracao INT NOT NULL,
+    ativo BOOLEAN NOT NULL
+);
+
+CREATE TABLE disciplina (
+    idDisciplina INT AUTO_INCREMENT PRIMARY KEY,
+    idCurso INT NOT NULL,
+    nome VARCHAR(100) NOT NULL,
+    semestre VARCHAR(20) NOT NULL,
+    ativo BOOLEAN NOT NULL,
+    FOREIGN KEY (idCurso) REFERENCES curso(idCurso)
+);
+
+CREATE TABLE turma (
+    idTurma INT AUTO_INCREMENT PRIMARY KEY,
+    idCurso INT NOT NULL,
+    semestreInicio VARCHAR(20) NOT NULL,
+    ativo BOOLEAN NOT NULL,
+    FOREIGN KEY (idCurso) REFERENCES curso(idCurso)
+);
+
+CREATE TABLE matricula (
+    idMatricula INT AUTO_INCREMENT PRIMARY KEY,
+    idAluno INT NOT NULL,
+    idCurso INT NOT NULL,
+    ativo BOOLEAN NOT NULL,
+    FOREIGN KEY (idAluno) REFERENCES aluno(idAluno),
+    FOREIGN KEY (idCurso) REFERENCES curso(idCurso)
+);
+
+CREATE TABLE matriculaDisciplina (
+    idMatriculaDisciplina INT AUTO_INCREMENT PRIMARY KEY,
+    idMatricula INT NOT NULL,
+    faltas INT NOT NULL,
+    semestreAtual VARCHAR(20) NOT NULL,
+    nota DOUBLE NOT NULL,
+    ativo BOOLEAN NOT NULL,
+    FOREIGN KEY (idMatricula) REFERENCES matricula(idMatricula)
+);
+
