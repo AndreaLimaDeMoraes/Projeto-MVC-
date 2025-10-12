@@ -24,6 +24,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.InputEvent;
 import java.awt.Toolkit;
 
+
 public class TelaPrincipal extends JFrame {
 
 	private static final long serialVersionUID = 1L;
@@ -247,25 +248,36 @@ public class TelaPrincipal extends JFrame {
 		
 		
 		btnListar.addActionListener(e -> {
-		    // Chama a função que gerencia a cor
+		    // 1. Chama a função que gerencia a cor
 		    ativarBotaoMenu(btnListar);
 
-		    // Lógica de Conteúdo (Troca de Painel)
+		    // 2. Lógica de Conteúdo (Troca de Painel)
 		    pnlConteudoAluno.removeAll();		    
-		    pnlConteudoAluno.setLayout(new BorderLayout()); 		    
-		    // Instancia o novo JPanel de conteúdo
-		    ListarAlunos listarAlunos = new ListarAlunos();		    
-		    // Adiciona o painel ListarAlunos na região CENTRAL. 
+		    pnlConteudoAluno.setLayout(new BorderLayout()); 	
+		    
+		    // 3. Instancia o novo JPanel de conteúdo, passando a instância do JFrame principal
+		    // (TelaPrincipal.this é necessário porque o 'this' sozinho refere-se ao ActionListener)
+		    ListarAlunos listarAlunos = new ListarAlunos(TelaPrincipal.this); // <--- Chamada Única e Correta
+		    
+		    // 4. Adiciona o painel ListarAlunos na região CENTRAL. 
 		    pnlConteudoAluno.add(listarAlunos, BorderLayout.CENTER); 		    
+		    
 		    pnlConteudoAluno.revalidate(); // Recalcula o layout
 		    pnlConteudoAluno.repaint(); // Redesenha a tela
 		});
+		
 		btnDadosPessoais.addActionListener(e -> {
-		    // Chama a função que gerencia a cor
+		    // Chama a função que gerencia a cor para focar no botão "Dados Pessoais"
 		    ativarBotaoMenu(btnDadosPessoais);
 
-		    // ** Lógica do MVC para trocar de tela vem AQUI **
-		    // ...
+		    //Lógica do MVC para trocar de tela
+		    
+		    // Instancia a tela de DadosPessoais.
+		    // Passando '0' (ou qualquer valor <= 0) para indicar que é a tela inicial/modo de Cadastro/Busca.
+		    DadosPessoais telaInicialDadosPessoais = new DadosPessoais(TelaPrincipal.this, 0); 
+		    
+		    // Chama o método para trocar o painel central
+		    trocarPainelConteudo(telaInicialDadosPessoais);
 		});
 		
 		btnDocumentos.addActionListener(e -> {
@@ -296,7 +308,7 @@ public class TelaPrincipal extends JFrame {
 	 * Altera a cor e a opacidade dos botões do menu para indicar qual está ativo.
 	 * @param botaoClicado O botão que acabou de ser clicado.
 	 */
-	private void ativarBotaoMenu(JButton botaoClicado) {
+	protected void ativarBotaoMenu(JButton botaoClicado) {
 	    // 1. LIMPAR O FOCO: Define todos os botões como INATIVOS/Transparentes
 	    for (JButton botao : botoesMenuAluno) {
 	        // Volta a exibir a cor do Painel de Fundo (COR_PADRAO_MENU)
@@ -308,5 +320,24 @@ public class TelaPrincipal extends JFrame {
 	    // 2. ATIVAR FOCO: Define o botão clicado como ATIVO/Opaco com a cor de destaque
 	    botaoClicado.setOpaque(true);
 	    botaoClicado.setBackground(COR_ATIVA);
+	}
+	
+	//Método para trocar o painel central (pnlConteudoAluno)
+	public void trocarPainelConteudo(JPanel novoPainel) {
+	    pnlConteudoAluno.removeAll();
+	    pnlConteudoAluno.setLayout(new BorderLayout());
+	    pnlConteudoAluno.add(novoPainel, BorderLayout.CENTER);
+	    pnlConteudoAluno.revalidate();
+	    pnlConteudoAluno.repaint();
+	}
+	//Método para simular o clique no botão Dados Pessoais (mudar o foco visual)
+	public void ativarBotaoMenuDadosPessoais() {
+	    // Isso reusa sua lógica existente de foco:
+	    ativarBotaoMenu(btnDadosPessoais);
+	}
+	
+	public void ativarBotaoMenuListarAlunos() {
+	    // Reutiliza o método protegido, passando a referência do botão Listar
+	    ativarBotaoMenu(btnListar); 
 	}
 }
