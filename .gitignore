@@ -1,0 +1,17 @@
+# Arquivos de compilação e binários Java
+*.class
+*.jar
+*.war
+/bin/
+/target/
+
+# Arquivos e pastas do Eclipse/IDE
+.classpath
+.project
+.settings/
+*.iml
+.idea/
+
+# Logs e arquivos temporários
+*.log
+temp/
