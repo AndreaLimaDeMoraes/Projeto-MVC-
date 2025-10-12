@@ -87,9 +87,10 @@ public class TelaPrincipal extends JFrame {
 		setTitle("MVC ALUNO");		
 		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 960, 557);
+		setBounds(100, 100, 1200, 557);
 		
 		menuBar = new JMenuBar();
+		menuBar.setFont(new Font("Segoe UI", Font.PLAIN, 15));
 		setJMenuBar(menuBar);
 		
 		mnNewMenu = new JMenu("Aluno");
@@ -144,7 +145,7 @@ public class TelaPrincipal extends JFrame {
 		
 		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		tabbedPane.setFont(new Font("Tahoma", Font.PLAIN, 15));
-		tabbedPane.setBounds(10, 26, 924, 459);
+		tabbedPane.setBounds(10, 26, 1166, 459);
 		contentPane.add(tabbedPane);
 		
 		panelAluno = new JPanel();
@@ -153,17 +154,17 @@ public class TelaPrincipal extends JFrame {
 		
 		panelMenuAluno = new JPanel();
 		panelMenuAluno.setBackground(new Color(54, 70, 78));
-		panelMenuAluno.setBounds(0, 0, 165, 426);
+		panelMenuAluno.setBounds(0, 0, 190, 426);
 		panelAluno.add(panelMenuAluno);
 		panelMenuAluno.setLayout(null);
 		
 		btnListar = new JButton("   Listar alunos");
 		btnListar.setForeground(new Color(255, 255, 255));
 		btnListar.setBackground(new Color(54, 70, 78));
-		btnListar.setFont(new Font("Tahoma", Font.PLAIN, 11));
+		btnListar.setFont(new Font("Tahoma", Font.PLAIN, 15));
 		btnListar.setHorizontalAlignment(SwingConstants.LEFT);
 		btnListar.setIcon(new ImageIcon(getClass().getResource("/Resources/imagens/lista-de-controle (3).png")));
-		btnListar.setBounds(0, 5, 166, 46);
+		btnListar.setBounds(0, 1, 188, 50);
 		btnListar.setBorderPainted(false);   // Remove a borda estática (se houver)
 		btnListar.setContentAreaFilled(false); // Remove o preenchimento da área de conteúdo (ajuda na transparência)
 		//Remove o contorno que aparece ao clicar ou quando o botão está selecionado (Focus Border)
@@ -174,8 +175,8 @@ public class TelaPrincipal extends JFrame {
 		btnDadosPessoais.setForeground(new Color(255, 255, 255));
 		btnDadosPessoais.setIcon(new ImageIcon(getClass().getResource("/Resources/imagens/perfil-de-usuario (1).png")));
 		btnDadosPessoais.setHorizontalAlignment(SwingConstants.LEFT);
-		btnDadosPessoais.setFont(new Font("Tahoma", Font.PLAIN, 11));
-		btnDadosPessoais.setBounds(-6, 53, 172, 53);
+		btnDadosPessoais.setFont(new Font("Tahoma", Font.PLAIN, 15));
+		btnDadosPessoais.setBounds(-6, 53, 194, 53);
 		btnDadosPessoais.setBorderPainted(false);   // Remove a borda estática (se houver)
 		btnDadosPessoais.setContentAreaFilled(false); // Remove o preenchimento da área de conteúdo (ajuda na transparência)
 		//Remove o contorno que aparece ao clicar ou quando o botão está selecionado (Focus Border)
@@ -187,17 +188,17 @@ public class TelaPrincipal extends JFrame {
 		btnDocumentos.setIcon(new ImageIcon(getClass().getResource("/Resources/imagens/documentos.png")));
 		btnDocumentos.setHorizontalAlignment(SwingConstants.LEFT);
 		btnDocumentos.setForeground(Color.WHITE);
-		btnDocumentos.setFont(new Font("Tahoma", Font.PLAIN, 11));
+		btnDocumentos.setFont(new Font("Tahoma", Font.PLAIN, 15));
 		btnDocumentos.setContentAreaFilled(false);
 		btnDocumentos.setBorderPainted(false); // Remove a borda estática (se houver)
-		btnDocumentos.setBounds(0, 106, 178, 46);
+		btnDocumentos.setBounds(0, 106, 188, 46);
 		btnDocumentos.setContentAreaFilled(false); // Remove o preenchimento da área de conteúdo (ajuda na transparência)
 		//Remove o contorno que aparece ao clicar ou quando o botão está selecionado (Focus Border)
 		btnDocumentos.setFocusPainted(false);
 		panelMenuAluno.add(btnDocumentos);
 		
 		pnlConteudoAluno = new JPanel();
-		pnlConteudoAluno.setBounds(166, 0, 753, 426);
+		pnlConteudoAluno.setBounds(197, 0, 955, 426);
 		panelAluno.add(pnlConteudoAluno);
 		
 		panelFaculdade = new JPanel();
@@ -207,16 +208,16 @@ public class TelaPrincipal extends JFrame {
 		panelMenuAluno_1 = new JPanel();
 		panelMenuAluno_1.setLayout(null);
 		panelMenuAluno_1.setBackground(new Color(54, 70, 78));
-		panelMenuAluno_1.setBounds(0, 0, 165, 426);
+		panelMenuAluno_1.setBounds(0, 0, 190, 426);
 		panelFaculdade.add(panelMenuAluno_1);
 		
 		btnCursos = new JButton("   Cursos");
 		btnCursos.setIcon(new ImageIcon(getClass().getResource("/Resources/imagens/chapeu-de-graduacao.png")));
 		btnCursos.setHorizontalAlignment(SwingConstants.LEFT);
 		btnCursos.setForeground(Color.WHITE);
-		btnCursos.setFont(new Font("Tahoma", Font.PLAIN, 11));
+		btnCursos.setFont(new Font("Tahoma", Font.PLAIN, 15));
 		btnCursos.setBackground(new Color(54, 70, 78));
-		btnCursos.setBounds(0, 0, 165, 55);
+		btnCursos.setBounds(0, 0, 190, 55);
 		btnCursos.setBorderPainted(false);  // Remove a borda estática (se houver)
 		btnCursos.setContentAreaFilled(false); // Remove o preenchimento da área de conteúdo (ajuda na transparência)
 		//Remove o contorno que aparece ao clicar ou quando o botão está selecionado (Focus Border)
@@ -227,8 +228,8 @@ public class TelaPrincipal extends JFrame {
 		btnDisciplinas.setIcon(new ImageIcon(getClass().getResource("/Resources/imagens/caderno.png")));
 		btnDisciplinas.setHorizontalAlignment(SwingConstants.LEFT);
 		btnDisciplinas.setForeground(Color.WHITE);
-		btnDisciplinas.setFont(new Font("Tahoma", Font.PLAIN, 11));
-		btnDisciplinas.setBounds(-1, 55, 167, 55);
+		btnDisciplinas.setFont(new Font("Tahoma", Font.PLAIN, 15));
+		btnDisciplinas.setBounds(-1, 55, 191, 55);
 		btnDisciplinas.setBorderPainted(false); // Remove a borda estática (se houver)
 		btnDisciplinas.setContentAreaFilled(false); // Remove o preenchimento da área de conteúdo (ajuda na transparência)
 		//Remove o contorno que aparece ao clicar ou quando o botão está selecionado (Focus Border)
@@ -245,25 +246,20 @@ public class TelaPrincipal extends JFrame {
 		botoesMenuAluno.add(btnDisciplinas);
 		
 		
-
 		btnListar.addActionListener(e -> {
 		    // Chama a função que gerencia a cor
 		    ativarBotaoMenu(btnListar);
 
-		    //Lógica de Conteúdo (Troca de Painel)
-		    pnlConteudoAluno.removeAll();
-		    pnlConteudoAluno.setLayout(null);
-		    
-		    //Instancia o novo JPanel de conteúdo
-		    ListarAlunos listarAlunos = new ListarAlunos();
-		    listarAlunos.setBounds(0, 0, 753, 426);
-		    pnlConteudoAluno.add(listarAlunos);
-		    listarAlunos.setLayout(null);
-		    
+		    // Lógica de Conteúdo (Troca de Painel)
+		    pnlConteudoAluno.removeAll();		    
+		    pnlConteudoAluno.setLayout(new BorderLayout()); 		    
+		    // Instancia o novo JPanel de conteúdo
+		    ListarAlunos listarAlunos = new ListarAlunos();		    
+		    // Adiciona o painel ListarAlunos na região CENTRAL. 
+		    pnlConteudoAluno.add(listarAlunos, BorderLayout.CENTER); 		    
 		    pnlConteudoAluno.revalidate(); // Recalcula o layout
 		    pnlConteudoAluno.repaint(); // Redesenha a tela
 		});
-		
 		btnDadosPessoais.addActionListener(e -> {
 		    // Chama a função que gerencia a cor
 		    ativarBotaoMenu(btnDadosPessoais);
