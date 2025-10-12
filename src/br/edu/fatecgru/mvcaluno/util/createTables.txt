@@ -1,9 +1,4 @@
--- =========================================
--- LIMPEZA DO BANCO (DROP TABLES)
--- =========================================
-
-SET FOREIGN_KEY_CHECKS = 0;
-
+-- DROP TABLES (ordem para respeitar FK)
 DROP TABLE IF EXISTS matriculaDisciplina;
 DROP TABLE IF EXISTS matricula;
 DROP TABLE IF EXISTS turma;
@@ -11,12 +6,7 @@ DROP TABLE IF EXISTS disciplina;
 DROP TABLE IF EXISTS curso;
 DROP TABLE IF EXISTS aluno;
 
-SET FOREIGN_KEY_CHECKS = 1;
-
--- =========================================
--- CRIAÇÃO DAS TABELAS
--- =========================================
-
+-- TABELA ALUNO
 CREATE TABLE aluno (
     idAluno INT AUTO_INCREMENT PRIMARY KEY,
     ra VARCHAR(20) NOT NULL UNIQUE,
@@ -31,6 +21,7 @@ CREATE TABLE aluno (
     ativo BOOLEAN NOT NULL
 );
 
+-- TABELA CURSO
 CREATE TABLE curso (
     idCurso INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
@@ -40,15 +31,17 @@ CREATE TABLE curso (
     ativo BOOLEAN NOT NULL
 );
 
+-- TABELA DISCIPLINA
 CREATE TABLE disciplina (
     idDisciplina INT AUTO_INCREMENT PRIMARY KEY,
     idCurso INT NOT NULL,
     nome VARCHAR(100) NOT NULL,
-    semestre VARCHAR(20) NOT NULL,
+    semestre INT NOT NULL,
     ativo BOOLEAN NOT NULL,
     FOREIGN KEY (idCurso) REFERENCES curso(idCurso)
 );
 
+-- TABELA TURMA
 CREATE TABLE turma (
     idTurma INT AUTO_INCREMENT PRIMARY KEY,
     idCurso INT NOT NULL,
@@ -57,6 +50,7 @@ CREATE TABLE turma (
     FOREIGN KEY (idCurso) REFERENCES curso(idCurso)
 );
 
+-- TABELA MATRICULA
 CREATE TABLE matricula (
     idMatricula INT AUTO_INCREMENT PRIMARY KEY,
     idAluno INT NOT NULL,
@@ -66,6 +60,7 @@ CREATE TABLE matricula (
     FOREIGN KEY (idCurso) REFERENCES curso(idCurso)
 );
 
+-- TABELA MATRICULADISCIPLINA
 CREATE TABLE matriculaDisciplina (
     idMatriculaDisciplina INT AUTO_INCREMENT PRIMARY KEY,
     idMatricula INT NOT NULL,
@@ -75,4 +70,3 @@ CREATE TABLE matriculaDisciplina (
     ativo BOOLEAN NOT NULL,
     FOREIGN KEY (idMatricula) REFERENCES matricula(idMatricula)
 );
-

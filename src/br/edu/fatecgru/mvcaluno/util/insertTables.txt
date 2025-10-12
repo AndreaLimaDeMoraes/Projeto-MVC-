@@ -15,32 +15,33 @@ INSERT INTO turma (idCurso, semestreInicio, ativo) VALUES
 (3, '2025/1', TRUE);
 
 -- ===== DISCIPLINAS =====
--- Curso 1: Análise e Desenvolvimento de Sistemas (semestres 1, 2, 3)
-INSERT INTO disciplina (idCurso, nome, semestre, ativo) VALUES
-(1, 'Introdução à Programação', '1º', TRUE),
-(1, 'Matemática Discreta', '1º', TRUE),
-(1, 'Estruturas de Dados', '2º', TRUE),
-(1, 'Algoritmos Avançados', '2º', TRUE),
-(1, 'Banco de Dados', '3º', TRUE),
-(1, 'Programação Web', '3º', TRUE);
 
--- Curso 2: Gestão Empresarial (semestres 1, 2, 3)
+-- Curso 1: ADS (semestres 1,2,3)
 INSERT INTO disciplina (idCurso, nome, semestre, ativo) VALUES
-(2, 'Fundamentos de Administração', '1º', TRUE),
-(2, 'Economia', '1º', TRUE),
-(2, 'Administração Financeira', '2º', TRUE),
-(2, 'Gestão de Pessoas', '2º', TRUE),
-(2, 'Marketing', '3º', TRUE),
-(2, 'Gestão Estratégica', '3º', TRUE);
+(1, 'Introdução à Programação', 1, TRUE),
+(1, 'Matemática Discreta', 1, TRUE),
+(1, 'Estruturas de Dados', 2, TRUE),
+(1, 'Algoritmos Avançados', 2, TRUE),
+(1, 'Banco de Dados', 3, TRUE),
+(1, 'Programação Web', 3, TRUE);
 
--- Curso 3: Moda e Design (semestres 1, 2, 3)
+-- Curso 2: Gestão Empresarial (semestres 1,2,3)
 INSERT INTO disciplina (idCurso, nome, semestre, ativo) VALUES
-(3, 'História da Moda', '1º', TRUE),
-(3, 'Introdução ao Design', '1º', TRUE),
-(3, 'Design Têxtil', '2º', TRUE),
-(3, 'Estamparia', '2º', TRUE),
-(3, 'Moda Contemporânea', '3º', TRUE),
-(3, 'Marketing de Moda', '3º', TRUE);
+(2, 'Fundamentos de Administração', 1, TRUE),
+(2, 'Economia', 1, TRUE),
+(2, 'Administração Financeira', 2, TRUE),
+(2, 'Gestão de Pessoas', 2, TRUE),
+(2, 'Marketing', 3, TRUE),
+(2, 'Gestão Estratégica', 3, TRUE);
+
+-- Curso 3: Moda e Design (semestres 1,2,3)
+INSERT INTO disciplina (idCurso, nome, semestre, ativo) VALUES
+(3, 'História da Moda', 1, TRUE),
+(3, 'Introdução ao Design', 1, TRUE),
+(3, 'Design Têxtil', 2, TRUE),
+(3, 'Estamparia', 2, TRUE),
+(3, 'Moda Contemporânea', 3, TRUE),
+(3, 'Marketing de Moda', 3, TRUE);
 
 -- ===== ALUNOS =====
 INSERT INTO aluno (ra, nome, dataNascimento, cpf, email, endereco, municipio, uf, celular, ativo) VALUES
