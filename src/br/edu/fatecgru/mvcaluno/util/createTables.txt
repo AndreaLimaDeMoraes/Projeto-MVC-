@@ -60,13 +60,15 @@ CREATE TABLE matricula (
     FOREIGN KEY (idCurso) REFERENCES curso(idCurso)
 );
 
--- TABELA MATRICULADISCIPLINA
+-- TABELA MATRICULADISCIPLINA 
 CREATE TABLE matriculaDisciplina (
     idMatriculaDisciplina INT AUTO_INCREMENT PRIMARY KEY,
     idMatricula INT NOT NULL,
+    idDisciplina INT NOT NULL,  -- NOVO CAMPO: Referência à disciplina
     faltas INT NOT NULL,
     semestreAtual VARCHAR(20) NOT NULL,
     nota DOUBLE NOT NULL,
     ativo BOOLEAN NOT NULL,
-    FOREIGN KEY (idMatricula) REFERENCES matricula(idMatricula)
+    FOREIGN KEY (idMatricula) REFERENCES matricula(idMatricula),
+    FOREIGN KEY (idDisciplina) REFERENCES disciplina(idDisciplina)  -- NOVA FK
 );

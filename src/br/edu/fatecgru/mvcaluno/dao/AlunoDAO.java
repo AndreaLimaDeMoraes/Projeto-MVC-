@@ -9,6 +9,8 @@ import java.util.List;
 
 import br.edu.fatecgru.mvcaluno.model.Aluno;
 import br.edu.fatecgru.mvcaluno.model.AlunoView;
+import br.edu.fatecgru.mvcaluno.model.BoletimAluno;
+import br.edu.fatecgru.mvcaluno.model.DisciplinaBoletim;
 import br.edu.fatecgru.mvcaluno.util.ConnectionFactory;
 
 public class AlunoDAO {
@@ -300,4 +302,119 @@ public class AlunoDAO {
         }
         return listaAlunos;
     }
+    
+ // ========================
+ // READ - Buscar Dados do Aluno para Boletim (ID, RA, Nome, Curso)
+ // ========================
+ public BoletimAluno buscarDadosBoletimAluno(int idAluno) throws Exception {
+     BoletimAluno dados = null;
+     String SQL = "SELECT a.idAluno, a.ra, a.nome, c.nome AS nomeCurso " +
+                  "FROM aluno a " +
+                  "JOIN matricula m ON a.idAluno = m.idAluno " +
+                  "JOIN curso c ON m.idCurso = c.idCurso " +
+                  "WHERE a.idAluno = ? AND a.ativo = TRUE AND m.ativo = TRUE";
+     
+     Connection conn = null;
+     PreparedStatement ps = null;
+     ResultSet rs = null;
+
+     try {
+         conn = ConnectionFactory.getConnection();
+         ps = conn.prepareStatement(SQL);
+         ps.setInt(1, idAluno);
+         rs = ps.executeQuery();
+         if (rs.next()) {
+             dados = new BoletimAluno(
+                 rs.getInt("idAluno"),
+                 rs.getString("ra"),
+                 rs.getString("nome"),
+                 rs.getString("nomeCurso")
+             );
+         }
+     } catch (SQLException e) {
+         throw new Exception("Erro ao buscar dados do aluno para boletim: " + e.getMessage());
+     } finally {
+         ConnectionFactory.closeConnection(conn, ps, rs);
+     }
+     return dados;
+ }
+
+ // ========================
+ // READ - Buscar Disciplinas do Boletim (com Notas e Faltas)
+ // ========================
+ public List<DisciplinaBoletim> buscarDisciplinasBoletim(int idAluno) throws Exception {
+     List<DisciplinaBoletim> disciplinas = new ArrayList<>();
+     String SQL = "SELECT d.nome AS nomeDisciplina, md.nota, md.faltas, md.semestreAtual " +
+                  "FROM aluno a " +
+                  "JOIN matricula m ON a.idAluno = m.idMatricula " +  // Correção: m.idAluno = a.idAluno
+                  "JOIN matriculaDisciplina md ON m.idMatricula = md.idMatricula " +
+                  "JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
+                  "WHERE a.idAluno = ? AND a.ativo = TRUE AND m.ativo = TRUE AND md.ativo = TRUE " +
+                  "ORDER BY md.semestreAtual, d.nome";
+     
+     Connection conn = null;
+     PreparedStatement ps = null;
+     ResultSet rs = null;
+
+     try {
+         conn = ConnectionFactory.getConnection();
+         ps = conn.prepareStatement(SQL);
+         ps.setInt(1, idAluno);
+         rs = ps.executeQuery();
+         while (rs.next()) {
+             DisciplinaBoletim disc = new DisciplinaBoletim(
+                 rs.getString("nomeDisciplina"),
+                 rs.getDouble("nota"),
+                 rs.getInt("faltas"),
+                 rs.getString("semestreAtual")
+             );
+             disciplinas.add(disc);
+         }
+     } catch (SQLException e) {
+         throw new Exception("Erro ao buscar disciplinas do boletim: " + e.getMessage());
+     } finally {
+         ConnectionFactory.closeConnection(conn, ps, rs);
+     }
+     return disciplinas;
+ }
+ 
+//========================
+//READ - Buscar Histórico Escolar (Todas as disciplinas)
+//========================
+public List<DisciplinaBoletim> buscarHistoricoEscolar(int idAluno) throws Exception {
+  List<DisciplinaBoletim> disciplinas = new ArrayList<>();
+  String SQL = "SELECT d.nome AS nomeDisciplina, md.nota, md.faltas, md.semestreAtual " +
+               "FROM aluno a " +
+               "JOIN matricula m ON a.idAluno = m.idAluno " +
+               "JOIN matriculaDisciplina md ON m.idMatricula = md.idMatricula " +
+               "JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
+               "WHERE a.idAluno = ? AND a.ativo = TRUE AND m.ativo = TRUE AND md.ativo = TRUE " +
+               "ORDER BY md.semestreAtual, d.nome";  // Sem filtro por semestre
+  
+  Connection conn = null;
+  PreparedStatement ps = null;
+  ResultSet rs = null;
+
+  try {
+      conn = ConnectionFactory.getConnection();
+      ps = conn.prepareStatement(SQL);
+      ps.setInt(1, idAluno);
+      rs = ps.executeQuery();
+      while (rs.next()) {
+          DisciplinaBoletim disc = new DisciplinaBoletim(
+              rs.getString("nomeDisciplina"),
+              rs.getDouble("nota"),
+              rs.getInt("faltas"),
+              rs.getString("semestreAtual")
+          );
+          disciplinas.add(disc);
+      }
+  } catch (SQLException e) {
+      throw new Exception("Erro ao buscar histórico escolar: " + e.getMessage());
+  } finally {
+      ConnectionFactory.closeConnection(conn, ps, rs);
+  }
+  return disciplinas;
+}
+    
 }

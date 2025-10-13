@@ -287,8 +287,8 @@ public class TelaPrincipal extends JFrame {
 		    // Chama a função que gerencia a cor
 		    ativarBotaoMenu(btnDocumentos);
 
-		    // ** Lógica do MVC para trocar de tela vem AQUI **
-		    // Por exemplo, painel.setLayout(new BorderLayout()); painel.add(new ListaAlunosView(), BorderLayout.CENTER);
+		    Documentos documentos = new Documentos(TelaPrincipal.this); 
+		    trocarPainelConteudo(documentos);
 		});
 		
 		

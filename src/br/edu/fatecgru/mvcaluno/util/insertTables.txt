@@ -1,3 +1,4 @@
+
 -- =========================================
 -- INSERÇÃO DE DADOS DE TESTE
 -- =========================================
@@ -69,30 +70,30 @@ INSERT INTO matricula (idAluno, idCurso, ativo) VALUES
 (9, 3, TRUE),
 (10, 3, TRUE);
 
--- ===== MATRÍCULA DISCIPLINA =====
-INSERT INTO matriculaDisciplina (idMatricula, faltas, semestreAtual, nota, ativo) VALUES
--- Curso 1
-(1, 2, '2025/1', 8.5, TRUE),
-(1, 0, '2025/1', 8.0, TRUE),
-(2, 1, '2025/1', 6.5, TRUE),
-(2, 3, '2025/1', 8.25, TRUE),
-(3, 0, '2025/1', 9.25, TRUE),
-(3, 2, '2025/1', 7.5, TRUE),
-(4, 4, '2025/1', 7.0, TRUE),
-(4, 1, '2025/1', 8.25, TRUE),
+-- ===== MATRÍCULA DISCIPLINA (COM idDisciplina INCLUÍDO E ASSOCIADO CORRETAMENTE) =====
+INSERT INTO matriculaDisciplina (idMatricula, idDisciplina, faltas, semestreAtual, nota, ativo) VALUES
+-- Curso 1 (ADS): idDisciplina 1 e 2 (semestre 1)
+(1, 1, 2, '2025/1', 8.5, TRUE),     -- Introdução à Programação
+(1, 2, 0, '2025/1', 8.0, TRUE),     -- Matemática Discreta
+(2, 1, 1, '2025/1', 6.5, TRUE),     -- Introdução à Programação
+(2, 2, 3, '2025/1', 8.25, TRUE),    -- Matemática Discreta
+(3, 1, 0, '2025/1', 9.25, TRUE),    -- Introdução à Programação
+(3, 2, 2, '2025/1', 7.5, TRUE),     -- Matemática Discreta
+(4, 1, 4, '2025/1', 7.0, TRUE),     -- Introdução à Programação
+(4, 2, 1, '2025/1', 8.25, TRUE),    -- Matemática Discreta
 
--- Curso 2
-(5, 2, '2025/1', 7.5, TRUE),
-(5, 0, '2025/1', 9.25, TRUE),
-(6, 1, '2025/1', 6.75, TRUE),
-(6, 3, '2025/1', 8.5, TRUE),
-(7, 2, '2025/1', 7.75, TRUE),
-(7, 1, '2025/1', 6.75, TRUE),
+-- Curso 2 (Gestão): idDisciplina 7 e 8 (semestre 1)
+(5, 7, 2, '2025/1', 7.5, TRUE),     -- Fundamentos de Administração
+(5, 8, 0, '2025/1', 9.25, TRUE),    -- Economia
+(6, 7, 1, '2025/1', 6.75, TRUE),    -- Fundamentos de Administração
+(6, 8, 3, '2025/1', 8.5, TRUE),     -- Economia
+(7, 7, 2, '2025/1', 7.75, TRUE),    -- Fundamentos de Administração
+(7, 8, 1, '2025/1', 6.75, TRUE),    -- Economia
 
--- Curso 3
-(8, 0, '2025/1', 8.75, TRUE),
-(8, 1, '2025/1', 9.25, TRUE),
-(9, 3, '2025/1', 7.5, TRUE),
-(9, 0, '2025/1', 7.0, TRUE),
-(10, 1, '2025/1', 8.25, TRUE),
-(10, 2, '2025/1', 9.25, TRUE);
+-- Curso 3 (Moda): idDisciplina 13 e 14 (semestre 1)
+(8, 13, 0, '2025/1', 8.75, TRUE),   -- História da Moda
+(8, 14, 1, '2025/1', 9.25, TRUE),   -- Introdução ao Design
+(9, 13, 3, '2025/1', 7.5, TRUE),    -- História da Moda
+(9, 14, 0, '2025/1', 7.0, TRUE),    -- Introdução ao Design
+(10, 13, 1, '2025/1', 8.25, TRUE),  -- História da Moda
+(10, 14, 2, '2025/1', 9.25, TRUE);  -- Introdução ao Design
