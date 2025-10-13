@@ -13,6 +13,7 @@ import javax.swing.ImageIcon;
 import javax.swing.SwingConstants;
 import java.awt.Font;
 import java.awt.Color;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JMenu;
@@ -23,6 +24,8 @@ import javax.swing.KeyStroke;
 import java.awt.event.KeyEvent;
 import java.awt.event.InputEvent;
 import java.awt.Toolkit;
+
+import br.edu.fatecgru.mvcaluno.view.TelaCurso;
 
 
 public class TelaPrincipal extends JFrame {
@@ -40,7 +43,7 @@ public class TelaPrincipal extends JFrame {
 	private JButton btnCursos;
 	private JButton btnDisciplinas;
 	private JPanel pnlConteudoAluno;
-	
+	private JPanel telaAtual; // Controla qual tela tá ativa
 	
 	//CORES PARA MUDAR O FOCO NOS BOTÕES
 	// Cor Padrão
@@ -288,12 +291,55 @@ public class TelaPrincipal extends JFrame {
 		    // Por exemplo, painel.setLayout(new BorderLayout()); painel.add(new ListaAlunosView(), BorderLayout.CENTER);
 		});
 		
+		
+		
 		btnCursos.addActionListener(e -> {
-		    // Chama a função que gerencia a cor
+		   
+			// Chama a função que gerencia a cor
 		    ativarBotaoMenu(btnCursos);
-
+		    
 		    // ** Lógica do MVC para trocar de tela vem AQUI **
-		    // ...
+		    
+		    // 1. MUDA PARA A ABA FACULDADE
+		    tabbedPane.setSelectedComponent(panelFaculdade);
+		    
+		 // 2. Remove o painel de conteúdo atual da Faculdade (se existir)
+		    // Encontrar ou criar o painel de conteúdo da Faculdade
+		    Component[] components = panelFaculdade.getComponents();
+		    JPanel pnlConteudoFaculdade = null;
+		    
+		    // Procura por um painel que não seja o menu lateral
+		    for (Component comp : components) {
+		        if (comp != panelMenuAluno_1 && comp instanceof JPanel) {
+		            pnlConteudoFaculdade = (JPanel) comp;
+		            break;
+		        }
+		    }
+		    
+		 // Se não encontrou, cria um novo painel de conteúdo
+		    if (pnlConteudoFaculdade == null) {
+		        pnlConteudoFaculdade = new JPanel();
+		        pnlConteudoFaculdade.setBounds(197, 0, 955, 426); // Mesmas coordenadas do Aluno
+		        panelFaculdade.add(pnlConteudoFaculdade);
+		    }
+		    
+		    // 3. Limpa e configura o painel de conteúdo
+		    pnlConteudoFaculdade.removeAll();
+		    pnlConteudoFaculdade.setLayout(new BorderLayout());
+		    
+		    // 4. Instancia a TelaCurso 
+		    TelaCurso telaCurso = new TelaCurso(TelaPrincipal.this, 0);
+		    telaAtual = telaCurso; 
+		    
+		    
+		    // 5. Adiciona a TelaCurso no painel de conteúdo da Faculdade
+		    pnlConteudoFaculdade.add(telaCurso, BorderLayout.CENTER);
+		    
+		    // 6. Atualiza a interface
+		    pnlConteudoFaculdade.revalidate();
+		    pnlConteudoFaculdade.repaint();
+		    
+		    
 		});
 
 		btnDisciplinas.addActionListener(e -> {
@@ -303,7 +349,43 @@ public class TelaPrincipal extends JFrame {
 		    // ** Lógica do MVC para trocar de tela vem AQUI **
 		    // ...
 		});
+		
+		 // ===== CONEXÃO DOS MENUS EXISTENTES - ADICIONE NO FINAL DO CONSTRUTOR =====
+          conectarMenus();
+
 	}
+	
+	// ===== MÉTODO PARA CONECTAR OS MENUS EXISTENTES =====
+       
+	private void conectarMenus() {
+        // Menu Aluno -> Salvar
+        mntmNewMenuItem.addActionListener(e -> {
+            if (telaAtual instanceof TelaCurso) {
+                ((TelaCurso) telaAtual).salvarCurso();
+            }
+        });
+        
+        // Menu Aluno -> Alterar  
+        mntmNewMenuItem_1.addActionListener(e -> {
+            if (telaAtual instanceof TelaCurso) {
+                ((TelaCurso) telaAtual).alterarCurso();
+            }
+        });
+        
+        // Menu Aluno -> Excluir
+        mntmNewMenuItem_3.addActionListener(e -> {
+            if (telaAtual instanceof TelaCurso) {
+                ((TelaCurso) telaAtual).excluirCurso();
+            }
+        });
+	}
+        
+        
+        
+	
+	
+	
+	
 	/**
 	 * Altera a cor e a opacidade dos botões do menu para indicar qual está ativo.
 	 * @param botaoClicado O botão que acabou de ser clicado.

@@ -11,26 +11,26 @@ import br.edu.fatecgru.mvcaluno.model.Curso;
 import br.edu.fatecgru.mvcaluno.util.ConnectionFactory;
 
 public class CursoDAO {
-    private Connection conn;
+    // REMOVER a conexão como atributo da classe
+    // private Connection conn; ← REMOVER ESTA LINHA
 
     public CursoDAO() throws Exception {
-        try {
-            this.conn = ConnectionFactory.getConnection();
-        } catch (Exception e) {
-            throw new Exception("Erro ao conectar: " + e.getMessage());
-        }
+        // Construtor vazio ou com lógica que não cria conexão
     }
 
-    // Inserir curso
+    // Inserir curso - MODIFICADO
     public void salvar(Curso curso) throws Exception {
         if (curso == null)
             throw new Exception("O valor passado não pode ser nulo");
 
+        Connection conn = null; // Conexão local
+        PreparedStatement ps = null;
+        
         String SQL = "INSERT INTO curso (nome, campus, periodo, duracao, ativo) "
                    + "VALUES (?, ?, ?, ?, ?)";
-        PreparedStatement ps = null;
 
         try {
+            conn = ConnectionFactory.getConnection(); // Nova conexão
             ps = conn.prepareStatement(SQL);
             ps.setString(1, curso.getNome());
             ps.setString(2, curso.getCampus());
@@ -45,15 +45,17 @@ public class CursoDAO {
         }
     }
 
-    // Listar todos os cursos
-    
+    // Listar todos os cursos - MODIFICADO
     public List<Curso> listarTodos() throws Exception {
         List<Curso> lista = new ArrayList<>();
-        String SQL = "SELECT * FROM curso WHERE ativo = true ORDER BY nome";
+        Connection conn = null; // Conexão local
         PreparedStatement ps = null;
         ResultSet rs = null;
 
+        String SQL = "SELECT * FROM curso WHERE ativo = true ORDER BY nome";
+
         try {
+            conn = ConnectionFactory.getConnection(); // Nova conexão
             ps = conn.prepareStatement(SQL);
             rs = ps.executeQuery();
             while (rs.next()) {
@@ -75,14 +77,17 @@ public class CursoDAO {
         return lista;
     }
 
-   // Buscar curso por Id
+    // Buscar curso por Id - MODIFICADO
     public Curso buscarPorId(int idCurso) throws Exception {
         Curso curso = null;
-        String SQL = "SELECT * FROM curso WHERE idCurso = ? AND ativo = true";
+        Connection conn = null; // Conexão local
         PreparedStatement ps = null;
         ResultSet rs = null;
 
+        String SQL = "SELECT * FROM curso WHERE idCurso = ? AND ativo = true";
+
         try {
+            conn = ConnectionFactory.getConnection(); // Nova conexão
             ps = conn.prepareStatement(SQL);
             ps.setInt(1, idCurso);
             rs = ps.executeQuery();
@@ -104,15 +109,18 @@ public class CursoDAO {
         return curso;
     }
 
-   // atualizar curso
+    // Atualizar curso - MODIFICADO
     public void atualizar(Curso curso) throws Exception {
         if (curso == null)
             throw new Exception("O valor passado não pode ser nulo");
 
-        String SQL = "UPDATE curso SET nome=?, campus=?, periodo=?, duracao=? WHERE idCurso=?";
+        Connection conn = null; // Conexão local
         PreparedStatement ps = null;
 
+        String SQL = "UPDATE curso SET nome=?, campus=?, periodo=?, duracao=? WHERE idCurso=?";
+
         try {
+            conn = ConnectionFactory.getConnection(); // Nova conexão
             ps = conn.prepareStatement(SQL);
             ps.setString(1, curso.getNome());
             ps.setString(2, curso.getCampus());
@@ -127,12 +135,15 @@ public class CursoDAO {
         }
     }
 
-    // remover curso 
+    // Remover curso - MODIFICADO
     public void excluir(int idCurso) throws Exception {
-        String SQL = "UPDATE curso SET ativo = false WHERE idCurso=?";
+        Connection conn = null; // Conexão local
         PreparedStatement ps = null;
 
+        String SQL = "UPDATE curso SET ativo = false WHERE idCurso=?";
+
         try {
+            conn = ConnectionFactory.getConnection(); // Nova conexão
             ps = conn.prepareStatement(SQL);
             ps.setInt(1, idCurso);
             ps.executeUpdate();
@@ -143,18 +154,18 @@ public class CursoDAO {
         }
     }
 
-    // listar por filtro
-    
+    // Listar por filtro - MODIFICADO
     public List<Curso> listarPorFiltro(String filtro) throws Exception {
         List<Curso> lista = new ArrayList<>();
-        
-        String filtroSQL = "%" + filtro + "%";
-        String SQL = "SELECT * FROM curso WHERE ativo = true AND (nome LIKE ? OR campus LIKE ?) ORDER BY nome";
-        
+        Connection conn = null; // Conexão local
         PreparedStatement ps = null;
         ResultSet rs = null;
 
+        String filtroSQL = "%" + filtro + "%";
+        String SQL = "SELECT * FROM curso WHERE ativo = true AND (nome LIKE ? OR campus LIKE ?) ORDER BY nome";
+
         try {
+            conn = ConnectionFactory.getConnection(); // Nova conexão
             ps = conn.prepareStatement(SQL);
             ps.setString(1, filtroSQL);
             ps.setString(2, filtroSQL);
@@ -179,14 +190,16 @@ public class CursoDAO {
         return lista;
     }
 
-    // verifica se curso já existe
-    
+    // Verifica se curso já existe - MODIFICADO
     public boolean existeCurso(String nome) throws Exception {
-        String SQL = "SELECT COUNT(*) FROM curso WHERE nome = ? AND ativo = true";
+        Connection conn = null; // Conexão local
         PreparedStatement ps = null;
         ResultSet rs = null;
 
+        String SQL = "SELECT COUNT(*) FROM curso WHERE nome = ? AND ativo = true";
+
         try {
+            conn = ConnectionFactory.getConnection(); // Nova conexão
             ps = conn.prepareStatement(SQL);
             ps.setString(1, nome);
             rs = ps.executeQuery();
