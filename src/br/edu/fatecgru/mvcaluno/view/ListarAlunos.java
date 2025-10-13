@@ -27,6 +27,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import br.edu.fatecgru.mvcaluno.view.TelaPrincipal;
 import br.edu.fatecgru.mvcaluno.dao.AlunoDAO;
+import br.edu.fatecgru.mvcaluno.dao.CursoDAO;
 import br.edu.fatecgru.mvcaluno.model.AlunoView;
 import br.edu.fatecgru.mvcaluno.model.AlunoTableModelSimplificado; 
 
@@ -164,6 +165,7 @@ public class ListarAlunos extends JPanel {
         
         cmbCurso = new JComboBox<>();
         cmbCurso.setBounds(466, 36, 274, 27); 
+        popularComboCursos();
         panelFiltros.add(cmbCurso);
         
         btnNovoAluno = new JButton(" Novo aluno");
@@ -175,6 +177,11 @@ public class ListarAlunos extends JPanel {
         btnNovoAluno.setContentAreaFilled(false); 
         btnNovoAluno.setFocusPainted(false);
         panelFiltros.add(btnNovoAluno);
+        
+     // Adiciona o evento de filtro ao ComboBox
+        cmbCurso.addActionListener(e -> {
+            aplicarFiltroCurso();
+        });
         
         btnNovoAluno.addActionListener(e -> {
             
@@ -214,7 +221,65 @@ public class ListarAlunos extends JPanel {
         adicionarEventoCliqueTabela();
     }
     
+    private void aplicarFiltroCurso() {
+        String itemSelecionado = (String) cmbCurso.getSelectedItem();
+        
+        //Verifica se o item é válido e não é o primeiro (Todos)
+        if (itemSelecionado == null || itemSelecionado.equals("Todos os Cursos")) {
+            // Se for "Todos os Cursos", recarrega sem filtro
+            carregarTabelaAlunos(null); 
+        } else {
+            // Extrai APENAS o nome do curso
+            String nomeCurso = itemSelecionado;
+            int indexParenteses = nomeCurso.lastIndexOf(" (");
+            
+            if (indexParenteses != -1) {
+                nomeCurso = nomeCurso.substring(0, indexParenteses);
+            }
+            
+            //Chama a função de carregamento da tabela, passando o nome do curso
+            carregarTabelaAlunos(nomeCurso); 
+            //Chama a função de carregamento da tabela, passando o nome do curso
+            carregarTabelaAlunosPorCurso(nomeCurso); 
+
+        }
+    }
     
+    private void popularComboCursos() {
+        try {
+            CursoDAO dao = new CursoDAO();
+            // Chama o novo método da DAO
+            List<String> listaCursosFormatada = dao.listarCursosParaCombo();
+
+            // Limpa e popula o ComboBox
+            cmbCurso.removeAllItems();
+            for (String cursoFormatado : listaCursosFormatada) {
+                cmbCurso.addItem(cursoFormatado);
+            }
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, 
+                "Erro ao carregar cursos para filtro: " + e.getMessage(), 
+                "Erro de Dados", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }    
+    
+    private void carregarTabelaAlunosPorCurso(String nomeCurso) {
+        try {
+            AlunoDAO dao = new AlunoDAO();
+            List<AlunoView> listaAlunos = dao.listarPorCurso(nomeCurso);
+            
+            tblListaAlunos.setModel(new AlunoTableModelSimplificado(listaAlunos));
+            configurarVisualTabela();
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, 
+                "Erro ao filtrar alunos por curso: " + e.getMessage(), 
+                "Erro de Conexão", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
 
     private void configurarVisualTabela() {
         tblListaAlunos.setFont(new Font("Tahoma", Font.PLAIN, 15));

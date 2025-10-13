@@ -12,14 +12,12 @@ import br.edu.fatecgru.mvcaluno.model.AlunoView;
 import br.edu.fatecgru.mvcaluno.util.ConnectionFactory;
 
 public class AlunoDAO {
-    private Connection conn;
 
-    public AlunoDAO() throws Exception {
-        try {
-            this.conn = ConnectionFactory.getConnection();
-        } catch (Exception e) {
-            throw new Exception("Erro ao conectar: " + e.getMessage());
-        }
+    /**
+     * Construtor padrão. Não precisa mais gerenciar a conexão aqui.
+     */
+    public AlunoDAO() {
+        // O construtor agora pode ficar vazio.
     }
 
     // ========================
@@ -31,9 +29,12 @@ public class AlunoDAO {
 
         String SQL = "INSERT INTO aluno (ra, nome, dataNascimento, cpf, email, endereco, municipio, uf, celular, ativo) "
                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        Connection conn = null;
         PreparedStatement ps = null;
 
         try {
+            conn = ConnectionFactory.getConnection(); // Abre a conexão
             ps = conn.prepareStatement(SQL);
             ps.setString(1, aluno.getRa());
             ps.setString(2, aluno.getNome());
@@ -49,57 +50,55 @@ public class AlunoDAO {
         } catch (SQLException e) {
             throw new Exception("Erro ao inserir aluno: " + e.getMessage());
         } finally {
-            ConnectionFactory.closeConnection(conn, ps);
+            ConnectionFactory.closeConnection(conn, ps); // Fecha a conexão
         }
     }
 
     // ========================
     // READ - Listar todos
     // ========================
+    public List<AlunoView> listarTodos() throws Exception {
+        List<AlunoView> lista = new ArrayList<>();
+        
+        String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus "
+                   + "FROM aluno a "
+                   + "INNER JOIN matricula m ON a.idAluno = m.idAluno "
+                   + "INNER JOIN curso c ON m.idCurso = c.idCurso "
+                   + "ORDER BY a.nome";
+        
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
 
- public List<AlunoView> listarTodos() throws Exception {
-     // Mude a lista para AlunoView
-     List<AlunoView> lista = new ArrayList<>();
-     
-     // Novo SQL usando JOIN para buscar o nome do curso e campus
-     String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus "
-                + "FROM aluno a "
-                + "INNER JOIN matricula m ON a.idAluno = m.idAluno "
-                + "INNER JOIN curso c ON m.idCurso = c.idCurso "
-                + "ORDER BY a.nome";
-     
-     PreparedStatement ps = null;
-     ResultSet rs = null;
-
-     try {
-         ps = conn.prepareStatement(SQL);
-         rs = ps.executeQuery();
-         while (rs.next()) {
-             // Instancia o novo AlunoView
-             AlunoView aluno = new AlunoView(
-                     rs.getInt("idAluno"),
-                     rs.getString("ra"),
-                     rs.getString("nome"),
-                     rs.getString("dataNascimento"),
-                     rs.getString("cpf"),
-                     rs.getString("email"),
-                     rs.getString("endereco"),
-                     rs.getString("municipio"),
-                     rs.getString("uf"),
-                     rs.getString("celular"),
-                     rs.getBoolean("ativo"),
-                     rs.getString("nomeCurso"),
-                     rs.getString("campus")
-             );
-             lista.add(aluno);
-         }
-     } catch (SQLException e) {
-         throw new Exception("Erro ao listar alunos: " + e.getMessage());
-     } finally {
-         ConnectionFactory.closeConnection(conn, ps, rs);
-     }
-     return lista;
- }
+        try {
+            conn = ConnectionFactory.getConnection(); // Abre a conexão
+            ps = conn.prepareStatement(SQL);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                AlunoView aluno = new AlunoView(
+                        rs.getInt("idAluno"),
+                        rs.getString("ra"),
+                        rs.getString("nome"),
+                        rs.getString("dataNascimento"),
+                        rs.getString("cpf"),
+                        rs.getString("email"),
+                        rs.getString("endereco"),
+                        rs.getString("municipio"),
+                        rs.getString("uf"),
+                        rs.getString("celular"),
+                        rs.getBoolean("ativo"),
+                        rs.getString("nomeCurso"),
+                        rs.getString("campus")
+                );
+                lista.add(aluno);
+            }
+        } catch (SQLException e) {
+            throw new Exception("Erro ao listar alunos: " + e.getMessage());
+        } finally {
+            ConnectionFactory.closeConnection(conn, ps, rs); // Fecha a conexão
+        }
+        return lista;
+    }
 
     // ========================
     // READ - Buscar por ID
@@ -107,10 +106,13 @@ public class AlunoDAO {
     public Aluno buscarPorId(int idAluno) throws Exception {
         Aluno aluno = null;
         String SQL = "SELECT * FROM aluno WHERE idAluno = ?";
+        
+        Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
 
         try {
+            conn = ConnectionFactory.getConnection(); // Abre a conexão
             ps = conn.prepareStatement(SQL);
             ps.setInt(1, idAluno);
             rs = ps.executeQuery();
@@ -132,7 +134,7 @@ public class AlunoDAO {
         } catch (SQLException e) {
             throw new Exception("Erro ao buscar aluno: " + e.getMessage());
         } finally {
-            ConnectionFactory.closeConnection(conn, ps, rs);
+            ConnectionFactory.closeConnection(conn, ps, rs); // Fecha a conexão
         }
         return aluno;
     }
@@ -146,9 +148,12 @@ public class AlunoDAO {
 
         String SQL = "UPDATE aluno SET ra=?, nome=?, dataNascimento=?, cpf=?, email=?, endereco=?, "
                    + "municipio=?, uf=?, celular=?, ativo=? WHERE idAluno=?";
+        
+        Connection conn = null;
         PreparedStatement ps = null;
 
         try {
+            conn = ConnectionFactory.getConnection(); // Abre a conexão
             ps = conn.prepareStatement(SQL);
             ps.setString(1, aluno.getRa());
             ps.setString(2, aluno.getNome());
@@ -165,7 +170,7 @@ public class AlunoDAO {
         } catch (SQLException e) {
             throw new Exception("Erro ao atualizar aluno: " + e.getMessage());
         } finally {
-            ConnectionFactory.closeConnection(conn, ps);
+            ConnectionFactory.closeConnection(conn, ps); // Fecha a conexão
         }
     }
 
@@ -174,71 +179,125 @@ public class AlunoDAO {
     // ========================
     public void excluir(int idAluno) throws Exception {
         String SQL = "DELETE FROM aluno WHERE idAluno=?";
+        
+        Connection conn = null;
         PreparedStatement ps = null;
 
         try {
+            conn = ConnectionFactory.getConnection(); // Abre a conexão
             ps = conn.prepareStatement(SQL);
             ps.setInt(1, idAluno);
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new Exception("Erro ao excluir aluno: " + e.getMessage());
         } finally {
-            ConnectionFactory.closeConnection(conn, ps);
+            ConnectionFactory.closeConnection(conn, ps); // Fecha a conexão
         }
     }
     
-	 // ========================
-	 // READ - Listar por Filtro (RA ou Nome)
-	 // ========================
-	 public List<AlunoView> listarPorFiltro(String filtro) throws Exception {
-	     List<AlunoView> lista = new ArrayList<>();
-	     
-	     // Constrói o filtro SQL com coringas '%'
-	     String filtroSQL = "%" + filtro + "%";
-	     
-	     // SQL com JOIN para buscar por RA OU Nome
-	     String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus "
-	                + "FROM aluno a "
-	                + "INNER JOIN matricula m ON a.idAluno = m.idAluno "
-	                + "INNER JOIN curso c ON m.idCurso = c.idCurso "
-	                + "WHERE a.nome LIKE ? OR a.ra LIKE ? "
-	                + "ORDER BY a.nome";
-	     
-	     PreparedStatement ps = null;
-	     ResultSet rs = null;
-	
-	     try {
-	         ps = conn.prepareStatement(SQL);
-	         // Os dois parâmetros do WHERE (nome e ra) usam o mesmo filtro
-	         ps.setString(1, filtroSQL); 
-	         ps.setString(2, filtroSQL);
-	         
-	         rs = ps.executeQuery();
-	         
-	         while (rs.next()) {
-	             // Lógica de instanciação de AlunoView
-	             AlunoView aluno = new AlunoView(
-	                     rs.getInt("idAluno"),
-	                     rs.getString("ra"),
-	                     rs.getString("nome"),
-	                     rs.getString("dataNascimento"),
-	                     rs.getString("cpf"),
-	                     rs.getString("email"),
-	                     rs.getString("endereco"),
-	                     rs.getString("municipio"),
-	                     rs.getString("uf"),
-	                     rs.getString("celular"),
-	                     rs.getBoolean("ativo"),
-	                     rs.getString("nomeCurso"),
-	                     rs.getString("campus")
-	             );
-	             lista.add(aluno);
-	         }
-	     } catch (SQLException e) {
-	         throw new Exception("Erro ao filtrar alunos: " + e.getMessage());
-	     } finally {
-	         ConnectionFactory.closeConnection(conn, ps, rs);
-	     }
-	     return lista;
-	 }
+    // ========================
+    // READ - Listar por Filtro (ID, RA ou Nome)
+    // ========================
+    public List<AlunoView> listarPorFiltro(String filtro) throws Exception {
+        List<AlunoView> lista = new ArrayList<>();
+        
+        String filtroSQL = "%" + filtro + "%";
+        
+        String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus "
+                   + "FROM aluno a "
+                   + "INNER JOIN matricula m ON a.idAluno = m.idAluno "
+                   + "INNER JOIN curso c ON m.idCurso = c.idCurso "
+                   + "WHERE a.nome LIKE ? OR a.ra LIKE ? OR CAST(a.idAluno AS VARCHAR(20)) LIKE ? "
+                   + "ORDER BY a.nome LIMIT 50";
+        
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            conn = ConnectionFactory.getConnection(); // Abre a conexão
+            ps = conn.prepareStatement(SQL);
+            ps.setString(1, filtroSQL); 
+            ps.setString(2, filtroSQL);
+            ps.setString(3, filtroSQL);
+            
+            rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                AlunoView aluno = new AlunoView(
+                        rs.getInt("idAluno"),
+                        rs.getString("ra"),
+                        rs.getString("nome"),
+                        rs.getString("dataNascimento"),
+                        rs.getString("cpf"),
+                        rs.getString("email"),
+                        rs.getString("endereco"),
+                        rs.getString("municipio"),
+                        rs.getString("uf"),
+                        rs.getString("celular"),
+                        rs.getBoolean("ativo"),
+                        rs.getString("nomeCurso"),
+                        rs.getString("campus")
+                );
+                lista.add(aluno);
+            }
+        } catch (SQLException e) {
+            throw new Exception("Erro ao filtrar alunos: " + e.getMessage());
+        } finally {
+            ConnectionFactory.closeConnection(conn, ps, rs); // Fecha a conexão
+        }
+        return lista;
+    }
+    
+ // Na classe AlunoDAO.java:
+
+    /**
+     * Lista alunos filtrando pela tabela de Curso.
+     */
+    public List<AlunoView> listarPorCurso(String nomeCurso) throws Exception {
+        List<AlunoView> listaAlunos = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        // NOVO SQL: Inclui a.* para trazer todos os campos necessários para AlunoView
+        String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus "
+                   + "FROM aluno a "
+                   + "INNER JOIN matricula m ON a.idAluno = m.idAluno "
+                   + "INNER JOIN curso c ON m.idCurso = c.idCurso "
+                   + "WHERE a.ativo = true AND c.nome = ? "
+                   + "ORDER BY a.nome";
+
+        try {
+            conn = ConnectionFactory.getConnection();
+            ps = conn.prepareStatement(SQL);
+            ps.setString(1, nomeCurso); // Filtra pelo nome do curso
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                // Este construtor agora tem todas as colunas disponíveis no ResultSet
+                AlunoView aluno = new AlunoView(
+                        rs.getInt("idAluno"),
+                        rs.getString("ra"),
+                        rs.getString("nome"),
+                        rs.getString("dataNascimento"),
+                        rs.getString("cpf"),
+                        rs.getString("email"),
+                        rs.getString("endereco"),
+                        rs.getString("municipio"),
+                        rs.getString("uf"),
+                        rs.getString("celular"),
+                        rs.getBoolean("ativo"),
+                        rs.getString("nomeCurso"), // alias do JOIN
+                        rs.getString("campus")      // alias do JOIN
+                );
+                listaAlunos.add(aluno);
+            }
+        } catch (SQLException e) {
+            throw new Exception("Erro ao listar alunos por curso: " + e.getMessage());
+        } finally {
+            ConnectionFactory.closeConnection(conn, ps, rs);
+        }
+        return listaAlunos;
+    }
 }

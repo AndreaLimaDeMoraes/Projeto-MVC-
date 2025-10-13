@@ -11,14 +11,12 @@ import br.edu.fatecgru.mvcaluno.model.Curso;
 import br.edu.fatecgru.mvcaluno.util.ConnectionFactory;
 
 public class CursoDAO {
-    // REMOVER a conexão como atributo da classe
-    // private Connection conn; ← REMOVER ESTA LINHA
 
     public CursoDAO() throws Exception {
         // Construtor vazio ou com lógica que não cria conexão
     }
 
-    // Inserir curso - MODIFICADO
+    // Inserir curso
     public void salvar(Curso curso) throws Exception {
         if (curso == null)
             throw new Exception("O valor passado não pode ser nulo");
@@ -45,7 +43,7 @@ public class CursoDAO {
         }
     }
 
-    // Listar todos os cursos - MODIFICADO
+    // Listar todos os cursos
     public List<Curso> listarTodos() throws Exception {
         List<Curso> lista = new ArrayList<>();
         Connection conn = null; // Conexão local
@@ -55,7 +53,7 @@ public class CursoDAO {
         String SQL = "SELECT * FROM curso WHERE ativo = true ORDER BY nome";
 
         try {
-            conn = ConnectionFactory.getConnection(); // Nova conexão
+            conn = ConnectionFactory.getConnection();
             ps = conn.prepareStatement(SQL);
             rs = ps.executeQuery();
             while (rs.next()) {
@@ -77,7 +75,7 @@ public class CursoDAO {
         return lista;
     }
 
-    // Buscar curso por Id - MODIFICADO
+    // Buscar curso por Id
     public Curso buscarPorId(int idCurso) throws Exception {
         Curso curso = null;
         Connection conn = null; // Conexão local
@@ -109,7 +107,7 @@ public class CursoDAO {
         return curso;
     }
 
-    // Atualizar curso - MODIFICADO
+    // Atualizar curso
     public void atualizar(Curso curso) throws Exception {
         if (curso == null)
             throw new Exception("O valor passado não pode ser nulo");
@@ -135,7 +133,7 @@ public class CursoDAO {
         }
     }
 
-    // Remover curso - MODIFICADO
+    // Remover curso
     public void excluir(int idCurso) throws Exception {
         Connection conn = null; // Conexão local
         PreparedStatement ps = null;
@@ -154,7 +152,7 @@ public class CursoDAO {
         }
     }
 
-    // Listar por filtro - MODIFICADO
+    // Listar por filtro
     public List<Curso> listarPorFiltro(String filtro) throws Exception {
         List<Curso> lista = new ArrayList<>();
         Connection conn = null; // Conexão local
@@ -190,7 +188,7 @@ public class CursoDAO {
         return lista;
     }
 
-    // Verifica se curso já existe - MODIFICADO
+    // Verifica se curso já existe
     public boolean existeCurso(String nome) throws Exception {
         Connection conn = null; // Conexão local
         PreparedStatement ps = null;
@@ -212,5 +210,38 @@ public class CursoDAO {
             ConnectionFactory.closeConnection(conn, ps, rs);
         }
         return false;
+    }
+    
+    // método para listar os cursos para a combobox
+    public List<String> listarCursosParaCombo() throws Exception {
+        List<String> listaCursos = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        // A consulta usa DISTINCT para garantir que não haja repetição
+        String SQL = "SELECT nome, campus FROM curso WHERE ativo = true ORDER BY nome, campus";
+
+        try {
+            conn = ConnectionFactory.getConnection();
+            ps = conn.prepareStatement(SQL);
+            rs = ps.executeQuery();
+            
+            // Adiciona a opção padrão (Todos)
+            listaCursos.add("Todos os Cursos");
+            
+            // Adiciona os cursos reais
+            while (rs.next()) {
+                String nomeCurso = rs.getString("nome");
+                String campus = rs.getString("campus");
+                // Adiciona a string formatada: "Nome (Campus)"
+                listaCursos.add(nomeCurso + " (" + campus + ")"); 
+            }
+        } catch (SQLException e) {
+            throw new Exception("Erro ao listar cursos para combo: " + e.getMessage());
+        } finally {
+            ConnectionFactory.closeConnection(conn, ps, rs);
+        }
+        return listaCursos;
     }
 }
