@@ -13,7 +13,21 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.List;
+
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.colors.DeviceRgb;
+import com.itextpdf.kernel.pdf.*;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.property.TextAlignment;
+import com.itextpdf.layout.property.UnitValue;
+
+
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
@@ -39,6 +53,9 @@ import br.edu.fatecgru.mvcaluno.model.AlunoView;
 import br.edu.fatecgru.mvcaluno.model.BoletimAluno;
 import br.edu.fatecgru.mvcaluno.model.DisciplinaBoletim;
 
+import com.itextpdf.kernel.colors.ColorConstants;
+import com.itextpdf.kernel.colors.DeviceRgb;
+
 public class Documentos extends JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -58,9 +75,12 @@ public class Documentos extends JPanel {
     private DefaultListModel<AlunoView> listModelSugestoes;
     private AlunoDAO alunoDAO;
     private AlunoView alunoSelecionado;
+    private BoletimAluno dadosAluno;  // Para o PDF
+    private List<DisciplinaBoletim> disciplinas;  // Para o PDF
     
     // Novos componentes
     private JButton btnGerarDocumento;
+    private JButton btnExportarPDF;  // Novo botão para exportar PDF
     private JTable tableDisciplinas;
     private DefaultTableModel modelDisciplinas;
 
@@ -128,12 +148,14 @@ public class Documentos extends JPanel {
         panelWrapper = new JPanel(new BorderLayout());
         panelWrapper.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 50, 10, 50));  // Margens: topo, esquerda, baixo, direita
         panelDocumento = new JPanel(new BorderLayout());
-        panelWrapper.add(panelDocumento, BorderLayout.CENTER);  // Adiciona o panelDocumento ao centro do wrapper
+        panelWrapper.add(panelDocumento, BorderLayout.CENTER);
         add(panelWrapper, BorderLayout.CENTER);
 
         // ----- Painel de Botões (Inferior) -----
         JPanel pnlBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton btnVoltar = new JButton("Voltar para Listagem");
+        btnExportarPDF = new JButton("Exportar para PDF");
+        pnlBotoes.add(btnExportarPDF);
         pnlBotoes.add(btnVoltar);
         add(pnlBotoes, BorderLayout.SOUTH);
         
@@ -227,6 +249,18 @@ public class Documentos extends JPanel {
                 }
             }
         });
+
+        btnExportarPDF.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (dadosAluno == null || disciplinas == null) {
+                    JOptionPane.showMessageDialog(Documentos.this, "Gere um documento primeiro!");
+                    return;
+                }
+                String tipo = (String) cmbDocumento.getSelectedItem();
+                gerarPDF(dadosAluno, disciplinas, tipo);
+            }
+        });
     }
 
     private void atualizarSugestoes() {
@@ -267,14 +301,14 @@ public class Documentos extends JPanel {
 
     private void gerarBoletim(int idAluno) {
         try {
-            BoletimAluno dadosAluno = alunoDAO.buscarDadosBoletimAluno(idAluno);
-            if (dadosAluno == null) {
+            BoletimAluno dados = alunoDAO.buscarDadosBoletimAluno(idAluno);
+            if (dados == null) {
                 JOptionPane.showMessageDialog(this, "Dados do aluno não encontrados.");
                 return;
             }
-
-            List<DisciplinaBoletim> disciplinas = alunoDAO.buscarDisciplinasBoletim(idAluno);
-            exibirDocumento(dadosAluno, disciplinas, "Boletim");
+            disciplinas = alunoDAO.buscarDisciplinasBoletim(idAluno);
+            dadosAluno = dados;
+            exibirDocumento(dados, disciplinas, "Boletim");
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erro ao gerar boletim: " + e.getMessage());
@@ -283,35 +317,36 @@ public class Documentos extends JPanel {
 
     private void gerarHistoricoEscolar(int idAluno) {
         try {
-            BoletimAluno dadosAluno = alunoDAO.buscarDadosBoletimAluno(idAluno);
-            if (dadosAluno == null) {
+            BoletimAluno dados = alunoDAO.buscarDadosBoletimAluno(idAluno);
+            if (dados == null) {
                 JOptionPane.showMessageDialog(this, "Dados do aluno não encontrados.");
                 return;
             }
-
-            List<DisciplinaBoletim> disciplinas = alunoDAO.buscarHistoricoEscolar(idAluno);
-            exibirDocumento(dadosAluno, disciplinas, "Histórico Escolar");
+            disciplinas = alunoDAO.buscarHistoricoEscolar(idAluno);
+            dadosAluno = dados;
+            exibirDocumento(dados, disciplinas, "Histórico Escolar");
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erro ao gerar histórico: " + e.getMessage());
         }
     }
 
-    private void exibirDocumento(BoletimAluno dadosAluno, List<DisciplinaBoletim> disciplinas, String tipo) {
+    private void exibirDocumento(BoletimAluno dadosAlunoParam, List<DisciplinaBoletim> disciplinasParam, String tipo) {
+        BoletimAluno dadosAlunoLocal = dadosAlunoParam;
+        List<DisciplinaBoletim> disciplinasLocal = disciplinasParam;
+        
         JPanel panelInfo = new JPanel(new GridLayout(4, 2));
-        
         panelInfo.add(new JLabel("Nome:"));
-        panelInfo.add(new JLabel(dadosAluno.getNome()));
+        panelInfo.add(new JLabel(dadosAlunoLocal.getNome()));
         panelInfo.add(new JLabel("Curso:"));
-        panelInfo.add(new JLabel(dadosAluno.getNomeCurso()));
+        panelInfo.add(new JLabel(dadosAlunoLocal.getNomeCurso()));
         panelInfo.add(new JLabel("ID Aluno:"));
-        panelInfo.add(new JLabel(String.valueOf(dadosAluno.getIdAluno())));
+        panelInfo.add(new JLabel(String.valueOf(dadosAlunoLocal.getIdAluno())));
         panelInfo.add(new JLabel("RA:"));
-        panelInfo.add(new JLabel(dadosAluno.getRa()));
-        
+        panelInfo.add(new JLabel(dadosAlunoLocal.getRa()));
 
         modelDisciplinas.setRowCount(0);
-        for (DisciplinaBoletim disc : disciplinas) {
+        for (DisciplinaBoletim disc : disciplinasLocal) {
             modelDisciplinas.addRow(new Object[]{
                 disc.getNomeDisciplina(),
                 String.format("%.2f", disc.getNota()),
@@ -325,14 +360,112 @@ public class Documentos extends JPanel {
         panelDocumento.add(new JScrollPane(tableDisciplinas), BorderLayout.CENTER);
         panelDocumento.revalidate();
         panelDocumento.repaint();
+    }
 
-        if (!disciplinas.isEmpty()) {
-            double media = disciplinas.stream().mapToDouble(DisciplinaBoletim::getNota).average().orElse(0.0);
-            JOptionPane.showMessageDialog(this, tipo + " gerado. Média Geral: " + String.format("%.2f", media));
-        } else {
-            JOptionPane.showMessageDialog(this, "Nenhum registro encontrado para " + tipo + ".");
+    private void gerarPDF(BoletimAluno dados, List<DisciplinaBoletim> disciplinasList, String tipo) {
+        try {
+            // Pasta Documentos do usuário
+            String userDocuments = System.getProperty("user.home") + "/Documents/";
+            new java.io.File(userDocuments).mkdirs(); // cria se não existir
+
+            String fileName = "Boletim_" + dados.getNome().replaceAll("\\s+", "_") + ".pdf";
+            String dest = userDocuments + fileName;
+
+            PdfWriter writer = new PdfWriter(dest);
+            PdfDocument pdf = new PdfDocument(writer);
+            Document document = new Document(pdf);
+
+            // Margens
+            document.setMargins(50, 40, 50, 40);
+
+            // --- Cabeçalho ---
+            Paragraph cabecalho = new Paragraph(tipo)
+                    .setBold()
+                    .setFontSize(16)
+                    .setTextAlignment(TextAlignment.CENTER);
+            document.add(cabecalho);
+            document.add(new Paragraph("\n"));
+
+            // --- Informações do aluno ---
+            Table tabelaInfo = new Table(UnitValue.createPercentArray(new float[]{1, 2}))
+                    .useAllAvailableWidth();
+
+            tabelaInfo.addCell(new Cell().add(new Paragraph("Nome:").setBold()));
+            tabelaInfo.addCell(new Cell().add(new Paragraph(dados.getNome())));
+            tabelaInfo.addCell(new Cell().add(new Paragraph("Curso:").setBold()));
+            tabelaInfo.addCell(new Cell().add(new Paragraph(dados.getNomeCurso())));
+            tabelaInfo.addCell(new Cell().add(new Paragraph("RA:").setBold()));
+            tabelaInfo.addCell(new Cell().add(new Paragraph(dados.getRa())));
+            tabelaInfo.addCell(new Cell().add(new Paragraph("ID Aluno:").setBold()));
+            tabelaInfo.addCell(new Cell().add(new Paragraph(String.valueOf(dados.getIdAluno()))));
+
+            document.add(tabelaInfo);
+            document.add(new Paragraph("\n"));
+
+            // --- Título da tabela ---
+            Paragraph tituloTabela = new Paragraph("Disciplinas e Desempenho")
+                    .setBold()
+                    .setFontSize(13)
+                    .setTextAlignment(TextAlignment.CENTER);
+            document.add(tituloTabela);
+            document.add(new Paragraph("\n"));
+
+            // --- Tabela das disciplinas ---
+            Table tabelaDisciplinas = new Table(UnitValue.createPercentArray(new float[]{3, 1, 1, 1}))
+                    .useAllAvailableWidth();
+
+            // Cabeçalho
+            String[] headers = {"Disciplina", "Nota", "Faltas", "Semestre"};
+            for (String h : headers) {
+                tabelaDisciplinas.addHeaderCell(
+                    new Cell().add(new Paragraph(h).setBold().setTextAlignment(TextAlignment.CENTER))
+                );
+            }
+
+            // Use o tipo do iText com qualificação total para evitar conflito com java.awt.Color
+            com.itextpdf.kernel.colors.Color cinzaClaro = new com.itextpdf.kernel.colors.DeviceRgb(235, 235, 235);
+            com.itextpdf.kernel.colors.Color branco = com.itextpdf.kernel.colors.ColorConstants.WHITE;
+
+            boolean corAlternada = false;
+            for (DisciplinaBoletim disc : disciplinasList) {
+                com.itextpdf.kernel.colors.Color bgColor = corAlternada ? cinzaClaro : branco;
+                corAlternada = !corAlternada;
+
+                tabelaDisciplinas.addCell(new Cell().add(new Paragraph(disc.getNomeDisciplina()))
+                        .setBackgroundColor(bgColor));
+                tabelaDisciplinas.addCell(new Cell().add(new Paragraph(String.format("%.2f", disc.getNota())))
+                        .setBackgroundColor(bgColor).setTextAlignment(TextAlignment.CENTER));
+                tabelaDisciplinas.addCell(new Cell().add(new Paragraph(String.valueOf(disc.getFaltas())))
+                        .setBackgroundColor(bgColor).setTextAlignment(TextAlignment.CENTER));
+                tabelaDisciplinas.addCell(new Cell().add(new Paragraph(disc.getSemestreAtual()))
+                        .setBackgroundColor(bgColor).setTextAlignment(TextAlignment.CENTER));
+            }
+
+            document.add(tabelaDisciplinas);
+            document.add(new Paragraph("\n\n"));
+
+            // --- Rodapé ---
+            String dataAtual = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            document.add(new Paragraph("Emitido em: " + dataAtual)
+                    .setFontSize(10)
+                    .setTextAlignment(TextAlignment.RIGHT));
+
+            document.add(new Paragraph("\n\n__________________________________________")
+                    .setTextAlignment(TextAlignment.CENTER));
+            document.add(new Paragraph("Assinatura da Coordenação")
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setFontSize(10));
+
+            document.close();
+
+            JOptionPane.showMessageDialog(this, "📄 Boletim gerado com sucesso em:\n" + dest);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Erro ao gerar PDF: " + e.getMessage());
         }
     }
+
 
     private void voltarParaListagem() {
         if (framePai instanceof TelaPrincipal) {

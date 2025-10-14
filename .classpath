@@ -6,10 +6,17 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="lib/com.jgoodies.common_1.8.1.v20240327-0800.jar"/>
-	<classpathentry kind="lib" path="lib/com.jgoodies.forms_1.9.0.v20240327-0800.jar"/>
-	<classpathentry kind="lib" path="lib/com.miglayout.core_11.4.2.jar"/>
-	<classpathentry kind="lib" path="lib/com.miglayout.swing_11.4.2.jar"/>
 	<classpathentry kind="lib" path="lib/mysql-connector-java-5.1.15-bin.jar"/>
+	<classpathentry kind="lib" path="C:/Users/angel/Downloads/iText7-Core-7.1.3/io-7.1.3.jar"/>
+	<classpathentry kind="lib" path="C:/Users/angel/Downloads/iText7-Core-7.1.3/io-7.1.3-javadoc.jar"/>
+	<classpathentry kind="lib" path="C:/Users/angel/Downloads/iText7-Core-7.1.3/io-7.1.3-sources.jar"/>
+	<classpathentry kind="lib" path="C:/Users/angel/Downloads/iText7-Core-7.1.3/kernel-7.1.3.jar"/>
+	<classpathentry kind="lib" path="C:/Users/angel/Downloads/iText7-Core-7.1.3/kernel-7.1.3-javadoc.jar"/>
+	<classpathentry kind="lib" path="C:/Users/angel/Downloads/iText7-Core-7.1.3/kernel-7.1.3-sources.jar"/>
+	<classpathentry kind="lib" path="C:/Users/angel/Downloads/iText7-Core-7.1.3/layout-7.1.3.jar"/>
+	<classpathentry kind="lib" path="C:/Users/angel/Downloads/iText7-Core-7.1.3/layout-7.1.3-javadoc.jar"/>
+	<classpathentry kind="lib" path="C:/Users/angel/Downloads/iText7-Core-7.1.3/layout-7.1.3-sources.jar"/>
+	<classpathentry kind="lib" path="C:/Users/angel/Downloads/slf4j-simple-1.7.36.jar"/>
+	<classpathentry kind="lib" path="C:/Users/angel/Downloads/slf4j-api-1.7.36.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
