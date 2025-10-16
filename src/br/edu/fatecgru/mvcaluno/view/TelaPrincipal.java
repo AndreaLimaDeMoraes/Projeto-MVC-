@@ -43,7 +43,7 @@ public class TelaPrincipal extends JFrame {
 	private JButton btnCursos;
 	private JButton btnDisciplinas;
 	private JPanel pnlConteudoAluno;
-	private JPanel telaAtual; // Controla qual tela tá ativa
+	private JPanel telaAtual; 
 	
 	//CORES PARA MUDAR O FOCO NOS BOTÕES
 	// Cor Padrão
@@ -67,7 +67,6 @@ public class TelaPrincipal extends JFrame {
 	private JMenuItem mntmNewMenuItem_8;
 	private JMenuItem mntmNewMenuItem_9;
 
-	
 	/**
 	 * Launch the application.
 	 */
@@ -379,12 +378,6 @@ public class TelaPrincipal extends JFrame {
             }
         });
 	}
-        
-        
-        
-	
-	
-	
 	
 	/**
 	 * Altera a cor e a opacidade dos botões do menu para indicar qual está ativo.

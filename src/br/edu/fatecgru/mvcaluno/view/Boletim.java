@@ -27,7 +27,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
@@ -43,24 +42,20 @@ public class Boletim extends JPanel {
     private JLabel lblNewLabel;
     private JTextField txtBuscar;
     private JPanel panelFiltros;
-    private JPanel panelBoletim;  // Novo: Painel para exibir o boletim
+    private JPanel panelBoletim; 
     
-    // Variáveis para a funcionalidade
     private JFrame framePai;
     
-    // Componentes para autocomplete (mantidos)
     private JPopupMenu popupSugestoes;
     private JList<AlunoView> listaSugestoes;
     private DefaultListModel<AlunoView> listModelSugestoes;
     private AlunoDAO alunoDAO;
     private AlunoView alunoSelecionado;
     
-    // Novos componentes para boletim
     private JButton btnGerarBoletim;
     private JTable tableDisciplinas;
     private DefaultTableModel modelDisciplinas;
 
-    // Construtores
     public Boletim(JFrame framePai) {
         this.framePai = framePai;
         try {
@@ -70,8 +65,8 @@ public class Boletim extends JPanel {
             JOptionPane.showMessageDialog(this, "Erro ao conectar ao banco de dados: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
         setupLayout();
-        inicializarComponentesBoletim();  // Novo
-        adicionarListeners();  // Mantido, mas expandido
+        inicializarComponentesBoletim();
+        adicionarListeners();
     }
 
     public Boletim() {
@@ -103,15 +98,13 @@ public class Boletim extends JPanel {
         txtBuscar.setForeground(HINT_COLOR);
         panelFiltros.add(txtBuscar);
         
-        // Novo: Botão para gerar boletim (ao lado da busca)
         btnGerarBoletim = new JButton("Gerar Boletim");
         btnGerarBoletim.setBounds(420, 33, 150, 27);
-        btnGerarBoletim.setEnabled(false);  // Desabilitado até selecionar aluno
+        btnGerarBoletim.setEnabled(false);
         panelFiltros.add(btnGerarBoletim);
         
         add(panelFiltros, BorderLayout.NORTH);
 
-        // Novo: Painel central para boletim (inicialmente vazio)
         panelBoletim = new JPanel(new BorderLayout());
         add(panelBoletim, BorderLayout.CENTER);
 
@@ -124,11 +117,9 @@ public class Boletim extends JPanel {
         btnVoltar.addActionListener(e -> voltarParaListagem());
     }
     
-    // Novo: Inicializa componentes específicos do boletim
     private void inicializarComponentesBoletim() {
         inicializarAutocomplete();
         
-        // Inicializa tabela de disciplinas
         String[] colunas = {"Disciplina", "Nota", "Faltas", "Semestre"};
         modelDisciplinas = new DefaultTableModel(colunas, 0);
         tableDisciplinas = new JTable(modelDisciplinas);
@@ -163,7 +154,6 @@ public class Boletim extends JPanel {
         final Color HINT_COLOR = Color.LIGHT_GRAY;
         final Color TEXT_COLOR = Color.BLACK;
 
-        // Listeners para hint e autocomplete (mantidos)
         txtBuscar.addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
@@ -199,7 +189,6 @@ public class Boletim extends JPanel {
             }
         });
 
-        // Novo: Listener para botão Gerar Boletim
         btnGerarBoletim.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -218,8 +207,7 @@ public class Boletim extends JPanel {
 
         if (textoDigitado.isEmpty() || textoDigitado.equals("Informe ID, Nome ou RA do Aluno")) {
             popupSugestoes.setVisible(false);
-            // alunoSelecionado = null;  // Comentei essa linha para evitar reset indevido
-            btnGerarBoletim.setEnabled(false);  // Desabilita o botão
+            btnGerarBoletim.setEnabled(false);
             return;
         }
 
@@ -247,12 +235,12 @@ public class Boletim extends JPanel {
             System.out.println("Aluno selecionado: " + alunoSelecionado.getNome());
             txtBuscar.setText(alunoSelecionado.getNome());
             popupSugestoes.setVisible(false);
-            btnGerarBoletim.setEnabled(true);  // Habilita o botão
+            btnGerarBoletim.setEnabled(true);
         }
     }
 
     private void gerarBoletim(int idAluno) {
-        try {
+    	try {
             System.out.println("Gerando boletim para ID: " + idAluno);
             BoletimAluno dadosAluno = alunoDAO.buscarDadosBoletimAluno(idAluno);
             if (dadosAluno == null) {
@@ -262,17 +250,20 @@ public class Boletim extends JPanel {
 
             // Exibe dados do aluno
             JPanel panelInfo = new JPanel(new GridLayout(4, 2));
-            panelInfo.add(new JLabel("ID Aluno:"));
-            panelInfo.add(new JLabel(String.valueOf(dadosAluno.getIdAluno())));
+            
+            // 🚨 GARANTIA DE QUE ESTAMOS USANDO O CAMPO CORRETO DO MODELO
+            panelInfo.add(new JLabel("Campus:"));
+            panelInfo.add(new JLabel(dadosAluno.getCampus()));         
+            
             panelInfo.add(new JLabel("RA:"));
             panelInfo.add(new JLabel(dadosAluno.getRa()));
             panelInfo.add(new JLabel("Nome:"));
             panelInfo.add(new JLabel(dadosAluno.getNome()));
             panelInfo.add(new JLabel("Curso:"));
             panelInfo.add(new JLabel(dadosAluno.getNomeCurso()));
-
+            
             List<DisciplinaBoletim> disciplinas = alunoDAO.buscarDisciplinasBoletim(idAluno);
-            modelDisciplinas.setRowCount(0);  // Limpa a tabela
+            modelDisciplinas.setRowCount(0);
             for (DisciplinaBoletim disc : disciplinas) {
                 modelDisciplinas.addRow(new Object[]{
                     disc.getNomeDisciplina(),
@@ -288,10 +279,9 @@ public class Boletim extends JPanel {
             panelBoletim.revalidate();
             panelBoletim.repaint();
 
-            // Cálculo de média (opcional)
+            // Opcional: Cálculo de média 
             if (!disciplinas.isEmpty()) {
                 double media = disciplinas.stream().mapToDouble(DisciplinaBoletim::getNota).average().orElse(0.0);
-                JOptionPane.showMessageDialog(this, "Média Geral: " + String.format("%.2f", media));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -302,9 +292,8 @@ public class Boletim extends JPanel {
     private void voltarParaListagem() {
         if (framePai instanceof TelaPrincipal) {
             TelaPrincipal telaPrincipal = (TelaPrincipal) framePai;
-            // Assumindo que você tem um painel de listagem
-            // Ajuste conforme necessário
-            telaPrincipal.trocarPainelConteudo(new ListarAlunos(telaPrincipal));
+            // Ajuste a chamada conforme a sua classe TelaPrincipal
+            // telaPrincipal.trocarPainelConteudo(new ListarAlunos(telaPrincipal));
         }
     }
 

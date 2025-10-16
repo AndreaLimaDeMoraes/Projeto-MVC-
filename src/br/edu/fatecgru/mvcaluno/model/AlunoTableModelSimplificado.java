@@ -2,15 +2,13 @@ package br.edu.fatecgru.mvcaluno.model;
 
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
-import br.edu.fatecgru.mvcaluno.model.Aluno;
 
 public class AlunoTableModelSimplificado extends AbstractTableModel {
 
-    // Mude a lista para AlunoView
     private final List<AlunoView> dados; 
-    private final String[] colunas = {"ID", "RA", "Nome", "Curso", "Campus"}; 
+    
+    private final String[] colunas = {"RA", "Nome do Aluno", "Curso", "Campus", "Semestre"}; 
 
-    // Mude o construtor para receber List<AlunoView>
     public AlunoTableModelSimplificado(List<AlunoView> dados) {
         this.dados = dados;
     }
@@ -34,20 +32,22 @@ public class AlunoTableModelSimplificado extends AbstractTableModel {
     public Object getValueAt(int rowIndex, int columnIndex) {
         AlunoView aluno = dados.get(rowIndex);
         
-        if (columnIndex == 0) return aluno.getIdAluno();
-        
         switch (columnIndex) {
-            case 1: return aluno.getRa();
-            case 2: return aluno.getNome();
-            case 3: return aluno.getNomeCurso();
-            case 4: return aluno.getCampus();
+            case 0: return aluno.getRa(); 
+            case 1: return aluno.getNome(); 
+            case 2: return aluno.getNomeCurso(); 
+            case 3: return aluno.getCampus(); 
+            case 4: return aluno.getSemestreAtual();
             default: return null;
         }
     }
-    // Garante que o ID (coluna 0) seja tratado como Integer para a próxima tela
+    
+    public AlunoView getAlunoAt(int rowIndex) {
+        return dados.get(rowIndex);
+    }
+    
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-        if (columnIndex == 0) return Integer.class;
-        return super.getColumnClass(columnIndex);
+        return String.class;
     }
 }

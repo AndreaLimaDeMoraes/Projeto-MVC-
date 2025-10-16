@@ -270,6 +270,7 @@ public class ListarAlunos extends JPanel {
             AlunoDAO dao = new AlunoDAO();
             List<AlunoView> listaAlunos = dao.listarPorCurso(nomeCurso);
             
+            // Importante: Assumindo que AlunoTableModelSimplificado agora usa: RA, Nome, Curso, Status
             tblListaAlunos.setModel(new AlunoTableModelSimplificado(listaAlunos));
             configurarVisualTabela();
             
@@ -285,25 +286,35 @@ public class ListarAlunos extends JPanel {
         tblListaAlunos.setFont(new Font("Tahoma", Font.PLAIN, 15));
         tblListaAlunos.getTableHeader().setFont(new Font("Tahoma", Font.BOLD, 15));
         tblListaAlunos.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        
         DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
         leftRenderer.setHorizontalAlignment(SwingConstants.LEFT);
+        
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+        
         tblListaAlunos.getColumnModel().getColumn(0).setCellRenderer(leftRenderer);
+        tblListaAlunos.getColumnModel().getColumn(1).setCellRenderer(leftRenderer);
+        tblListaAlunos.getColumnModel().getColumn(2).setCellRenderer(leftRenderer);
+        tblListaAlunos.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
+        tblListaAlunos.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);
 
-        tblListaAlunos.getColumnModel().getColumn(0).setPreferredWidth(55);
-        tblListaAlunos.getColumnModel().getColumn(1).setPreferredWidth(150);
-        tblListaAlunos.getColumnModel().getColumn(2).setPreferredWidth(300);
-        tblListaAlunos.getColumnModel().getColumn(3).setPreferredWidth(300);
-        tblListaAlunos.getColumnModel().getColumn(4).setPreferredWidth(150);
+
+        tblListaAlunos.getColumnModel().getColumn(0).setPreferredWidth(100); 
+        tblListaAlunos.getColumnModel().getColumn(1).setPreferredWidth(255); 
+        tblListaAlunos.getColumnModel().getColumn(2).setPreferredWidth(300); 
+        tblListaAlunos.getColumnModel().getColumn(3).setPreferredWidth(180); 
+        tblListaAlunos.getColumnModel().getColumn(4).setPreferredWidth(117); 
+        
     }
     
 	/**
-	 * Launch the application. (Mantido para testes)
+	 * Launch the application.
 	 */
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-                    // Para testar esta classe, ela deve ser exibida em um JFrame
                     JFrame frameTeste = new JFrame("Teste Listar Alunos");
                     frameTeste.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                     frameTeste.setBounds(100, 100, 800, 600); 
@@ -327,10 +338,8 @@ public class ListarAlunos extends JPanel {
 	        List<AlunoView> listaAlunos; 
 	        
 	        if (filtro == null || filtro.trim().isEmpty()) {
-	            // Se o filtro for vazio, lista todos
 	            listaAlunos = dao.listarTodos(); 
 	        } else {
-	            // Se houver filtro, chama o novo método de busca
 	            listaAlunos = dao.listarPorFiltro(filtro);
 	        }
 	        
@@ -352,10 +361,10 @@ public class ListarAlunos extends JPanel {
                 if (e.getClickCount() == 2) {
                     int linhaSelecionada = tblListaAlunos.getSelectedRow();
                     if (linhaSelecionada != -1) {
-                        // O ID do Aluno é a primeira coluna (índice 0)
-                        Object idValue = tblListaAlunos.getValueAt(linhaSelecionada, 0);
-                        int idAluno = (int) idValue; 
-                        
+                        AlunoTableModelSimplificado model = (AlunoTableModelSimplificado) tblListaAlunos.getModel();
+                        AlunoView aluno = model.getAlunoAt(linhaSelecionada);
+                        int idAluno = aluno.getIdAluno();
+
                         abrirTelaDadosPessoais(idAluno);
                     }
                 }
@@ -381,7 +390,6 @@ public class ListarAlunos extends JPanel {
             telaPrincipal.ativarBotaoMenuDadosPessoais();
             
         } else {
-            // Lógica para main de teste, se necessário
             JOptionPane.showMessageDialog(this, 
                 "Aluno ID " + idAluno + " selecionado. A tela de Edição/Exclusão seria aberta aqui.", 
                 "Teste de Clique", JOptionPane.INFORMATION_MESSAGE);

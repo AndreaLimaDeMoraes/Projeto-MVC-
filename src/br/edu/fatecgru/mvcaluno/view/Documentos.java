@@ -47,6 +47,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.DefaultTableCellRenderer; // Importação adicionada
 
 import br.edu.fatecgru.mvcaluno.dao.AlunoDAO;
 import br.edu.fatecgru.mvcaluno.model.AlunoView;
@@ -61,10 +62,10 @@ public class Documentos extends JPanel {
     private static final long serialVersionUID = 1L;
     private JLabel lblNewLabel;
     private JTextField txtBuscar;
-    private JComboBox<String> cmbDocumento;  // Restaurado
+    private JComboBox<String> cmbDocumento;
     private JPanel panelFiltros;
-    private JPanel panelWrapper;  // Novo: Wrapper para centralizar o conteúdo
-    private JPanel panelDocumento;  // Painel interno para o documento
+    private JPanel panelWrapper;
+    private JPanel panelDocumento;
     
     // Variáveis para a funcionalidade
     private JFrame framePai;
@@ -80,14 +81,17 @@ public class Documentos extends JPanel {
     
     // Novos componentes
     private JButton btnGerarDocumento;
-    private JButton btnExportarPDF;  // Novo botão para exportar PDF
+    private JButton btnExportarPDF;
     private JTable tableDisciplinas;
     private DefaultTableModel modelDisciplinas;
+    private JLabel lblDocumento_1;
+    
 
     // Construtores
     public Documentos(JFrame framePai) {
         this.framePai = framePai;
         try {
+            // Inicializa o DAO
             this.alunoDAO = new AlunoDAO();
         } catch (Exception e) {
             e.printStackTrace();
@@ -121,7 +125,7 @@ public class Documentos extends JPanel {
         
         txtBuscar = new JTextField(); 
         txtBuscar.setBounds(78, 33, 325, 27);		
-        txtBuscar.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        txtBuscar.setFont(new Font("Tahoma", Font.PLAIN, 14));
         txtBuscar.setColumns(10);
         txtBuscar.setText(HINT_TEXT);
         txtBuscar.setForeground(HINT_COLOR);
@@ -139,35 +143,73 @@ public class Documentos extends JPanel {
         btnGerarDocumento = new JButton("Gerar Documento");
         btnGerarDocumento.setIcon(new ImageIcon(Documentos.class.getResource("/Resources/imagens/documento-de-texto.png")));
         btnGerarDocumento.setBounds(755, 22, 179, 50);
-        btnGerarDocumento.setEnabled(false);  // Desabilitado até selecionar aluno
+        btnGerarDocumento.setEnabled(false);
+        btnGerarDocumento.setContentAreaFilled(false);
+        btnGerarDocumento.setFocusPainted(false);
+
         panelFiltros.add(btnGerarDocumento);
         
         add(panelFiltros, BorderLayout.NORTH);
 
-        // Novo: Painel wrapper para centralizar o conteúdo com margens
         panelWrapper = new JPanel(new BorderLayout());
-        panelWrapper.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 50, 10, 50));  // Margens: topo, esquerda, baixo, direita
+        panelWrapper.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 50, 10, 50));
         panelDocumento = new JPanel(new BorderLayout());
         panelWrapper.add(panelDocumento, BorderLayout.CENTER);
         add(panelWrapper, BorderLayout.CENTER);
 
         // ----- Painel de Botões (Inferior) -----
         JPanel pnlBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton btnVoltar = new JButton("Voltar para Listagem");
-        btnExportarPDF = new JButton("Exportar para PDF");
+        btnExportarPDF = new JButton(" Exportar");
+        btnExportarPDF.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        btnExportarPDF.setContentAreaFilled(false);
+        btnExportarPDF.setFocusPainted(false);
+        btnExportarPDF.setIcon(new ImageIcon(Documentos.class.getResource("/Resources/imagens/baixar-pdf.png")));
+        
         pnlBotoes.add(btnExportarPDF);
-        pnlBotoes.add(btnVoltar);
+        
+        // Esconde o botão de exportar por padrão
+        pnlBotoes.setVisible(false); 
+        
         add(pnlBotoes, BorderLayout.SOUTH);
         
-        btnVoltar.addActionListener(e -> voltarParaListagem());
+        lblDocumento_1 = new JLabel("  ");
+        lblDocumento_1.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        pnlBotoes.add(lblDocumento_1);
     }
     
     private void inicializarComponentes() {
         inicializarAutocomplete();
         
+        Font tableFont = new Font("Tahoma", Font.PLAIN, 15);
+        Font headerFont = new Font("Tahoma", Font.BOLD, 15); 
+
         String[] colunas = {"Disciplina", "Nota", "Faltas", "Semestre"};
         modelDisciplinas = new DefaultTableModel(colunas, 0);
         tableDisciplinas = new JTable(modelDisciplinas);
+        
+        tableDisciplinas.setFont(tableFont);
+        
+        tableDisciplinas.getTableHeader().setFont(headerFont);
+        
+        tableDisciplinas.setRowHeight(25);
+        
+        tableDisciplinas.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                
+                setFont(tableFont); 
+                
+                // Centraliza o texto nas colunas de Nota, Faltas e Semestre
+                if (column > 0) {
+                    setHorizontalAlignment(CENTER);
+                } else {
+                    setHorizontalAlignment(LEFT);
+                }
+                return this;
+            }
+        });
+        
         tableDisciplinas.setPreferredScrollableViewportSize(new Dimension(600, 200));
     }
     
@@ -184,7 +226,7 @@ public class Documentos extends JPanel {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof AlunoView) {
                     AlunoView aluno = (AlunoView) value;
-                    setText(aluno.getIdAluno() + " - " + aluno.getNome() + " (RA: " + aluno.getRa() + ")");
+                    setText(aluno.getNome() + " (RA: " + aluno.getRa() + ")");
                 }
                 return this;
             }
@@ -330,23 +372,105 @@ public class Documentos extends JPanel {
             JOptionPane.showMessageDialog(this, "Erro ao gerar histórico: " + e.getMessage());
         }
     }
-
+ 
     private void exibirDocumento(BoletimAluno dadosAlunoParam, List<DisciplinaBoletim> disciplinasParam, String tipo) {
         BoletimAluno dadosAlunoLocal = dadosAlunoParam;
         List<DisciplinaBoletim> disciplinasLocal = disciplinasParam;
         
-        JPanel panelInfo = new JPanel(new GridLayout(4, 2));
-        panelInfo.add(new JLabel("Nome:"));
-        panelInfo.add(new JLabel(dadosAlunoLocal.getNome()));
-        panelInfo.add(new JLabel("Curso:"));
-        panelInfo.add(new JLabel(dadosAlunoLocal.getNomeCurso()));
-        panelInfo.add(new JLabel("ID Aluno:"));
-        panelInfo.add(new JLabel(String.valueOf(dadosAlunoLocal.getIdAluno())));
-        panelInfo.add(new JLabel("RA:"));
-        panelInfo.add(new JLabel(dadosAlunoLocal.getRa()));
+        // Painel que conterá os dados do aluno (usa BorderLayout para organizar)
+        JPanel panelInfo = new JPanel(new BorderLayout());
+        
+        // ====================================================================
+        // NOVO: Usa BoxLayout no eixo X (Horizontal) para controlar o espaçamento
+        // entre os grupos de informações (Nome, RA, Curso, Campus).
+        // ====================================================================
+        JPanel panelDadosCompactos = new JPanel(); 
+        panelDadosCompactos.setLayout(new javax.swing.BoxLayout(panelDadosCompactos, javax.swing.BoxLayout.X_AXIS));
 
+        // Define o espaçamento vertical e o alinhamento
+        int vgap = 10;
+        int hgapEntreGrupos = 40; // Espaçamento MAIOR entre Rótulos (Ex: entre RA e Curso)
+        int hgapDentroGrupo = 5;  // Espaçamento MENOR entre Rótulo e Valor (Ex: Nome: [Valor])
+
+        // Definição da nova fonte: Tamanho 15
+        Font fontBold = new Font("Tahoma", Font.BOLD, 15); // Rótulos em negrito
+        Font fontPlain = new Font("Tahoma", Font.PLAIN, 15); // Valores normais
+        
+        
+        // Função auxiliar para criar um bloco de Rótulo-Valor
+        // Usa FlowLayout interno com hgap pequeno
+        
+        // ----------------- NOME -----------------
+        JPanel pnlNome = new JPanel(new FlowLayout(FlowLayout.LEFT, hgapDentroGrupo, vgap));
+        
+        JLabel lblNome = new JLabel("Nome:");
+        lblNome.setFont(fontBold);
+        pnlNome.add(lblNome);
+        
+        JLabel valNome = new JLabel(dadosAlunoLocal.getNome());
+        valNome.setFont(fontPlain);
+        pnlNome.add(valNome);
+        
+        panelDadosCompactos.add(pnlNome);
+        panelDadosCompactos.add(javax.swing.Box.createHorizontalStrut(hgapEntreGrupos)); // Espaçamento
+
+        // ----------------- CURSO -----------------
+        JPanel pnlCurso = new JPanel(new FlowLayout(FlowLayout.LEFT, hgapDentroGrupo, vgap));
+
+        JLabel lblCurso = new JLabel("Curso:");
+        lblCurso.setFont(fontBold);
+        pnlCurso.add(lblCurso);
+        
+        JLabel valCurso = new JLabel(dadosAlunoLocal.getNomeCurso());
+        valCurso.setFont(fontPlain);
+        pnlCurso.add(valCurso);
+        
+        panelDadosCompactos.add(pnlCurso);
+        panelDadosCompactos.add(javax.swing.Box.createHorizontalStrut(hgapEntreGrupos)); // Espaçamento
+
+        // ----------------- RA -----------------
+        JPanel pnlRA = new JPanel(new FlowLayout(FlowLayout.LEFT, hgapDentroGrupo, vgap));
+
+        JLabel lblRA = new JLabel("RA:");
+        lblRA.setFont(fontBold);
+        pnlRA.add(lblRA);
+        
+        JLabel valRA = new JLabel(dadosAlunoLocal.getRa());
+        valRA.setFont(fontPlain);
+        pnlRA.add(valRA);
+        
+        panelDadosCompactos.add(pnlRA);
+        panelDadosCompactos.add(javax.swing.Box.createHorizontalStrut(hgapEntreGrupos)); // Espaçamento
+
+        // ----------------- CAMPUS -----------------
+        JPanel pnlCampus = new JPanel(new FlowLayout(FlowLayout.LEFT, hgapDentroGrupo, vgap));
+
+        JLabel lblCampus = new JLabel("Campus:");
+        lblCampus.setFont(fontBold);
+        pnlCampus.add(lblCampus);
+        
+        JLabel valCampus = new JLabel(dadosAlunoLocal.getCampus());
+        valCampus.setFont(fontPlain);
+        pnlCampus.add(valCampus);
+        
+        panelDadosCompactos.add(pnlCampus);
+        // Sem espaçamento após o último grupo
+        
+        
+        // Adiciona o painel compacto ao panel de informações principal
+        // Usamos BorderLayout.WEST para evitar que ele seja esticado e ocupe todo o espaço
+        panelInfo.add(panelDadosCompactos, BorderLayout.WEST);
+
+        // Cria um painel vazio para servir como separador
+        JPanel separador = new JPanel();
+        separador.setPreferredSize(new Dimension(1, 20)); 
+        separador.setMinimumSize(new Dimension(1, 20));
+        separador.setBackground(new Color(0, 0, 0, 0)); // Torna transparente
+        
+        // ------------------------------------------------------------------
+        
         modelDisciplinas.setRowCount(0);
-        for (DisciplinaBoletim disc : disciplinasLocal) {
+        for (DisciplinaBoletim disc : disciplinasParam) { 
             modelDisciplinas.addRow(new Object[]{
                 disc.getNomeDisciplina(),
                 String.format("%.2f", disc.getNota()),
@@ -356,19 +480,37 @@ public class Documentos extends JPanel {
         }
 
         panelDocumento.removeAll();
-        panelDocumento.add(panelInfo, BorderLayout.NORTH);
-        panelDocumento.add(new JScrollPane(tableDisciplinas), BorderLayout.CENTER);
+        
+        JLabel lblTituloDados = new JLabel("Informações do Aluno");
+        lblTituloDados.setFont(new Font("Tahoma", Font.BOLD, 15));
+        lblTituloDados.setHorizontalAlignment(JLabel.CENTER);
+        
+        // Painel para organizar o topo (Título + Informações + Separador)
+        JPanel pnlTopo = new JPanel(new BorderLayout());
+        pnlTopo.add(lblTituloDados, BorderLayout.NORTH);
+        pnlTopo.add(panelInfo, BorderLayout.CENTER);
+        pnlTopo.add(separador, BorderLayout.SOUTH);  
+
+        
+        // Adiciona os componentes ao painel principal do documento
+        panelDocumento.add(pnlTopo, BorderLayout.NORTH);
+        panelDocumento.add(new JScrollPane(tableDisciplinas), BorderLayout.CENTER); 
+
+        
         panelDocumento.revalidate();
         panelDocumento.repaint();
-    }
+        
+        ((JPanel) btnExportarPDF.getParent()).setVisible(true);
 
+    }
+    
     private void gerarPDF(BoletimAluno dados, List<DisciplinaBoletim> disciplinasList, String tipo) {
         try {
             // Pasta Documentos do usuário
             String userDocuments = System.getProperty("user.home") + "/Documents/";
-            new java.io.File(userDocuments).mkdirs(); // cria se não existir
+            new java.io.File(userDocuments).mkdirs();
 
-            String fileName = "Boletim_" + dados.getNome().replaceAll("\\s+", "_") + ".pdf";
+            String fileName = tipo.replaceAll("\\s+", "_") + "_" + dados.getNome().replaceAll("\\s+", "_") + ".pdf";
             String dest = userDocuments + fileName;
 
             PdfWriter writer = new PdfWriter(dest);
@@ -387,17 +529,22 @@ public class Documentos extends JPanel {
             document.add(new Paragraph("\n"));
 
             // --- Informações do aluno ---
+            // Aumentamos o array para 3 linhas de informação
             Table tabelaInfo = new Table(UnitValue.createPercentArray(new float[]{1, 2}))
                     .useAllAvailableWidth();
 
             tabelaInfo.addCell(new Cell().add(new Paragraph("Nome:").setBold()));
             tabelaInfo.addCell(new Cell().add(new Paragraph(dados.getNome())));
-            tabelaInfo.addCell(new Cell().add(new Paragraph("Curso:").setBold()));
-            tabelaInfo.addCell(new Cell().add(new Paragraph(dados.getNomeCurso())));
+            
             tabelaInfo.addCell(new Cell().add(new Paragraph("RA:").setBold()));
             tabelaInfo.addCell(new Cell().add(new Paragraph(dados.getRa())));
-            tabelaInfo.addCell(new Cell().add(new Paragraph("ID Aluno:").setBold()));
-            tabelaInfo.addCell(new Cell().add(new Paragraph(String.valueOf(dados.getIdAluno()))));
+            
+            tabelaInfo.addCell(new Cell().add(new Paragraph("Curso:").setBold()));
+            tabelaInfo.addCell(new Cell().add(new Paragraph(dados.getNomeCurso())));
+            
+            // CORREÇÃO: Adiciona o Campus no PDF
+            tabelaInfo.addCell(new Cell().add(new Paragraph("Campus:").setBold()));
+            tabelaInfo.addCell(new Cell().add(new Paragraph(dados.getCampus()))); // <--- CORREÇÃO AQUI
 
             document.add(tabelaInfo);
             document.add(new Paragraph("\n"));
@@ -422,7 +569,6 @@ public class Documentos extends JPanel {
                 );
             }
 
-            // Use o tipo do iText com qualificação total para evitar conflito com java.awt.Color
             com.itextpdf.kernel.colors.Color cinzaClaro = new com.itextpdf.kernel.colors.DeviceRgb(235, 235, 235);
             com.itextpdf.kernel.colors.Color branco = com.itextpdf.kernel.colors.ColorConstants.WHITE;
 
@@ -458,7 +604,7 @@ public class Documentos extends JPanel {
 
             document.close();
 
-            JOptionPane.showMessageDialog(this, "📄 Boletim gerado com sucesso em:\n" + dest);
+            JOptionPane.showMessageDialog(this, "📄 Documento gerado com sucesso em:\n" + dest);
 
         } catch (Exception e) {
             e.printStackTrace();

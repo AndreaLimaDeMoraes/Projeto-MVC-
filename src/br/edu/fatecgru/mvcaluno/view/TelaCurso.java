@@ -57,7 +57,6 @@ public class TelaCurso extends JPanel {
     
     private JPanel criarPainelFormulario() {
         JPanel pnlFormulario = new JPanel();
-        pnlFormulario.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 10));
         pnlFormulario.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(Color.GRAY), 
             "Cadastrar Novo Curso", 
@@ -68,32 +67,43 @@ public class TelaCurso extends JPanel {
         
         // Nome do Curso
         JLabel lblNome = new JLabel("Nome:");
-        lblNome.setFont(new Font("Tahoma", Font.PLAIN, 12));
+        lblNome.setBounds(10, 31, 43, 20);
+        lblNome.setFont(new Font("Dialog", Font.PLAIN, 12));
         txtNome = new JTextField(15);
+        txtNome.setBounds(49, 29, 201, 25);
+        txtNome.setFont(new Font("Dialog", Font.PLAIN, 12));
         txtNome.setPreferredSize(new Dimension(150, 25));
+        pnlFormulario.setLayout(null);
         pnlFormulario.add(lblNome);
         pnlFormulario.add(txtNome);
+        pnlFormulario.setPreferredSize(new Dimension(950, 75));
+
         
         // Campus
         JLabel lblCampus = new JLabel("Campus:");
-        lblCampus.setFont(new Font("Tahoma", Font.PLAIN, 12));
+        lblCampus.setBounds(256, 31, 60, 20);
+        lblCampus.setFont(new Font("Dialog", Font.PLAIN, 12));
         cbCampus = new JComboBox<>(new String[]{"Tatuapé", "Paulista", "Vila Mariana", "Santo Amaro"});
+        cbCampus.setBounds(310, 28, 120, 25);
+        cbCampus.setFont(new Font("Dialog", Font.PLAIN, 12));
         cbCampus.setPreferredSize(new Dimension(120, 25));
         pnlFormulario.add(lblCampus);
         pnlFormulario.add(cbCampus);
         
         // Período
         JLabel lblPeriodo = new JLabel("Período:");
-        lblPeriodo.setFont(new Font("Tahoma", Font.PLAIN, 12));
+        lblPeriodo.setBounds(440, 29, 54, 20);
+        lblPeriodo.setFont(new Font("Dialog", Font.PLAIN, 12));
         JPanel pnlPeriodo = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        pnlPeriodo.setBounds(486, 27, 159, 29);
         ButtonGroup grupoPeriodo = new ButtonGroup();
         
         rdMatutino = new JRadioButton("Mat");
-        rdMatutino.setFont(new Font("Tahoma", Font.PLAIN, 11));
+        rdMatutino.setFont(new Font("Dialog", Font.PLAIN, 12));
         rdVespertino = new JRadioButton("Ves");
-        rdVespertino.setFont(new Font("Tahoma", Font.PLAIN, 11));
+        rdVespertino.setFont(new Font("Dialog", Font.PLAIN, 12));
         rdNoturno = new JRadioButton("Not");
-        rdNoturno.setFont(new Font("Tahoma", Font.PLAIN, 11));
+        rdNoturno.setFont(new Font("Dialog", Font.PLAIN, 12));
         
         grupoPeriodo.add(rdMatutino);
         grupoPeriodo.add(rdVespertino);
@@ -108,21 +118,23 @@ public class TelaCurso extends JPanel {
         pnlFormulario.add(pnlPeriodo);
         
         // Duração
-        JLabel lblDuracao = new JLabel("Duração:");
-        lblDuracao.setFont(new Font("Tahoma", Font.PLAIN, 12));
+        JLabel lblDuracao = new JLabel("Duração (Semestres):");
+        lblDuracao.setBounds(650, 29, 132, 20);
+        lblDuracao.setFont(new Font("Dialog", Font.PLAIN, 12));
         txtDuracao = new JTextField(3);
+        txtDuracao.setBounds(775, 27, 45, 25);
+        txtDuracao.setFont(new Font("Dialog", Font.PLAIN, 12));
         txtDuracao.setPreferredSize(new Dimension(40, 25));
-        JLabel lblSemestres = new JLabel("semestres");
-        lblSemestres.setFont(new Font("Tahoma", Font.PLAIN, 11));
         pnlFormulario.add(lblDuracao);
         pnlFormulario.add(txtDuracao);
-        pnlFormulario.add(lblSemestres);
         
         // ===== BOTÃO NOVO CURSO MANTIDO =====
-        btnNovoCurso = new JButton("Novo Curso");
-        btnNovoCurso.setFont(new Font("Tahoma", Font.BOLD, 12));
-        btnNovoCurso.setBackground(new Color(54, 70, 78));
-        btnNovoCurso.setForeground(Color.WHITE);
+        btnNovoCurso = new JButton(" Novo");
+        btnNovoCurso.setBounds(826, 20, 102, 40);
+        btnNovoCurso.setIcon(new ImageIcon(TelaCurso.class.getResource("/Resources/imagens/novo-documento.png")));
+        btnNovoCurso.setFont(new Font("Tahoma", Font.BOLD, 11));
+        btnNovoCurso.setBackground(new Color(255, 255, 255));
+        btnNovoCurso.setForeground(new Color(0, 0, 0));
         btnNovoCurso.setFocusPainted(false);
         btnNovoCurso.setPreferredSize(new Dimension(120, 30));
         btnNovoCurso.addActionListener(e -> salvarCurso()); // Chama o mesmo método do menu
