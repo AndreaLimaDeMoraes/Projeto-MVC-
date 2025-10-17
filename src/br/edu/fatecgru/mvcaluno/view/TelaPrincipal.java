@@ -347,6 +347,45 @@ public class TelaPrincipal extends JFrame {
 
 		    // ** Lógica do MVC para trocar de tela vem AQUI **
 		    // ...
+			// 1. MUDA PARA A ABA FACULDADE
+		    tabbedPane.setSelectedComponent(panelFaculdade);
+		    
+		 // 2. Remove o painel de conteúdo atual da Faculdade (se existir)
+		    // Encontrar ou criar o painel de conteúdo da Faculdade
+		    Component[] components = panelFaculdade.getComponents();
+		    JPanel pnlConteudoFaculdade = null;
+		    
+		    // Procura por um painel que não seja o menu lateral
+		    for (Component comp : components) {
+		        if (comp != panelMenuAluno_1 && comp instanceof JPanel) {
+		            pnlConteudoFaculdade = (JPanel) comp;
+		            break;
+		        }
+		    }
+		    
+		 // Se não encontrou, cria um novo painel de conteúdo
+		    if (pnlConteudoFaculdade == null) {
+		        pnlConteudoFaculdade = new JPanel();
+		        pnlConteudoFaculdade.setBounds(197, 0, 955, 426); // Mesmas coordenadas do Aluno
+		        panelFaculdade.add(pnlConteudoFaculdade);
+		    }
+		    
+		    // 3. Limpa e configura o painel de conteúdo
+		    pnlConteudoFaculdade.removeAll();
+		    pnlConteudoFaculdade.setLayout(new BorderLayout());
+		    
+		    
+		    
+		    TelaDisciplina disciplina = new TelaDisciplina(); 
+		    telaAtual = disciplina;
+		    
+		    // 5. Adiciona a TelaCurso no painel de conteúdo da Faculdade
+		    pnlConteudoFaculdade.add(disciplina, BorderLayout.CENTER);
+		    
+		    // 6. Atualiza a interface
+		    pnlConteudoFaculdade.revalidate();
+		    pnlConteudoFaculdade.repaint();
+			
 		});
 		
 		 // ===== CONEXÃO DOS MENUS EXISTENTES - ADICIONE NO FINAL DO CONSTRUTOR =====
@@ -416,3 +455,4 @@ public class TelaPrincipal extends JFrame {
 	    ativarBotaoMenu(btnListar); 
 	}
 }
+
