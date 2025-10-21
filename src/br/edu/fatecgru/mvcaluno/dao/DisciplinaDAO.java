@@ -52,7 +52,7 @@ public class DisciplinaDAO {
         PreparedStatement ps = null;
         ResultSet rs = null;
 
-        String SQL = "SELECT * FROM disciplina WHERE ativo = true ORDER BY nome";
+        String SQL = "SELECT * FROM disciplina WHERE ativo = true ORDER BY semestre";
 
         try {
             conn = ConnectionFactory.getConnection();
