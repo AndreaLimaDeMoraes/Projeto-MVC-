@@ -31,55 +31,65 @@ import javax.swing.border.TitledBorder;
 import javax.swing.border.EtchedBorder;
 import javax.swing.ImageIcon;
 
+/**
+ * View para atribuição e consulta de Notas e Faltas dos alunos.
+ * Implementa um recurso de AutoComplete na pesquisa de alunos.
+ */
 public class NotasFaltas extends JPanel {
 
     private static final long serialVersionUID = 1L;
     private JPanel contentPane;
     private JPanel panelPesquisarAluno;
     private JLabel lblPesquisarAluno;
-    private JTextField txtPesquisarAluno;
-    private JPanel panelDados;
+    private JTextField txtPesquisarAluno; // Campo de pesquisa com AutoComplete
+    private JPanel panelDados; // Painel que exibe Nome, RA e Curso do aluno selecionado
     private JLabel lblCurso;
     private JTextField txtNota;
     private JTextField txtFalta;
     private JLabel lblNome;
     private JLabel lblRA;
     private JLabel lblInformeADisciplina;
-    private JComboBox<String> cmbDisciplina;
-    private JPanel panelNotasFaltas;
+    private JComboBox<String> cmbDisciplina; // Dropdown para selecionar a disciplina
+    private JPanel panelNotasFaltas; // Painel para inserir Nota e Falta
     private JLabel lblNota;
     private JLabel lblFaltas;
-    private JButton btnAtribuir;
+    private JButton btnAtribuir; // Botão para salvar/atualizar Notas e Faltas
     private JLabel lblSemestre;
-    private JComboBox<String> cmbSemestre;
+    private JComboBox<String> cmbSemestre; // Dropdown para selecionar o semestre
 
     private TelaPrincipal telaPrincipal;
-    private int idAlunoSelecionado = -1;
-    private int idMatriculaSelecionada = -1;
-    private String semestreAtual = "2025/2"; // Padronizado com barra
+    private int idAlunoSelecionado = -1; // ID do aluno encontrado pelo AutoComplete
+    private int idMatriculaSelecionada = -1; // ID da matrícula (usada para vincular a nota/falta)
+    private String semestreAtual = "2025/2"; // Semestre padrão para preenchimento inicial
 
     private final String HINT_TEXT = "Digite nome ou RA do aluno";
     private final Color HINT_COLOR = Color.LIGHT_GRAY;
     private final Color TEXT_COLOR = Color.BLACK;
 
-    // Componentes para autocomplete
+    // Componentes para autocomplete (JPopupMenu exibe a lista, JList contém os itens)
     private JPopupMenu popupSugestoes;
     private JList<AlunoView> listaSugestoes;
     private DefaultListModel<AlunoView> listModelSugestoes;
-    private AlunoDAO alunoDAO;
+    private AlunoDAO alunoDAO; // Objeto DAO para acesso ao banco de dados (busca de aluno e notas)
     private JLabel lblNewLabel;
     private JLabel lblRa;
     private JLabel lblCurso_1;
 
+    /**
+     * Construtor da View NotasFaltas.
+     * @param p A referência da TelaPrincipal (Frame pai).
+     * @param mode Modo de operação (não usado atualmente, mas mantido para padrão).
+     */
     public NotasFaltas(TelaPrincipal p, int mode) {
         this.telaPrincipal = p;
         try {
+            // Instancia a DAO para comunicação com o banco de dados.
             this.alunoDAO = new AlunoDAO();
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erro ao conectar ao banco de dados: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
-        inicializarAutocomplete();
+        inicializarAutocomplete(); // Configura todos os componentes do AutoComplete
         setLayout(null);
         setBorder(new EmptyBorder(5, 5, 5, 5));
 
@@ -103,6 +113,7 @@ public class NotasFaltas extends JPanel {
         txtPesquisarAluno.setText(HINT_TEXT);
         txtPesquisarAluno.setForeground(HINT_COLOR);
 
+        // Adicionar FocusListener para gerenciar o texto de Hint (dica)
         txtPesquisarAluno.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
@@ -114,6 +125,7 @@ public class NotasFaltas extends JPanel {
 
             @Override
             public void focusLost(FocusEvent e) {
+                // Lógica para evitar que o hint apareça se o foco for para a lista de sugestões
                 if (e.getOppositeComponent() != null && e.getOppositeComponent().getParent() == popupSugestoes) {
                     return;
                 }
@@ -124,11 +136,11 @@ public class NotasFaltas extends JPanel {
             }
         });
 
-        // Adicionar DocumentListener para busca em tempo real
+        // Adicionar DocumentListener para busca em tempo real (AutoUpdate)
         txtPesquisarAluno.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                atualizarSugestoes();
+                atualizarSugestoes(); // Chama a função que busca e exibe o popup
             }
 
             @Override
@@ -147,7 +159,7 @@ public class NotasFaltas extends JPanel {
         panelDados.setLayout(null);
         panelDados.setBounds(10, 86, 920, 159);
         add(panelDados);
-        panelDados.setVisible(false); // Oculto inicialmente
+        panelDados.setVisible(false); // Painel de dados do aluno oculto até que um aluno seja selecionado
 
         lblCurso = new JLabel("Carregando...");
         lblCurso.setFont(new Font("Tahoma", Font.PLAIN, 15));
@@ -201,19 +213,21 @@ public class NotasFaltas extends JPanel {
 
         // Listener para cmbSemestre
         cmbSemestre.addActionListener(e -> {
+            // Ao mudar o semestre, recarrega as disciplinas disponíveis
             String semestreSelecionado = (String) cmbSemestre.getSelectedItem();
             popularDisciplinas(semestreSelecionado);
         });
 
         // Listener para cmbDisciplina
         cmbDisciplina.addActionListener(e -> {
+            // Ao selecionar uma disciplina, tenta carregar as notas/faltas existentes
             String disciplinaSelecionada = (String) cmbDisciplina.getSelectedItem();
             if (disciplinaSelecionada != null && !disciplinaSelecionada.equals("Selecione uma disciplina")) {
                 int idDisciplina = extrairIdDisciplina(disciplinaSelecionada);
                 carregarNotaFaltas(idDisciplina, (String) cmbSemestre.getSelectedItem());
-                panelNotasFaltas.setVisible(true);
+                panelNotasFaltas.setVisible(true); // Exibe o painel de edição
             } else {
-                panelNotasFaltas.setVisible(false);
+                panelNotasFaltas.setVisible(false); // Oculta se não houver disciplina selecionada
             }
         });
 
@@ -253,21 +267,27 @@ public class NotasFaltas extends JPanel {
         btnAtribuir.setContentAreaFilled(false); 
         btnAtribuir.setFocusPainted(false);
         btnAtribuir.setIcon(new ImageIcon(NotasFaltas.class.getResource("/Resources/imagens/salve-.png")));
+        // Ação de salvar nota/falta
         btnAtribuir.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                salvarNotaFaltas();
+                salvarNotaFaltas(); // Chama a função de persistência dos dados
             }
         });
         panelNotasFaltas.add(btnAtribuir);
     }
 
+    /**
+     * Configura os componentes necessários para o AutoComplete:
+     * JPopupMenu (a janela flutuante), JList (a lista de sugestões) e o CellRenderer (formatação da lista).
+     */
     private void inicializarAutocomplete() {
         popupSugestoes = new JPopupMenu();
-        popupSugestoes.setFocusable(false);
+        popupSugestoes.setFocusable(false); // Importante para não roubar o foco da caixa de texto
 
         listModelSugestoes = new DefaultListModel<>();
         listaSugestoes = new JList<>(listModelSugestoes);
 
+        // Define como cada item da lista de sugestões será exibido (Nome + RA)
         listaSugestoes.setCellRenderer(new DefaultListCellRenderer() {
             @Override
             public java.awt.Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -283,16 +303,21 @@ public class NotasFaltas extends JPanel {
         JScrollPane scrollPaneSugestoes = new JScrollPane(listaSugestoes);
         popupSugestoes.add(scrollPaneSugestoes);
 
+        // Adiciona listener para capturar o clique do mouse na lista de sugestões
         listaSugestoes.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 1) {
-                    selecionarAlunoSugerido();
+                    selecionarAlunoSugerido(); // Chama a função para preencher a tela com o aluno
                 }
             }
         });
     }
 
+    /**
+     * Busca alunos no banco de dados com base no texto digitado (filtro)
+     * e atualiza o JPopupMenu de sugestões em tempo real.
+     */
     private void atualizarSugestoes() {
         String textoDigitado = txtPesquisarAluno.getText().trim();
 
@@ -302,12 +327,14 @@ public class NotasFaltas extends JPanel {
         }
 
         try {
+            // Chama a DAO para buscar alunos por nome ou RA
             List<AlunoView> alunosEncontrados = alunoDAO.listarPorFiltro(textoDigitado);
             listModelSugestoes.clear();
             if (!alunosEncontrados.isEmpty()) {
                 for (AlunoView aluno : alunosEncontrados) {
                     listModelSugestoes.addElement(aluno);
                 }
+                // Exibe o popup e define seu tamanho
                 popupSugestoes.show(txtPesquisarAluno, 0, txtPesquisarAluno.getHeight());
                 popupSugestoes.setPopupSize(txtPesquisarAluno.getWidth(), 150);
             } else {
@@ -319,6 +346,13 @@ public class NotasFaltas extends JPanel {
         }
     }
 
+    /**
+     * Processa o aluno selecionado na lista de sugestões:
+     * 1. Preenche os dados do aluno (Nome, RA, Curso).
+     * 2. Busca o ID da Matrícula.
+     * 3. Exibe o painel de dados.
+     * 4. Popula os ComboBoxes de Semestre e Disciplina.
+     */
     private void selecionarAlunoSugerido() {
         AlunoView alunoSelecionado = listaSugestoes.getSelectedValue();
         if (alunoSelecionado != null) {
@@ -328,19 +362,23 @@ public class NotasFaltas extends JPanel {
             lblRA.setText(alunoSelecionado.getRa());
             lblCurso.setText(alunoSelecionado.getNomeCurso());
             try {
+                // Busca o ID da matrícula do aluno (necessário para persistir a nota/falta)
                 idMatriculaSelecionada = alunoDAO.buscarIdMatricula(idAlunoSelecionado);
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this, "Erro ao buscar matrícula: " + e.getMessage());
                 return;
             }
-            panelDados.setVisible(true);
-            popularSemestres();
-            cmbSemestre.setSelectedItem(semestreAtual);
-            popularDisciplinas(semestreAtual);
-            popupSugestoes.setVisible(false);
+            panelDados.setVisible(true); // Exibe o painel com Nome/RA/Curso
+            popularSemestres(); // Popula o JComboBox de semestres
+            cmbSemestre.setSelectedItem(semestreAtual); // Seta o semestre atual como padrão
+            popularDisciplinas(semestreAtual); // Popula disciplinas do semestre atual
+            popupSugestoes.setVisible(false); // Oculta a lista de sugestões
         }
     }
 
+    /**
+     * Popula o ComboBox de semestres com valores fixos.
+     */
     private void popularSemestres() {
         cmbSemestre.removeAllItems();
         cmbSemestre.addItem("2023/1");
@@ -351,16 +389,25 @@ public class NotasFaltas extends JPanel {
         cmbSemestre.addItem("2025/2");
     }
 
+    /**
+     * Popula o ComboBox de disciplinas com base no curso do aluno e no semestre selecionado.
+     * @param semestre O semestre no formato "AAAA/N".
+     */
     private void popularDisciplinas(String semestre) {
         cmbDisciplina.removeAllItems();
         cmbDisciplina.addItem("Selecione uma disciplina"); // Opção padrão
         if (semestre == null || semestre.isEmpty()) {
-            return; // Não faz nada se semestre for null ou vazio
+            return;
         }
         try {
+            // Primeiro, obtém o ID do curso a partir da matrícula
             int idCurso = obterIdCursoDaMatricula(idMatriculaSelecionada);
             if (idCurso == -1) return;
+            
+            // Extrai o número do semestre (ex: 2025/2 -> 2)
             int semestreInt = Integer.parseInt(semestre.split("/")[1]);
+            
+            // Chama a DAO para listar as disciplinas do curso e semestre
             List<String> disciplinas = alunoDAO.listarDisciplinasPorCursoESemestre(idCurso, semestreInt);
             for (String disc : disciplinas) {
                 cmbDisciplina.addItem(disc);
@@ -370,6 +417,13 @@ public class NotasFaltas extends JPanel {
         }
     }
 
+    /**
+     * Busca o ID do Curso associado a uma Matrícula.
+     * Necessário para filtrar as disciplinas corretas.
+     * (Método com conexão JDBC direta, simplificado para a View).
+     * @param idMatricula O ID da matrícula do aluno.
+     * @return O ID do curso, ou -1 em caso de erro.
+     */
     private int obterIdCursoDaMatricula(int idMatricula) {
         try {
             java.sql.Connection conn = br.edu.fatecgru.mvcaluno.util.ConnectionFactory.getConnection();
@@ -388,12 +442,23 @@ public class NotasFaltas extends JPanel {
         return -1;
     }
 
+    /**
+     * Extrai o ID da disciplina de uma string formatada no ComboBox.
+     * O formato esperado é "ID - Nome da Disciplina".
+     * @param item A string selecionada no JComboBox.
+     * @return O ID numérico da disciplina.
+     */
     private int extrairIdDisciplina(String item) {
         return Integer.parseInt(item.split(" - ")[0]);
     }
 
+    /**
+     * Carrega a nota e a falta existentes para a disciplina e semestre selecionados.
+     * Se não existir, limpa os campos.
+     */
     private void carregarNotaFaltas(int idDisciplina, String semestre) {
         try {
+            // Chama a DAO para buscar no banco (retorna um array [nota, falta])
             double[] resultado = alunoDAO.buscarNotaFaltas(idMatriculaSelecionada, idDisciplina, semestre);
             if (resultado != null) {
                 txtNota.setText(String.valueOf(resultado[0]));
@@ -407,6 +472,10 @@ public class NotasFaltas extends JPanel {
         }
     }
 
+    /**
+     * Salva ou atualiza a nota e falta para a disciplina e semestre selecionados.
+     * Implementa validação básica (intervalo da nota e faltas).
+     */
     private void salvarNotaFaltas() {
         String notaStr = txtNota.getText();
         String faltasStr = txtFalta.getText();
@@ -418,17 +487,20 @@ public class NotasFaltas extends JPanel {
             double nota = Double.parseDouble(notaStr);
             int faltas = Integer.parseInt(faltasStr);
             
+            // Validações de domínio
             if (nota < 0 || nota > 10) {
                 JOptionPane.showMessageDialog(this, "Nota deve estar entre 0 e 10.");
                 return;
             }
-            if (faltas < 0 || faltas > 80) {
+            if (faltas < 0 || faltas > 80) { // Exemplo de limite de faltas
                 JOptionPane.showMessageDialog(this, "Faltas devem estar entre 0 e 80.");
                 return;
             }
             
             String semestre = (String) cmbSemestre.getSelectedItem();
             int idDisciplina = extrairIdDisciplina((String) cmbDisciplina.getSelectedItem());
+            
+            // Chama a DAO para persistir os dados no banco
             alunoDAO.salvarNotaFaltas(idMatriculaSelecionada, idDisciplina, semestre, nota, faltas);
             JOptionPane.showMessageDialog(this, "Salvo com sucesso!");
         } catch (NumberFormatException e) {
