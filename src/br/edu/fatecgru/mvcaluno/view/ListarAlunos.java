@@ -194,11 +194,10 @@ public class ListarAlunos extends JPanel {
                 //Instancia a nova tela de cadastro (DadosPessoais)
                 // O valor '0' ou '-1' é uma convenção para indicar que é um NOVO cadastro
                 DadosPessoais telaCadastro = new DadosPessoais(telaPrincipal, 0); 
-                
-                //Chama o método do TelaPrincipal para trocar o painel central
-                telaPrincipal.trocarPainelConteudo(telaCadastro);
-                
-                //Muda o foco do menu lateral
+                telaPrincipal.trocarPainelConteudo(
+                	    telaPrincipal.getPnlConteudoAluno(), // O container correto
+                	    (JPanel) telaCadastro              // A nova tela com cast
+                	);
                 telaPrincipal.ativarBotaoMenuDadosPessoais();
                 
             } else {
@@ -383,11 +382,12 @@ public class ListarAlunos extends JPanel {
             // O valor idAluno (> 0) indica que a tela deve carregar os dados para EDIÇÃO/EXCLUSÃO.
             DadosPessoais telaEdicao = new DadosPessoais(telaPrincipal, idAluno); 
             
-            //Troca o painel central
-            telaPrincipal.trocarPainelConteudo(telaEdicao);
-            
-            //Muda o foco do menu lateral para "Dados Pessoais"
-            telaPrincipal.ativarBotaoMenuDadosPessoais();
+            telaPrincipal.trocarPainelConteudo(
+            	    telaPrincipal.getPnlConteudoAluno(), // O container correto
+            	    (JPanel) telaEdicao                // A nova tela com cast
+            	);
+
+            	telaPrincipal.ativarBotaoMenuDadosPessoais();
             
         } else {
             JOptionPane.showMessageDialog(this, 
