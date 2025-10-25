@@ -26,6 +26,16 @@ public class TelaCurso extends JPanel {
     
     private List<Curso> cursosLista; // Para guardar os cursos reais
     
+    // Botões de ação (como na tela de disciplinas)
+    private JButton btnSalvar;
+    private JButton btnAlterar;
+    private JButton btnCancelar;
+    private JButton btnExcluir;
+    private JPanel pnlBotoesAcao;
+    
+    private Curso cursoSelecionado;
+    private boolean modoEdicao = false;
+    
     // Construtores
     public TelaCurso(JFrame framePai, int idCurso) {
         this(); // Chama o construtor sem parâmetros
@@ -53,6 +63,11 @@ public class TelaCurso extends JPanel {
         // ===== PAINEL CENTRAL - LISTA DE CURSOS =====
         JPanel pnlLista = criarPainelLista();
         add(pnlLista, BorderLayout.CENTER);
+        
+        // ===== PAINEL INFERIOR - BOTÕES DE AÇÃO (INICIALMENTE OCULTOS) =====
+        pnlBotoesAcao = criarPainelBotoesAcao();
+        add(pnlBotoesAcao, BorderLayout.SOUTH);
+        pnlBotoesAcao.setVisible(false);
     }
     
     private JPanel criarPainelFormulario() {
@@ -83,7 +98,7 @@ public class TelaCurso extends JPanel {
         JLabel lblCampus = new JLabel("Campus:");
         lblCampus.setBounds(256, 31, 60, 20);
         lblCampus.setFont(new Font("Dialog", Font.PLAIN, 12));
-        cbCampus = new JComboBox<>(new String[]{"Tatuapé", "Paulista", "Vila Mariana", "Santo Amaro"});
+        cbCampus = new JComboBox<>(new String[]{"São Paulo", "Guarulhos", "Diadema","Tatuapé", "Ipiranga","Jundiaí","São Caetano", "Paulista", "Vila Mariana", "Santo Amaro"});
         cbCampus.setBounds(310, 28, 120, 25);
         cbCampus.setFont(new Font("Dialog", Font.PLAIN, 12));
         cbCampus.setPreferredSize(new Dimension(120, 25));
@@ -128,7 +143,7 @@ public class TelaCurso extends JPanel {
         pnlFormulario.add(lblDuracao);
         pnlFormulario.add(txtDuracao);
         
-        // ===== BOTÃO NOVO CURSO MANTIDO =====
+        // ===== BOTÃO NOVO CURSO  =====
         btnNovoCurso = new JButton(" Novo");
         btnNovoCurso.setBounds(826, 20, 102, 40);
         btnNovoCurso.setIcon(new ImageIcon(TelaCurso.class.getResource("/Resources/imagens/novo-documento.png")));
@@ -157,15 +172,274 @@ public class TelaCurso extends JPanel {
         // Model e Lista
         listModel = new DefaultListModel<>();
         listCursos = new JList<>(listModel);
-        listCursos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        listCursos.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         listCursos.setFont(new Font("Tahoma", Font.PLAIN, 12));
         listCursos.setBackground(Color.WHITE);
+        
+        // Adiciona o listener para duplo clique
+        listCursos.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) { // Duplo clique
+                    int index = listCursos.locationToIndex(e.getPoint());
+                    if (index >= 0 && index < cursosLista.size()) {
+                        cursoSelecionado = cursosLista.get(index);
+                        preencherFormularioComCurso(cursoSelecionado);
+                        modoEdicao = true;
+                        pnlBotoesAcao.setVisible(true);
+                        
+                        // Desabilita o formulário superior para edição direta
+                        txtNome.setEnabled(false);
+                        txtDuracao.setEnabled(false);
+                        cbCampus.setEnabled(false);
+                        rdMatutino.setEnabled(false);
+                        rdVespertino.setEnabled(false);
+                        rdNoturno.setEnabled(false);
+                        btnNovoCurso.setEnabled(false);
+                    }
+                }
+            }
+        });
         
         JScrollPane scrollPane = new JScrollPane(listCursos);
         scrollPane.setPreferredSize(new Dimension(500, 300));
         pnlLista.add(scrollPane, BorderLayout.CENTER);
         
         return pnlLista;
+    }
+    
+    private JPanel criarPainelBotoesAcao() {
+        JPanel pnlBotoes = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        pnlBotoes.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color.GRAY), 
+            "Editor Curso", 
+            TitledBorder.DEFAULT_JUSTIFICATION,
+            TitledBorder.DEFAULT_POSITION,
+            new Font("Tahoma", Font.BOLD, 12)
+        ));
+        
+        // Botão Salvar
+        btnSalvar = new JButton("Salvar");
+        btnSalvar.setFont(new Font("Tahoma", Font.BOLD, 11));
+        btnSalvar.addActionListener(e -> salvarAlteracoes());
+        
+        // Botão Alterar
+        btnAlterar = new JButton("Alterar");
+        btnAlterar.setFont(new Font("Tahoma", Font.BOLD, 11));
+        btnAlterar.addActionListener(e -> habilitarEdicao());
+        
+        // Botão Cancelar
+        btnCancelar = new JButton("Cancelar");
+        btnCancelar.setFont(new Font("Tahoma", Font.BOLD, 11));
+        btnCancelar.addActionListener(e -> cancelarEdicao());
+        
+        // Botão Excluir
+        btnExcluir = new JButton("Excluir");
+        btnExcluir.setFont(new Font("Tahoma", Font.BOLD, 11));
+        btnExcluir.addActionListener(e -> excluirCursoSelecionado());
+        
+        pnlBotoes.add(btnSalvar);
+        pnlBotoes.add(btnAlterar);
+        pnlBotoes.add(btnCancelar);
+        pnlBotoes.add(btnExcluir);
+        
+        return pnlBotoes;
+    }
+    
+    private void preencherFormularioComCurso(Curso curso) {
+        txtNome.setText(curso.getNome());
+        txtDuracao.setText(String.valueOf(curso.getDuracao()));
+        cbCampus.setSelectedItem(curso.getCampus());
+        
+        // Define o período selecionado
+        rdMatutino.setSelected(false);
+        rdVespertino.setSelected(false);
+        rdNoturno.setSelected(false);
+        
+        switch(curso.getPeriodo()) {
+            case "Matutino": rdMatutino.setSelected(true); break;
+            case "Vespertino": rdVespertino.setSelected(true); break;
+            case "Noturno": rdNoturno.setSelected(true); break;
+        }
+    }
+    
+    private void salvarAlteracoes() {
+        if (cursoSelecionado == null) return;
+        
+        try {
+            if (validarCampos()) {
+                cursoSelecionado.setNome(txtNome.getText().trim());
+                cursoSelecionado.setCampus(cbCampus.getSelectedItem().toString());
+                cursoSelecionado.setPeriodo(getPeriodoSelecionado());
+                cursoSelecionado.setDuracao(Integer.parseInt(txtDuracao.getText().trim()));
+                
+                cursoDAO.atualizar(cursoSelecionado);
+                
+                JOptionPane.showMessageDialog(this, "Curso alterado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                cancelarEdicao();
+                carregarCursos();
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Erro ao salvar alterações: " + e.getMessage(), 
+                "Erro", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+    
+    private void habilitarEdicao() {
+        txtNome.setEnabled(true);
+        txtDuracao.setEnabled(true);
+        cbCampus.setEnabled(true);
+        rdMatutino.setEnabled(true);
+        rdVespertino.setEnabled(true);
+        rdNoturno.setEnabled(true);
+        
+        btnSalvar.setEnabled(true);
+        btnAlterar.setEnabled(false);
+    }
+    
+    private void cancelarEdicao() {
+        modoEdicao = false;
+        cursoSelecionado = null;
+        pnlBotoesAcao.setVisible(false);
+        
+        // Reabilita o formulário superior
+        txtNome.setEnabled(true);
+        txtDuracao.setEnabled(true);
+        cbCampus.setEnabled(true);
+        rdMatutino.setEnabled(true);
+        rdVespertino.setEnabled(true);
+        rdNoturno.setEnabled(true);
+        btnNovoCurso.setEnabled(true);
+        
+        // Reseta os botões
+        btnSalvar.setEnabled(true);
+        btnAlterar.setEnabled(true);
+        
+        limparFormulario();
+    }
+    
+    private void excluirCursoSelecionado() {
+        if (cursoSelecionado == null) return;
+        
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            "Tem certeza que deseja excluir o curso:\n" + 
+            cursoSelecionado.getNome() + " - " + cursoSelecionado.getCampus() + "?", 
+            "Confirmação", JOptionPane.YES_NO_OPTION);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                cursoDAO.excluir(cursoSelecionado.getIdCurso());
+                JOptionPane.showMessageDialog(this, "Curso excluído com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                cancelarEdicao();
+                carregarCursos();
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Erro ao excluir curso: " + e.getMessage(), 
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    private void excluirCursosSelecionados() {
+        int[] selectedIndices = listCursos.getSelectedIndices();
+        if (selectedIndices.length == 0) {
+            JOptionPane.showMessageDialog(this, "Selecione um ou mais cursos para excluir!", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Verificar se há mais de um curso selecionado
+        if (selectedIndices.length == 1) {
+            excluirCursoSelecionado();
+            return;
+        }
+        
+        // Para múltiplos cursos
+        StringBuilder cursosParaExcluir = new StringBuilder();
+        cursosParaExcluir.append("Tem certeza que deseja excluir os seguintes cursos?\n\n");
+        
+        for (int index : selectedIndices) {
+            if (index >= 0 && index < cursosLista.size()) {
+                Curso curso = cursosLista.get(index);
+                cursosParaExcluir.append("• ").append(curso.getNome())
+                               .append(" - ").append(curso.getCampus())
+                               .append("\n");
+            }
+        }
+        
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            cursosParaExcluir.toString(), 
+            "Confirmação de Exclusão Múltipla", 
+            JOptionPane.YES_NO_OPTION);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                int excluidos = 0;
+                for (int index : selectedIndices) {
+                    if (index >= 0 && index < cursosLista.size()) {
+                        Curso curso = cursosLista.get(index);
+                        cursoDAO.excluir(curso.getIdCurso());
+                        excluidos++;
+                    }
+                }
+                
+                JOptionPane.showMessageDialog(this, 
+                    excluidos + " curso(s) excluído(s) com sucesso!", 
+                    "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                
+                if (modoEdicao) {
+                    cancelarEdicao();
+                }
+                carregarCursos();
+                
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, 
+                    "Erro ao excluir cursos: " + e.getMessage(), 
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    private void excluirTodosCursos() {
+        if (cursosLista.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Não há cursos para excluir!", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            "Tem certeza que deseja excluir TODOS os " + cursosLista.size() + " cursos?\n\n" +
+            "Esta ação não pode ser desfeita!", 
+            "Confirmação de Exclusão Total", 
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                int totalCursos = cursosLista.size();
+                int excluidos = 0;
+                
+                for (Curso curso : cursosLista) {
+                    cursoDAO.excluir(curso.getIdCurso());
+                    excluidos++;
+                }
+                
+                JOptionPane.showMessageDialog(this, 
+                    "Todos os " + excluidos + " cursos foram excluídos com sucesso!", 
+                    "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                
+                if (modoEdicao) {
+                    cancelarEdicao();
+                }
+                carregarCursos();
+                
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, 
+                    "Erro ao excluir todos os cursos: " + e.getMessage(), 
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
     }
     
     // ===== MÉTODOS PÚBLICOS PARA O MENU DA TELAPRINCIPAL =====
@@ -196,18 +470,44 @@ public class TelaCurso extends JPanel {
     public void alterarCurso() {
         int selectedIndex = listCursos.getSelectedIndex();
         if (selectedIndex >= 0 && selectedIndex < cursosLista.size()) {
-            Curso cursoSelecionado = cursosLista.get(selectedIndex);
-            abrirFormularioAlteracao(cursoSelecionado);
+            cursoSelecionado = cursosLista.get(selectedIndex);
+            preencherFormularioComCurso(cursoSelecionado);
+            modoEdicao = true;
+            pnlBotoesAcao.setVisible(true);
+            
+            // Desabilita o formulário superior para edição direta
+            txtNome.setEnabled(false);
+            txtDuracao.setEnabled(false);
+            cbCampus.setEnabled(false);
+            rdMatutino.setEnabled(false);
+            rdVespertino.setEnabled(false);
+            rdNoturno.setEnabled(false);
+            btnNovoCurso.setEnabled(false);
         } else {
             JOptionPane.showMessageDialog(this, "Selecione um curso para alterar!", "Aviso", JOptionPane.WARNING_MESSAGE);
         }
     }
     
     public void excluirCurso() {
-        int selectedIndex = listCursos.getSelectedIndex();
-        if (selectedIndex >= 0 && selectedIndex < cursosLista.size()) {
-            Curso cursoSelecionado = cursosLista.get(selectedIndex);
-            
+        int[] selectedIndices = listCursos.getSelectedIndices();
+        
+        if (selectedIndices.length == 0) {
+            // Perguntar se quer excluir todos
+            int opcao = JOptionPane.showConfirmDialog(this,
+                "Nenhum curso selecionado. Deseja excluir TODOS os cursos?",
+                "Excluir Cursos",
+                JOptionPane.YES_NO_CANCEL_OPTION);
+                
+            if (opcao == JOptionPane.YES_OPTION) {
+                excluirTodosCursos();
+            } else if (opcao == JOptionPane.NO_OPTION) {
+                JOptionPane.showMessageDialog(this, 
+                    "Selecione um ou mais cursos para excluir!", 
+                    "Aviso", JOptionPane.WARNING_MESSAGE);
+            }
+        } else if (selectedIndices.length == 1) {
+            // Excluir curso único (comportamento original)
+            Curso cursoSelecionado = cursosLista.get(selectedIndices[0]);
             int confirm = JOptionPane.showConfirmDialog(this, 
                 "Tem certeza que deseja excluir o curso:\n" + 
                 cursoSelecionado.getNome() + " - " + cursoSelecionado.getCampus() + "?", 
@@ -225,7 +525,8 @@ public class TelaCurso extends JPanel {
                 }
             }
         } else {
-            JOptionPane.showMessageDialog(this, "Selecione um curso para excluir!", "Aviso", JOptionPane.WARNING_MESSAGE);
+            // Excluir múltiplos cursos
+            excluirCursosSelecionados();
         }
     }
     
@@ -246,7 +547,7 @@ public class TelaCurso extends JPanel {
         
         // Campo Campus  
         panel.add(new JLabel("Campus:"));
-        JComboBox<String> cbCampus = new JComboBox<>(new String[]{"Tatuapé", "Paulista", "Vila Mariana", "Santo Amaro"});
+        JComboBox<String> cbCampus = new JComboBox<>(new String[]{"São Paulo","Guarulhos","Diadema","Tatuapé", "Ipiranga","Jundiaí","São Caetano", "Paulista", "Vila Mariana", "Santo Amaro"});
         cbCampus.setSelectedItem(curso.getCampus());
         panel.add(cbCampus);
         
@@ -301,8 +602,8 @@ public class TelaCurso extends JPanel {
                 int duracao;
                 try {
                     duracao = Integer.parseInt(txtDuracao.getText().trim());
-                    if (duracao <= 0) {
-                        JOptionPane.showMessageDialog(this, "Duração deve ser maior que zero!");
+                    if (duracao < 1) {
+                        JOptionPane.showMessageDialog(this, "Duração deve ser maior que um semestre!");
                         return;
                     }
                 } catch (NumberFormatException e) {
@@ -371,8 +672,8 @@ public class TelaCurso extends JPanel {
         
         try {
             int duracao = Integer.parseInt(txtDuracao.getText().trim());
-            if (duracao <= 0) {
-                JOptionPane.showMessageDialog(this, "Duração deve ser maior que zero!", "Validação", JOptionPane.WARNING_MESSAGE);
+            if (duracao < 1) {
+                JOptionPane.showMessageDialog(this, "Duração deve ser maior que um!", "Validação", JOptionPane.WARNING_MESSAGE);
                 txtDuracao.requestFocus();
                 return false;
             }
