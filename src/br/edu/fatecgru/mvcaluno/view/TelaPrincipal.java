@@ -21,7 +21,7 @@ import javax.swing.KeyStroke;
 import java.awt.event.KeyEvent;
 import java.awt.event.InputEvent;
 import java.awt.Toolkit;
-import br.edu.fatecgru.mvcaluno.view.TelaCurso;
+import javax.swing.JOptionPane;
 
 /**
  * Classe principal do sistema MVC Aluno.
@@ -143,8 +143,8 @@ public class TelaPrincipal extends JFrame {
         mnNewMenu_1.add(mntmNewMenuItem_6);
         mntmNewMenuItem_8 = new JMenuItem("Consultar");
         mnNewMenu_1.add(mntmNewMenuItem_8);
-
-        // Menu "Ajuda" com item Sobre
+        
+       // Menu "Ajuda" com item Sobre
         mnNewMenu_2 = new JMenu("Ajuda");
         menuBar.add(mnNewMenu_2);
         mntmNewMenuItem_9 = new JMenuItem("Sobre");
@@ -335,34 +335,8 @@ public class TelaPrincipal extends JFrame {
             pnlConteudoFaculdade.revalidate();
             pnlConteudoFaculdade.repaint();
         });
-
-        // Conecta os menus superiores às ações correspondentes das telas internas
-        conectarMenus();
     }
-
-    /**
-     * Conecta os itens do menu superior às ações específicas da tela atual.
-     * Por exemplo, Salvar, Alterar e Excluir só funcionam se a tela atual for TelaCurso.
-     */
-    private void conectarMenus() {
-        mntmNewMenuItem.addActionListener(e -> {
-            if (telaAtual instanceof TelaCurso) {
-                ((TelaCurso) telaAtual).salvarCurso();
-            }
-        });
-
-        mntmNewMenuItem_1.addActionListener(e -> {
-            if (telaAtual instanceof TelaCurso) {
-                ((TelaCurso) telaAtual).alterarCurso();
-            }
-        });
-
-        mntmNewMenuItem_3.addActionListener(e -> {
-            if (telaAtual instanceof TelaCurso) {
-                ((TelaCurso) telaAtual).excluirCurso();
-            }
-        });
-    }
+        
 
     /**
      * Ativa o botão clicado e desativa os outros, mudando a cor de fundo
