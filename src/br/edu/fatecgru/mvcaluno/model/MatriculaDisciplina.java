@@ -1,70 +1,107 @@
 package br.edu.fatecgru.mvcaluno.model;
 
 public class MatriculaDisciplina {
-	private int idMatriculaDisciplina;
-	private int idMatricula;
-	private int faltas;
-	private String semestreAtual;
-	private double nota;
-	private boolean ativo;
+    private int idMatriculaDisciplina;
+    private int idMatricula;
+    private int idDisciplina;
+    private int faltas;
+    private double nota;
+    private String status; // Valores possíveis: "Cursando", "Aprovado", "Reprovado"
+    private boolean ativo;
 
-	public MatriculaDisciplina() {}
+    // ===============================================
+    // Construtores
+    // ===============================================
 
-	public MatriculaDisciplina(int idMatriculaDisciplina, int idMatricula, int faltas, 
-			String semestreAtual, double nota, boolean ativo) {
-		this.idMatriculaDisciplina = idMatriculaDisciplina;
-		this.idMatricula = idMatricula;
-		this.faltas = faltas;
-		this.semestreAtual = semestreAtual;
-		this.nota = nota;
-		this.ativo = ativo;
-	}
+    /**
+     * Construtor padrão (sem parâmetros).
+     */
+    public MatriculaDisciplina() {}
 
-	public int getIdMatriculaDisciplina() {
-		return idMatriculaDisciplina;
-	}
+    /**
+     * Construtor completo para inicializar todos os campos.
+     * @param idMatriculaDisciplina ID único da matrícula em disciplina.
+     * @param idMatricula ID da matrícula do aluno.
+     * @param idDisciplina ID da disciplina.
+     * @param faltas Número de faltas.
+     * @param nota Nota do aluno.
+     * @param status Status da matrícula (ex.: "Cursando").
+     * @param ativo Indica se o registro está ativo.
+     */
+    public MatriculaDisciplina(int idMatriculaDisciplina, int idMatricula, int idDisciplina, int faltas,
+                               double nota, String status, boolean ativo) {
+        this.idMatriculaDisciplina = idMatriculaDisciplina;
+        this.idMatricula = idMatricula;
+        this.idDisciplina = idDisciplina;
+        setFaltas(faltas); // Usa setter para validação
+        setNota(nota); // Usa setter para validação
+        this.status = status;
+        this.ativo = ativo;
+    }
 
-	public void setIdMatriculaDisciplina(int idMatriculaDisciplina) {
-		this.idMatriculaDisciplina = idMatriculaDisciplina;
-	}
+    // ===============================================
+    // Getters e Setters
+    // ===============================================
 
-	public int getIdMatricula() {
-		return idMatricula;
-	}
+    public int getIdMatriculaDisciplina() {
+        return idMatriculaDisciplina;
+    }
 
-	public void setIdMatricula(int idMatricula) {
-		this.idMatricula = idMatricula;
-	}
+    public void setIdMatriculaDisciplina(int idMatriculaDisciplina) {
+        this.idMatriculaDisciplina = idMatriculaDisciplina;
+    }
 
-	public int getFaltas() {
-		return faltas;
-	}
+    public int getIdMatricula() {
+        return idMatricula;
+    }
 
-	public void setFaltas(int faltas) {
-		this.faltas = faltas;
-	}
+    public void setIdMatricula(int idMatricula) {
+        this.idMatricula = idMatricula;
+    }
 
-	public String getSemestreAtual() {
-		return semestreAtual;
-	}
+    public int getIdDisciplina() {
+        return idDisciplina;
+    }
 
-	public void setSemestreAtual(String semestreAtual) {
-		this.semestreAtual = semestreAtual;
-	}
+    public void setIdDisciplina(int idDisciplina) {
+        this.idDisciplina = idDisciplina;
+    }
 
-	public double getNota() {
-		return nota;
-	}
+    public int getFaltas() {
+        return faltas;
+    }
 
-	public void setNota(double nota) {
-		this.nota = nota;
-	}
+    public void setFaltas(int faltas) {
+        if (faltas < 0) {
+            throw new IllegalArgumentException("Faltas não podem ser negativas.");
+        }
+        this.faltas = faltas;
+    }
 
-	public boolean isAtivo() {
-		return ativo;
-	}
+    public double getNota() {
+        return nota;
+    }
 
-	public void setAtivo(boolean ativo) {
-		this.ativo = ativo;
-	}
+    public void setNota(double nota) {
+        if (nota < 0 || nota > 10) {
+            throw new IllegalArgumentException("Nota deve estar entre 0 e 10.");
+        }
+        this.nota = nota;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public boolean isAtivo() {
+        return ativo;
+    }
+
+    public void setAtivo(boolean ativo) {
+        this.ativo = ativo;
+    }
 }

@@ -1,10 +1,14 @@
 -- DROP TABLES (ordem para respeitar FK)
+SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS matriculaDisciplina;
 DROP TABLE IF EXISTS matricula;
-DROP TABLE IF EXISTS turma;
 DROP TABLE IF EXISTS disciplina;
 DROP TABLE IF EXISTS curso;
 DROP TABLE IF EXISTS aluno;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+
 
 -- TABELA ALUNO
 CREATE TABLE aluno (
@@ -39,15 +43,8 @@ CREATE TABLE disciplina (
     semestre INT NOT NULL,
     ativo BOOLEAN NOT NULL,
     FOREIGN KEY (idCurso) REFERENCES curso(idCurso)
-);
-
--- TABELA TURMA
-CREATE TABLE turma (
-    idTurma INT AUTO_INCREMENT PRIMARY KEY,
-    idCurso INT NOT NULL,
-    semestreInicio VARCHAR(20) NOT NULL,
-    ativo BOOLEAN NOT NULL,
-    FOREIGN KEY (idCurso) REFERENCES curso(idCurso)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 );
 
 -- TABELA MATRICULA
@@ -55,20 +52,29 @@ CREATE TABLE matricula (
     idMatricula INT AUTO_INCREMENT PRIMARY KEY,
     idAluno INT NOT NULL,
     idCurso INT NOT NULL,
-    ativo BOOLEAN NOT NULL,
-    FOREIGN KEY (idAluno) REFERENCES aluno(idAluno),
+    semestreInicio VARCHAR(20) NOT NULL,
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    FOREIGN KEY (idAluno) REFERENCES aluno(idAluno)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
     FOREIGN KEY (idCurso) REFERENCES curso(idCurso)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 -- TABELA MATRICULADISCIPLINA 
 CREATE TABLE matriculaDisciplina (
     idMatriculaDisciplina INT AUTO_INCREMENT PRIMARY KEY,
     idMatricula INT NOT NULL,
-    idDisciplina INT NOT NULL,  -- NOVO CAMPO: Referência à disciplina
+    idDisciplina INT NOT NULL,
     faltas INT NOT NULL,
-    semestreAtual VARCHAR(20) NOT NULL,
     nota DOUBLE NOT NULL,
-    ativo BOOLEAN NOT NULL,
-    FOREIGN KEY (idMatricula) REFERENCES matricula(idMatricula),
-    FOREIGN KEY (idDisciplina) REFERENCES disciplina(idDisciplina)  -- NOVA FK
+    status ENUM('Cursando', 'Aprovado', 'Reprovado') DEFAULT 'Cursando',
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+ 	FOREIGN KEY (idMatricula) REFERENCES matricula(idMatricula)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (idDisciplina) REFERENCES disciplina(idDisciplina)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );

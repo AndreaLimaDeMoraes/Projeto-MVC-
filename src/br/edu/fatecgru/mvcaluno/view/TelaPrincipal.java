@@ -414,7 +414,7 @@ public class TelaPrincipal extends JFrame {
             ativarBotaoMenu(btnNotasFaltas);
         }
     }
-
+    
     public void ativarBotaoMenuListarAlunos() {
         ativarBotaoMenu(btnListar);
     }

@@ -4,7 +4,7 @@ public class Disciplina {
     private int idDisciplina;
     private int idCurso;
     private String nome;
-    private int semestre; // ALTERADO PARA INT
+    private int semestre;
     private boolean ativo;
 
     public Disciplina() {}

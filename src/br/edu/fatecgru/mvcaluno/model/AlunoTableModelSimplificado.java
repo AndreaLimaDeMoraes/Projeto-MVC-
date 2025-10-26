@@ -5,6 +5,8 @@ import javax.swing.table.AbstractTableModel;
 
 public class AlunoTableModelSimplificado extends AbstractTableModel {
 
+    private static final long serialVersionUID = 1L; // Adicionado para resolver erro de serialização
+    
     private final List<AlunoView> dados; 
     
     private final String[] colunas = {"RA", "Nome do Aluno", "Curso", "Campus", "Semestre"}; 
