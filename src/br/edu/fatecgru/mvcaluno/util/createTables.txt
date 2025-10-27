@@ -43,8 +43,9 @@ CREATE TABLE disciplina (
     semestre INT NOT NULL,
     ativo BOOLEAN NOT NULL,
     FOREIGN KEY (idCurso) REFERENCES curso(idCurso)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    CONSTRAINT unq_disciplina UNIQUE (idCurso, nome)
 );
 
 -- TABELA MATRICULA
@@ -67,6 +68,7 @@ CREATE TABLE matriculaDisciplina (
     idMatriculaDisciplina INT AUTO_INCREMENT PRIMARY KEY,
     idMatricula INT NOT NULL,
     idDisciplina INT NOT NULL,
+    semestreCursado VARCHAR(20) NOT NULL,
     faltas INT NOT NULL,
     nota DOUBLE NOT NULL,
     status ENUM('Cursando', 'Aprovado', 'Reprovado') DEFAULT 'Cursando',
@@ -76,5 +78,6 @@ CREATE TABLE matriculaDisciplina (
         ON UPDATE CASCADE,
     FOREIGN KEY (idDisciplina) REFERENCES disciplina(idDisciplina)
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
+    CONSTRAINT unq_matriculadisciplina UNIQUE (idMatricula, idDisciplina, semestreCursado) -- AJUDA A EVITAR DUPLICIDADE EM UM MESMO SEMESTRE LETIVO
 );

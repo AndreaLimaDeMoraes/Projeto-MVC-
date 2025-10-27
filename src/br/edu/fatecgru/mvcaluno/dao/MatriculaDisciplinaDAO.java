@@ -4,317 +4,593 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.logging.Logger;
-import java.util.logging.Level;
-import br.edu.fatecgru.mvcaluno.model.DisciplinaBoletim;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import br.edu.fatecgru.mvcaluno.model.Disciplina;
 import br.edu.fatecgru.mvcaluno.model.MatriculaDisciplina;
-import br.edu.fatecgru.mvcaluno.model.NotaFaltas;
+import br.edu.fatecgru.mvcaluno.model.MatriculaDisciplinaDetalhe;
 import br.edu.fatecgru.mvcaluno.util.ConnectionFactory;
 
 public class MatriculaDisciplinaDAO {
 
-    private static final Logger logger = Logger.getLogger(MatriculaDisciplinaDAO.class.getName());
+    private final double NOTA_MINIMA_APROVACAO = 6.0;
+    private final int MAX_FALTAS_PERMITIDAS = 7;
 
-    public MatriculaDisciplinaDAO() {}
+    // ===========================================
+    // CÁLCULOS DE SEMESTRE
+    // ===========================================
 
-    // ===============================================
-    // READ - Buscar Nota e Faltas (Item Específico)
-    // ===============================================
-    public NotaFaltas buscarNotaFaltas(int idMatricula, int idDisciplina, String semestre) throws Exception {
-        if (semestre == null || semestre.trim().isEmpty()) {
-            throw new IllegalArgumentException("Semestre não pode ser nulo ou vazio.");
+    public String calcularProximoSemestreLetivo(String semestreAtual) {
+        if (semestreAtual == null || !semestreAtual.contains("/")) {
+            return LocalDate.now().getYear() + "/2";
         }
+        String[] partes = semestreAtual.split("/");
+        int ano = Integer.parseInt(partes[0]);
+        int semestre = Integer.parseInt(partes[1]);
+        return (semestre == 1) ? (ano + "/2") : ((ano + 1) + "/1");
+    }
 
-        NotaFaltas resultado = null;
-        String SQL = "SELECT md.nota, md.faltas, md.status FROM matriculaDisciplina md " +
-                     "JOIN matricula m ON md.idMatricula = m.idMatricula " +
-                     "WHERE md.idMatricula = ? AND md.idDisciplina = ? AND m.semestreInicio = ? AND md.ativo = 1";
+    
+    public int calcularProximoSemestreCurso(int idMatricula) throws Exception {
+        int semestreAtual = 1;
 
         try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL)) {
-
+             PreparedStatement ps = conn.prepareStatement(
+                 "SELECT MAX(d.semestre) AS semestreAtual " +
+                 "FROM matriculaDisciplina md " +
+                 "JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
+                 "WHERE md.idMatricula = ?"
+             )) {
             ps.setInt(1, idMatricula);
-            ps.setInt(2, idDisciplina);
-            ps.setString(3, semestre);
-
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    double nota = rs.getDouble("nota");
-                    int faltas = rs.getInt("faltas");
-                    String status = rs.getString("status");
-                    resultado = new NotaFaltas(nota, faltas, status);
+                    semestreAtual = rs.getInt("semestreAtual");
                 }
             }
-
-        } catch (SQLException e) {
-            throw new Exception("Erro ao buscar nota e faltas: " + e.getMessage());
         }
-        return resultado;
+
+        // Se o aluno já está no semestre 3, não cria mais matrículas
+        if (semestreAtual >= 3) {
+            return -1; // ou 0 para indicar "fim do curso"
+        }
+
+        return semestreAtual + 1; //retorna o próximo semestre do curso
     }
 
-    // ===============================================
-    // CREATE/UPDATE - Salvar/Alterar Nota, Faltas e Status (UPSERT) - Versão com 6 argumentos
-    // ===============================================
-    public void salvarNotaFaltas(int idMatricula, int idDisciplina, String semestre,
-                                 double nota, int faltas, String status) throws Exception {
-        if (semestre == null || semestre.trim().isEmpty()) {
-            throw new IllegalArgumentException("Semestre não pode ser nulo ou vazio.");
-        }
-        if (nota < 0 || nota > 10) {
-            throw new IllegalArgumentException("Nota deve estar entre 0 e 10.");
-        }
-        if (faltas < 0) {
-            throw new IllegalArgumentException("Faltas não podem ser negativas.");
-        }
-        if (status == null || status.trim().isEmpty()) {
-            throw new IllegalArgumentException("Status não pode ser nulo ou vazio.");
-        }
-
-        String SQL = "INSERT INTO matriculaDisciplina " +
-                     "(idMatricula, idDisciplina, faltas, nota, status, ativo) " +
-                     "VALUES (?, ?, ?, ?, ?, 1) " +
-                     "ON DUPLICATE KEY UPDATE nota = VALUES(nota), faltas = VALUES(faltas), status = VALUES(status)";
-
+    
+    
+    
+    public boolean temDisciplinaCursando(int idAluno, String semestreCursado) throws Exception {
+        String sql = "SELECT COUNT(*) AS qtd " +
+                     "FROM matriculaDisciplina MD " +
+                     "JOIN matricula M ON MD.idMatricula = M.idMatricula " +
+                     "WHERE M.idAluno = ? AND MD.semestreCursado = ? " +
+                     "AND MD.status = 'Cursando' AND MD.ativo = TRUE";
         try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL)) {
-
-            ps.setInt(1, idMatricula);
-            ps.setInt(2, idDisciplina);
-            ps.setInt(3, faltas);
-            ps.setDouble(4, nota);
-            ps.setString(5, status);
-            ps.executeUpdate();
-
-        } catch (SQLException e) {
-            throw new Exception("Erro ao salvar nota, faltas e status: " + e.getMessage());
-        }
-    }
-
-    // ===============================================
-    // CREATE/UPDATE - Salvar/Alterar Nota e Faltas (UPSERT) - Overload com 5 argumentos (status padrão "Cursando")
-    // ===============================================
-    public void salvarNotaFaltas(int idMatricula, int idDisciplina, String semestre,
-                                 double nota, int faltas) throws Exception {
-        salvarNotaFaltas(idMatricula, idDisciplina, semestre, nota, faltas, "Cursando");
-    }
-
-    // ===============================================
-    // DELETE - Excluir Nota e Faltas
-    // ===============================================
-    public void excluirNotaFaltas(int idMatricula, int idDisciplina, String semestre) throws Exception {
-        if (semestre == null || semestre.trim().isEmpty()) {
-            throw new IllegalArgumentException("Semestre não pode ser nulo ou vazio.");
-        }
-
-        String SQL = "DELETE md FROM matriculaDisciplina md " +
-                     "JOIN matricula m ON md.idMatricula = m.idMatricula " +
-                     "WHERE md.idMatricula = ? AND md.idDisciplina = ? AND m.semestreInicio = ?";
-
-        try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL)) {
-
-            ps.setInt(1, idMatricula);
-            ps.setInt(2, idDisciplina);
-            ps.setString(3, semestre);
-
-            int rowsAffected = ps.executeUpdate();
-            if (rowsAffected == 0) {
-                throw new Exception("Nenhuma nota/falta encontrada para excluir com os parâmetros fornecidos.");
-            }
-
-        } catch (SQLException e) {
-            throw new Exception("Erro ao excluir nota e faltas: " + e.getMessage());
-        }
-    }
-
-    // ===============================================
-    // READ - Buscar Disciplinas para Boletim (Semestre Atual)
-    // ===============================================
-    public List<DisciplinaBoletim> buscarDisciplinasBoletim(int idAluno) throws Exception {
-        List<DisciplinaBoletim> disciplinas = new ArrayList<>();
-        String SQL = "SELECT d.nome AS nomeDisciplina, md.nota, md.faltas, md.status, m.semestreInicio AS semestreAtual " +
-                     "FROM aluno a " +
-                     "JOIN matricula m ON a.idAluno = m.idAluno " +
-                     "JOIN matriculaDisciplina md ON m.idMatricula = md.idMatricula " +
-                     "JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
-                     "WHERE a.idAluno = ? AND a.ativo = TRUE AND m.ativo = TRUE AND md.ativo = TRUE " +
-                     "ORDER BY d.nome";
-
-        try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL)) {
-
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idAluno);
+            ps.setString(2, semestreCursado);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("qtd") > 0;
+                }
+            }
+        }
+        return false;
+    }
+
+    public List<Disciplina> listarDisciplinasProximoSemestre(int idCurso, int proximoSemestre, int idMatricula) throws Exception {
+        List<Disciplina> disciplinas = new ArrayList<>();
+        String sql = "SELECT * FROM disciplina D " +
+                     "WHERE D.idCurso=? AND D.semestre=? AND D.ativo=TRUE " +
+                     "AND D.idDisciplina NOT IN (SELECT MD.idDisciplina FROM matriculaDisciplina MD WHERE MD.idMatricula=? AND MD.ativo=TRUE)";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idCurso);
+            ps.setInt(2, proximoSemestre);
+            ps.setInt(3, idMatricula);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    DisciplinaBoletim disc = new DisciplinaBoletim(
-                        rs.getString("nomeDisciplina"),
-                        rs.getDouble("nota"),
-                        rs.getInt("faltas"),
-                        rs.getString("status"),
-                        rs.getString("semestreAtual")
-                    );
-                    disciplinas.add(disc);
+                    Disciplina d = new Disciplina();
+                    d.setIdDisciplina(rs.getInt("idDisciplina"));
+                    d.setNome(rs.getString("nome"));
+                    d.setSemestre(rs.getInt("semestre"));
+                    disciplinas.add(d);
                 }
             }
-
-        } catch (SQLException e) {
-            throw new Exception("Erro ao buscar disciplinas do boletim: " + e.getMessage());
         }
         return disciplinas;
     }
-
-    // ===============================================
-    // MÉTODO AUXILIAR - Buscar alunos reprovados para rematrícula
-    // ===============================================
-    public List<MatriculaDisciplina> listarAlunosReprovados(String semestre) throws Exception {
-        if (semestre == null || semestre.trim().isEmpty()) {
-            throw new IllegalArgumentException("Semestre não pode ser nulo ou vazio.");
-        }
-
-        List<MatriculaDisciplina> reprovados = new ArrayList<>();
-        String SQL = "SELECT md.idMatriculaDisciplina, md.idMatricula, md.idDisciplina, md.faltas, md.nota, md.status, md.ativo " +
-                     "FROM matriculaDisciplina md " +
-                     "JOIN matricula m ON md.idMatricula = m.idMatricula " +
-                     "WHERE m.semestreInicio = ? AND md.status = 'Reprovado' AND md.ativo = 1";
-
-        try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL)) {
-
-            ps.setString(1, semestre);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    MatriculaDisciplina md = new MatriculaDisciplina(
-                        rs.getInt("idMatriculaDisciplina"),
-                        rs.getInt("idMatricula"),
-                        rs.getInt("idDisciplina"),
-                        rs.getInt("faltas"),
-                        rs.getDouble("nota"),
-                        rs.getString("status"),
-                        rs.getBoolean("ativo")
-                    );
-                    reprovados.add(md);
-                }
-            }
-
-        } catch (SQLException e) {
-            throw new Exception("Erro ao listar alunos reprovados: " + e.getMessage());
-        }
-        return reprovados;
+    
+    public String calcularSemestreAtual() {
+        LocalDate hoje = LocalDate.now();
+        int ano = hoje.getYear();
+        int semestre = (hoje.getMonthValue() <= 6) ? 1 : 2;
+        return ano + "/" + semestre;
     }
 
-    /**
-     * Realiza a rematrícula automática das disciplinas reprovadas de um semestre para o próximo.
-     * @param semestreAtual O semestre em que os alunos foram reprovados (ex: "2025/1")
-     * @param proximoSemestre O semestre para rematrícula (ex: "2025/2")
-     * @throws Exception
-     */
-    public void rematricularReprovados(String semestreAtual, String proximoSemestre) throws Exception {
-        if (semestreAtual == null || semestreAtual.trim().isEmpty() || proximoSemestre == null || proximoSemestre.trim().isEmpty()) {
-            throw new IllegalArgumentException("Semestres não podem ser nulos ou vazios.");
-        }
 
-        List<MatriculaDisciplina> reprovados = listarAlunosReprovados(semestreAtual);
+    // ===========================================
+    // MÉTODOS DE NOTAS E FALTAS
+    // ===========================================
 
-        if (reprovados.isEmpty()) {
-            logger.info("Nenhum aluno reprovado encontrado no semestre " + semestreAtual);
-            return;
-        }
+    private String calcularStatusFinal(double nota, int faltas) {
+        if (nota == 0 && faltas == 0) return "Cursando";
+        if (nota < NOTA_MINIMA_APROVACAO || faltas > MAX_FALTAS_PERMITIDAS) return "Reprovado";
+        return "Aprovado";
+    }
 
-        // Primeiro, atualiza o semestreInicio na tabela matricula para o próximo semestre
-        String SQLUpdateMatricula = "UPDATE matricula SET semestreInicio = ? WHERE idMatricula IN (" +
-                                    "SELECT DISTINCT md.idMatricula FROM matriculaDisciplina md WHERE md.status = 'Reprovado' AND md.ativo = 1)";
+    public void atribuirTemporariamenteNotaFaltas(MatriculaDisciplina md) throws Exception {
+        String status = calcularStatusFinal(md.getNota(), md.getFaltas());
+        String SQL = "UPDATE matriculaDisciplina SET nota=?, faltas=?, status=? WHERE idMatriculaDisciplina=?";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(SQL)) {
+            ps.setDouble(1, md.getNota());
+            ps.setInt(2, md.getFaltas());
+            ps.setString(3, status);
+            ps.setInt(4, md.getIdMatriculaDisciplina());
 
-        String SQLInsert = "INSERT INTO matriculaDisciplina " +
-                           "(idMatricula, idDisciplina, faltas, nota, status, ativo) " +
-                           "VALUES (?, ?, 0, 0, 'Cursando', 1)";
-
-        Connection conn = null;
-        try {
-            conn = ConnectionFactory.getConnection();
-            conn.setAutoCommit(false); // Inicia transação
-
-            // Atualiza o semestre das matrículas reprovadas
-            try (PreparedStatement psUpdate = conn.prepareStatement(SQLUpdateMatricula)) {
-                psUpdate.setString(1, proximoSemestre);
-                psUpdate.executeUpdate();
+            if (ps.executeUpdate() == 0) {
+                throw new Exception("Nenhuma nota/falta atualizada. Registro não encontrado.");
             }
+        }
+    }
 
-            // Insere novas matrículas em disciplinas
-            try (PreparedStatement ps = conn.prepareStatement(SQLInsert)) {
-                for (MatriculaDisciplina md : reprovados) {
-                    ps.setInt(1, md.getIdMatricula());
-                    ps.setInt(2, md.getIdDisciplina());
-                    ps.addBatch();
+    public void finalizarNotaFaltas(MatriculaDisciplina md) throws Exception {
+        atribuirTemporariamenteNotaFaltas(md); // mesmo comportamento
+    }
+
+    public MatriculaDisciplina buscarNotaFaltas(int idMatricula, int idDisciplina, String semestreCursado) throws Exception {
+        MatriculaDisciplina md = null;
+        String SQL = "SELECT * FROM matriculaDisciplina WHERE idMatricula=? AND idDisciplina=? AND semestreCursado=? AND ativo=TRUE";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(SQL)) {
+            ps.setInt(1, idMatricula);
+            ps.setInt(2, idDisciplina);
+            ps.setString(3, semestreCursado);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    md = new MatriculaDisciplina();
+                    md.setIdMatriculaDisciplina(rs.getInt("idMatriculaDisciplina"));
+                    md.setIdMatricula(rs.getInt("idMatricula"));
+                    md.setIdDisciplina(rs.getInt("idDisciplina"));
+                    md.setSemestreCursado(rs.getString("semestreCursado"));
+                    md.setFaltas(rs.getInt("faltas"));
+                    md.setNota(rs.getDouble("nota"));
+                    md.setStatus(rs.getString("status"));
+                    md.setAtivo(rs.getBoolean("ativo"));
                 }
-
-                int[] resultados = ps.executeBatch();
-                conn.commit(); // Confirma transação
-                logger.info("Rematrícula concluída: " + resultados.length + " disciplinas rematriculadas para o semestre " + proximoSemestre);
             }
+        }
+        return md;
+    }
 
+    // ===========================================
+    // MÉTODOS DE POPULAÇÃO DE UI
+    // ===========================================
+
+    public List<String> listarSemestresCursados(int idAluno) throws Exception {
+        List<String> semestres = new ArrayList<>();
+        String sql = "SELECT DISTINCT semestreCursado FROM matriculaDisciplina " +
+                     "WHERE idMatricula = ? AND ativo = TRUE ORDER BY semestreCursado";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idAluno);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    semestres.add(rs.getString("semestreCursado"));
+                }
+            }
+        }
+        return semestres;
+    }
+
+
+    public List<MatriculaDisciplinaDetalhe> listarDisciplinasParaAlunoNoSemestre(int idAluno, String semestre) throws Exception {
+        List<MatriculaDisciplinaDetalhe> detalhes = new ArrayList<>();
+        String SQL = "SELECT D.idDisciplina, D.nome AS nomeDisciplina, MD.idMatriculaDisciplina " +
+                     "FROM matriculaDisciplina MD " +
+                     "JOIN matricula M ON MD.idMatricula = M.idMatricula " +
+                     "JOIN Disciplina D ON MD.idDisciplina = D.idDisciplina " +
+                     "WHERE M.idAluno=? AND MD.semestreCursado=? AND MD.ativo=TRUE " +
+                     "ORDER BY D.nome";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(SQL)) {
+            ps.setInt(1, idAluno);
+            ps.setString(2, semestre);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    MatriculaDisciplinaDetalhe detalhe = new MatriculaDisciplinaDetalhe();
+                    detalhe.setIdDisciplina(rs.getInt("idDisciplina"));
+                    detalhe.setNomeDisciplina(rs.getString("nomeDisciplina"));
+                    detalhe.setIdMatriculaDisciplina(rs.getInt("idMatriculaDisciplina"));
+                    detalhes.add(detalhe);
+                }
+            }
+        }
+        return detalhes;
+    }
+
+    // ===========================================
+    // MÉTODOS NOVOS PARA SUA VIEW
+    // ===========================================
+
+    /** Verifica se existem disciplinas com status 'Cursando' */
+    public boolean verificarPendencias(int idMatricula) throws Exception {
+        String SQL = "SELECT COUNT(*) FROM matriculaDisciplina WHERE idMatricula=? AND status='Cursando' AND ativo=TRUE";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(SQL)) {
+            ps.setInt(1, idMatricula);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1) > 0;
+            }
+        }
+        return false;
+    }
+    public List<MatriculaDisciplina> listarDisciplinasPorStatus(int idMatricula, String status) throws Exception {
+        List<MatriculaDisciplina> lista = new ArrayList<>();
+        
+        String sql = "SELECT * FROM matriculaDisciplina WHERE idMatricula = ? AND status = ? AND ativo = TRUE";
+        try (Connection conn = ConnectionFactory.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idMatricula);
+            ps.setString(2, status);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                MatriculaDisciplina md = new MatriculaDisciplina();
+                md.setIdMatriculaDisciplina(rs.getInt("idMatriculaDisciplina"));
+                md.setIdDisciplina(rs.getInt("idDisciplina"));
+                md.setNota(rs.getDouble("nota"));
+                md.setFaltas(rs.getInt("faltas"));
+                md.setStatus(rs.getString("status"));
+                md.setSemestreCursado(rs.getString("semestreCursado"));
+                lista.add(md);
+            }
         } catch (SQLException e) {
-            if (conn != null) {
-                try {
-                    conn.rollback(); // Reverte em caso de erro
-                } catch (SQLException rollbackEx) {
-                    logger.log(Level.SEVERE, "Erro ao fazer rollback: " + rollbackEx.getMessage());
-                }
-            }
-            throw new Exception("Erro ao realizar rematrícula automática: " + e.getMessage());
-        } finally {
-            if (conn != null) {
-                try {
-                    conn.setAutoCommit(true); // Restaura auto-commit
-                    conn.close();
-                } catch (SQLException closeEx) {
-                    logger.log(Level.WARNING, "Erro ao fechar conexão: " + closeEx.getMessage());
-                }
-            }
+            throw new Exception("Erro ao listar disciplinas por status.", e);
+        }
+        return lista;
+    }
+
+    public void matricularDisciplinaNoSemestre(int idDisciplina, int idMatricula, String semestre) throws Exception {
+    	Connection conn = ConnectionFactory.getConnection();
+
+    	String sql = "INSERT INTO matriculaDisciplina (idMatricula, idDisciplina, semestreCursado, faltas, nota, status, ativo) "
+                   + "VALUES (?, ?, ?, 0, 0.0, 'Cursando', TRUE)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idMatricula);
+            ps.setInt(2, idDisciplina);
+            ps.setString(3, semestre);
+            ps.executeUpdate();
         }
     }
     
- // ===============================================
- // READ - Obter ID do Curso de uma Matrícula
- // ===============================================
- public int obterIdCursoDaMatricula(int idMatricula) throws Exception {
-     String SQL = "SELECT idCurso FROM matricula WHERE idMatricula = ?";
-     try (Connection conn = ConnectionFactory.getConnection();
-          PreparedStatement ps = conn.prepareStatement(SQL)) {
-         ps.setInt(1, idMatricula);
-         try (ResultSet rs = ps.executeQuery()) {
-             if (rs.next()) {
-                 return rs.getInt("idCurso");
-             }
-         }
-     } catch (SQLException e) {
-         throw new Exception("Erro ao obter ID do curso da matrícula: " + e.getMessage());
-     }
-     return -1; // Retorno padrão se não encontrar
- }
- 
-//===============================================
-//READ - Listar Disciplinas por Curso e Semestre
-//===============================================
-public List<String> listarDisciplinasPorCursoESemestre(int idCurso, int semestre) throws Exception {
-  List<String> disciplinas = new ArrayList<>();
-  String SQL = "SELECT CONCAT(idDisciplina, ' - ', nome) AS disciplina " +
-               "FROM disciplina " +
-               "WHERE idCurso = ? AND semestre = ? AND ativo = 1 " +
-               "ORDER BY nome";
-  try (Connection conn = ConnectionFactory.getConnection();
-       PreparedStatement ps = conn.prepareStatement(SQL)) {
-      ps.setInt(1, idCurso);
-      ps.setInt(2, semestre);
-      try (ResultSet rs = ps.executeQuery()) {
-          while (rs.next()) {
-              disciplinas.add(rs.getString("disciplina"));
-          }
-      }
-  } catch (SQLException e) {
-      throw new Exception("Erro ao listar disciplinas por curso e semestre: " + e.getMessage());
-  }
-  return disciplinas;
+    public List<Integer> listarDisciplinasPorSemestreCurso(int idCurso, String semestre) throws Exception {
+        List<Integer> lista = new ArrayList<>();
+        int semestreNum;
+
+        if (semestre.contains("/")) {
+            // Ex: "2025/2"
+            semestreNum = Integer.parseInt(semestre.split("/")[1]);
+        } else {
+            // Ex: "3" → já é o número do semestre
+            semestreNum = Integer.parseInt(semestre);
+        }
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                 "SELECT idDisciplina FROM disciplina WHERE idCurso = ? AND semestre = ? AND ativo = TRUE"
+             )) {
+            ps.setInt(1, idCurso);
+            ps.setInt(2, semestreNum);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(rs.getInt("idDisciplina"));
+                }
+            }
+        }
+        return lista;
+    }
+
+public boolean jaMatriculado(int idMatricula, Integer idDisciplina, String semestre) throws Exception {
+    	
+    	String sql = "SELECT COUNT(*) FROM matriculaDisciplina WHERE idMatricula = ? AND idDisciplina = ? AND semestreCursado = ? AND ativo = TRUE";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idMatricula);
+            ps.setInt(2, idDisciplina);
+            ps.setString(3, semestre);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+            return false;
+        } catch (SQLException e) {
+            throw new Exception("Erro ao verificar matrícula existente.", e);
+        }
+    }
+    
+/** Verifica se ainda existem disciplinas com status 'Cursando' no semestre específico. */
+public boolean verificarPendenciasNoSemestre(int idMatricula, String semestre) throws Exception {
+    String SQL = "SELECT COUNT(*) FROM matriculaDisciplina WHERE idMatricula=? AND semestreCursado=? AND status='Cursando' AND ativo=TRUE";
+    try (Connection conn = ConnectionFactory.getConnection();
+         PreparedStatement ps = conn.prepareStatement(SQL)) {
+        ps.setInt(1, idMatricula);
+        ps.setString(2, semestre);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt(1) > 0;
+        }
+    }
+    return false;
 }
+
+public List<String> processarFimSemestre(int idMatricula, int idCurso, String semestreAtualAluno) throws Exception {
+    List<String> disciplinasMatriculadas = new ArrayList<>();
+    Connection conn = null;
+
+    try {
+        // 0️ VERIFICAÇÃO DE PENDÊNCIAS (NOVO PASSO)
+        if (verificarPendenciasNoSemestre(idMatricula, semestreAtualAluno)) {
+            throw new Exception("Não é possível finalizar o semestre. Existem disciplinas pendentes ('Cursando') sem nota ou falta atribuídas.");
+        }
+        
+        conn = ConnectionFactory.getConnection();
+        conn.setAutoCommit(false); // Inicia a transação
+
+        // 1️Atualizar status (Aprovado/Reprovado) das disciplinas do semestre encerrado
+        String sqlUpdateStatus = "UPDATE matriculaDisciplina SET status = CASE " +
+                                 "WHEN nota >= ? AND faltas <= ? THEN 'Aprovado' " +
+                                 "ELSE 'Reprovado' END " +
+                                 "WHERE idMatricula = ? AND semestreCursado = ? AND ativo = TRUE AND status = 'Cursando'";
+        try (PreparedStatement ps = conn.prepareStatement(sqlUpdateStatus)) {
+            ps.setDouble(1, NOTA_MINIMA_APROVACAO);
+            ps.setInt(2, MAX_FALTAS_PERMITIDAS);
+            ps.setInt(3, idMatricula);
+            ps.setString(4, semestreAtualAluno);
+            ps.executeUpdate();
+        }
+
+        // 2️ Calcular próximo semestre letivo (ex: "2025/1" → "2025/2")
+        String proximoSemestreLetivo = calcularProximoSemestreLetivo(semestreAtualAluno);
+
+        // 3️ Buscar disciplinas reprovadas (que precisam ser repetidas)
+        List<MatriculaDisciplina> reprovadas = listarDisciplinasPorStatus(idMatricula, "Reprovado");
+        Set<Integer> idsReprovadas = reprovadas.stream()
+                .map(MatriculaDisciplina::getIdDisciplina)
+                .collect(Collectors.toSet());
+
+        // 4️ Buscar disciplinas aprovadas (para evitar matrícula duplicada)
+        List<MatriculaDisciplina> aprovadas = listarDisciplinasPorStatus(idMatricula, "Aprovado");
+        Set<Integer> idsAprovadas = aprovadas.stream()
+                .map(MatriculaDisciplina::getIdDisciplina)
+                .collect(Collectors.toSet());
+
+     // 5️ Determinar qual é o próximo semestre da grade curricular do curso
+        int proximoSemestreCurso = calcularProximoSemestreCurso(idMatricula);
+
+        // 6️ Determinar disciplinas para matrícula (AVANÇA E REPETE PENDÊNCIAS)
+        List<Integer> disciplinasParaMatricular = new ArrayList<>();
+
+        // Se proximoSemestreCurso é 3, o semestre alvo para busca de pendências é 3, 
+        // o que significa que devemos verificar os semestres 1 e 2.
+        int semestreAlvoParaPendencias = (proximoSemestreCurso != -1) ? proximoSemestreCurso : 
+                                         (idsAprovadas.isEmpty() ? 1 : calcularMaxSemestreAprovado(idsAprovadas, idCurso) + 1);
+
+
+        // ===============================================
+        // 6.1: Adiciona TODAS as disciplinas pendentes de semestres anteriores (REPETIÇÃO/PENDÊNCIAS)
+        // ===============================================
+
+        // Busca todas as IDs de disciplinas obrigatórias dos semestres anteriores ao alvo.
+        List<Integer> idsObrigatoriasAnteriores = listarDisciplinasSemestreAte(idCurso, semestreAlvoParaPendencias); 
+
+        for (Integer idDisc : idsObrigatoriasAnteriores) {
+            // Se não foi aprovada E não está na lista de matrícula E não está matriculada neste semestre letivo
+            if (!idsAprovadas.contains(idDisc) &&
+                !disciplinasParaMatricular.contains(idDisc) &&
+                !jaMatriculado(idMatricula, idDisc, proximoSemestreLetivo)) {
+                
+                disciplinasParaMatricular.add(idDisc);
+                System.out.println("ADICIONANDO PENDÊNCIA (Anterior/Reprovada): ID Disciplina " + idDisc);
+            }
+        }
+
+
+        // ===============================================
+        // 6.2: Adiciona as NOVAS disciplinas da grade (AVANÇO)
+        // ===============================================
+        if (proximoSemestreCurso != -1) {
+            List<Integer> disciplinasProxSemestre =
+                    listarDisciplinasPorSemestreCurso(idCurso, String.valueOf(proximoSemestreCurso));
+
+            for (Integer idDisc : disciplinasProxSemestre) {
+                // Matrícula na disciplina nova, desde que não tenha sido aprovada
+                // E (principalmente) não tenha sido adicionada como Pendência no Passo 6.1 (caso seja uma reprovação do último semestre)
+                if (!idsAprovadas.contains(idDisc) &&
+                    !disciplinasParaMatricular.contains(idDisc) && // <- Verificação crucial
+                    !jaMatriculado(idMatricula, idDisc, proximoSemestreLetivo)) {
+                    
+                    disciplinasParaMatricular.add(idDisc);
+                }
+            }
+        }
+
+        // O curso só termina se não há mais disciplinas novas E não há pendências de repetição.
+        if (proximoSemestreCurso == -1 && disciplinasParaMatricular.isEmpty()) {
+             System.out.println("Aluno concluiu todas as disciplinas do curso e não tem pendências.");
+             conn.commit();
+             return disciplinasMatriculadas;
+        }
+
+        // 7️ Matricular as disciplinas selecionadas
+        if (!disciplinasParaMatricular.isEmpty()) {
+            String sqlInsert = "INSERT INTO matriculaDisciplina " +
+                    "(idMatricula, idDisciplina, semestreCursado, faltas, nota, status, ativo) " +
+                    "VALUES (?, ?, ?, 0, 0.0, 'Cursando', TRUE)";
+            try (PreparedStatement ps = conn.prepareStatement(sqlInsert)) {
+                for (Integer idDisc : disciplinasParaMatricular) {
+                    ps.setInt(1, idMatricula);
+                    ps.setInt(2, idDisc);
+                    ps.setString(3, proximoSemestreLetivo);
+                    ps.addBatch();
+                }
+                ps.executeBatch(); // Executa todas as inserções
+            }
+
+            // Retornar nomes das disciplinas matriculadas para exibir na interface
+            String sqlNomes = "SELECT nome FROM disciplina WHERE idDisciplina IN (" +
+                    disciplinasParaMatricular.stream().map(String::valueOf).collect(Collectors.joining(",")) + ")";
+            try (PreparedStatement ps = conn.prepareStatement(sqlNomes);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    disciplinasMatriculadas.add(rs.getString("nome"));
+                }
+            }
+        }
+
+        conn.commit(); // Confirma a transação
+    } catch (Exception e) {
+        if (conn != null) conn.rollback(); // Desfaz em caso de erro
+        throw new Exception("Erro ao processar fim de semestre: " + e.getMessage(), e); 
+    } finally {
+        if (conn != null) {
+            conn.setAutoCommit(true);
+            conn.close();
+        }
+    }
+
+    return disciplinasMatriculadas;
+}
+
+/** Lista todas as IDs de disciplinas obrigatórias do curso, de 1 até o semestre alvo-1. */
+public List<Integer> listarDisciplinasSemestreAte(int idCurso, int semestreAlvo) throws Exception {
+    List<Integer> lista = new ArrayList<>();
+    // Busca disciplinas com semestre MENOR que o semestreAlvo
+    String sql = "SELECT idDisciplina FROM disciplina WHERE idCurso = ? AND semestre < ? AND ativo = TRUE";
+    try (Connection conn = ConnectionFactory.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, idCurso);
+        ps.setInt(2, semestreAlvo);
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                lista.add(rs.getInt("idDisciplina"));
+            }
+        }
+    }
+    return lista;
+}
+
+/** Calcula o maior número de semestre de uma disciplina que o aluno já aprovou. */
+public int calcularMaxSemestreAprovado(Set<Integer> idsAprovadas, int idCurso) throws Exception {
+    if (idsAprovadas.isEmpty()) return 0;
+    
+    String ids = idsAprovadas.stream().map(String::valueOf).collect(Collectors.joining(","));
+    
+    String sql = "SELECT MAX(semestre) FROM disciplina WHERE idDisciplina IN (" + ids + ") AND idCurso = ?";
+    try (Connection conn = ConnectionFactory.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, idCurso);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+    }
+    return 0;
+}
+
+
+    private int getTotalDisciplinasAnteriores(int idCurso, int semestreAlvo) throws Exception { 
+        int count = 0;
+        String sql = "SELECT COUNT(idDisciplina) FROM disciplina WHERE idCurso = ? AND semestre < ? AND ativo = TRUE";
+        try (Connection conn = ConnectionFactory.getConnection(); 
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idCurso);
+            ps.setInt(2, semestreAlvo); // Conta todos os semestres abaixo do alvo (e.g., para o 3º, conta 1º e 2º)
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    count = rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            // Captura o SQLException e relança como Exception para o método chamador
+            throw new Exception("Erro ao contar total de disciplinas anteriores.", e);
+        }
+        return count;
+    }
+
+    /** Conta quantas disciplinas dos semestres anteriores (1 até N-1) o aluno JÁ APROVOU. */
+    private int totalAprovadasDisciplinasAnteriores(int idMatricula, int idCurso, int semestreAlvo) throws Exception { // MUDADO PARA throws Exception
+        int count = 0;
+        String sql = "SELECT COUNT(DISTINCT d.idDisciplina) " +
+                     "FROM matriculaDisciplina md " +
+                     "JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
+                     "WHERE md.idMatricula = ? AND d.idCurso = ? AND d.semestre < ? AND md.status = 'Aprovado' AND d.ativo = TRUE";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idMatricula);
+            ps.setInt(2, idCurso);
+            ps.setInt(3, semestreAlvo);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    count = rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            // Captura o SQLException e relança como Exception para o método chamador
+            throw new Exception("Erro ao contar disciplinas aprovadas anteriores.", e);
+        }
+        return count;
+    }
+
+    public String obterSemestreAtualAluno(int idAluno) throws Exception {
+        String sql = "SELECT semestreCursado FROM matriculaDisciplina md " +
+                     "JOIN matricula m ON md.idMatricula = m.idMatricula " +
+                     "WHERE m.idAluno = ? AND md.ativo = TRUE " +
+                     "ORDER BY md.semestreCursado DESC LIMIT 1";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idAluno);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("semestreCursado");
+                }
+            }
+        }
+        return calcularSemestreAtual(); // fallback
+    }
+    
+    public String calcularProximoSemestreDoAluno(int idMatricula) throws Exception {
+        String sql = "SELECT MAX(semestreCursado) AS ultimoSemestre FROM matriculaDisciplina WHERE idMatricula=? AND ativo=TRUE";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idMatricula);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String ultimo = rs.getString("ultimoSemestre");
+                    if (ultimo != null && ultimo.contains("/")) {
+                        String[] partes = ultimo.split("/");
+                        int ano = Integer.parseInt(partes[0]);
+                        int sem = Integer.parseInt(partes[1]);
+                        int proximoSem = (sem == 1) ? 2 : 1;
+                        int proximoAno = (sem == 1) ? ano : ano + 1;
+                        return proximoAno + "/" + proximoSem;
+                    } else {
+                        // fallback seguro
+                        return calcularSemestreAtual();
+                    }
+
+                }
+            }
+        }
+        // fallback se não tiver nenhum semestre
+        return calcularSemestreAtual();
+    }
+    
+
 }

@@ -1,124 +1,212 @@
 package br.edu.fatecgru.mvcaluno.view;
 
-import javax.swing.JPanel;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.JLabel;
-import java.awt.Font;
-import javax.swing.JTextField;
-import javax.swing.JComboBox;
-import javax.swing.JButton;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.util.List;
-import java.util.ArrayList;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.Color;
-import javax.swing.JOptionPane;
-import javax.swing.JPopupMenu;
-import javax.swing.JList;
-import javax.swing.DefaultListModel;
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.JScrollPane;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+
 import br.edu.fatecgru.mvcaluno.dao.AlunoDAO;
-import br.edu.fatecgru.mvcaluno.model.AlunoView;
-import br.edu.fatecgru.mvcaluno.model.NotaFaltas;
 import br.edu.fatecgru.mvcaluno.dao.MatriculaDisciplinaDAO;
-import javax.swing.border.TitledBorder;
-import javax.swing.ImageIcon;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import br.edu.fatecgru.mvcaluno.util.ConnectionFactory;
+import br.edu.fatecgru.mvcaluno.model.AlunoView;
+import br.edu.fatecgru.mvcaluno.model.MatriculaDisciplina;
+import br.edu.fatecgru.mvcaluno.model.MatriculaDisciplinaDetalhe;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.util.List;
 
 /**
  * View para atribuição e consulta de Notas e Faltas dos alunos.
- * Implementa um recurso de AutoComplete na pesquisa de alunos.
+ * Implementa recurso de AutoComplete na pesquisa de alunos.
  */
 public class NotasFaltas extends JPanel {
 
-    private static final long serialVersionUID = 1L;
-    private JPanel contentPane;
-    private JPanel panelPesquisarAluno;
-    private JLabel lblPesquisarAluno;
-    private JTextField txtPesquisarAluno;
-    private JPanel panelDados;
-    private JLabel lblCurso;
-    private JTextField txtNota;
-    private JTextField txtFalta;
-    private JLabel lblNome;
-    private JLabel lblRA;
-    private JLabel lblInformeADisciplina;
-    private JComboBox<String> cmbDisciplina;
-    private JPanel panelNotasFaltas;
-    private JLabel lblNota;
-    private JLabel lblFaltas;
-    private JButton btnAtribuir;
-    private JLabel lblSemestre;
-    private JComboBox<String> cmbSemestre; // Movido para inicialização correta no construtor
+    private static class DisciplinaComboItem {
+        private int idDisciplina;
+        private String displayText;
 
-    private TelaPrincipal telaPrincipal;
-    private int idAlunoSelecionado = -1;
-    private int idMatriculaSelecionada = -1;
-    private String semestreAtual = "2025/2";
+        public DisciplinaComboItem(int idDisciplina, String displayText) {
+            this.idDisciplina = idDisciplina;
+            this.displayText = displayText;
+        }
+
+        public int getIdDisciplina() {
+            return idDisciplina;
+        }
+
+        @Override
+        public String toString() {
+            return displayText;
+        }
+    }
+
+    private static final long serialVersionUID = 1L;
 
     private final String HINT_TEXT = "Digite nome ou RA do aluno";
     private final Color HINT_COLOR = Color.LIGHT_GRAY;
     private final Color TEXT_COLOR = Color.BLACK;
 
+    private TelaPrincipal telaPrincipal;
+    private int idAlunoSelecionado = -1;
+    private int idMatriculaSelecionada = -1;
+    private AlunoView alunoSelecionado = null;
+
+    private JPanel panelPesquisarAluno;
+    private JLabel lblPesquisarAluno;
+    private JTextField txtPesquisarAluno;
+
+    private JPanel panelDados;
+    private JLabel lblNome, lblRA, lblCurso;
+    private JComboBox<String> cmbSemestre;
+    private JComboBox<Object> cmbDisciplina;
+
+    private JPanel panelNotasFaltas;
+    private JTextField txtNota, txtFalta, txtStatus;
+    private JButton btnAtribuir, btnProcessarFimSemestre;
+
     private JPopupMenu popupSugestoes;
     private JList<AlunoView> listaSugestoes;
     private DefaultListModel<AlunoView> listModelSugestoes;
+
     private AlunoDAO alunoDAO;
     private MatriculaDisciplinaDAO matriculaDisciplinaDAO;
-    private JLabel lblNewLabel;
-    private JLabel lblRa;
-    private JLabel lblCurso_1;
-    private JLabel lblCurso_2;
+    private boolean bloqueioSemestreListener = false;
 
     public NotasFaltas(TelaPrincipal p, int mode) {
         this.telaPrincipal = p;
-        System.out.println("DEBUG: Iniciando NotasFaltas");
         try {
-            System.out.println("DEBUG: Instanciando DAOs");
             this.alunoDAO = new AlunoDAO();
             this.matriculaDisciplinaDAO = new MatriculaDisciplinaDAO();
         } catch (Exception e) {
-            System.err.println("ERRO: Falha DAOs - " + e.getMessage());
-            e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erro ao conectar: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        System.out.println("DEBUG: Chamando inicializarAutocomplete");
+
         inicializarAutocomplete();
+        inicializarComponentes();
+        adicionarListeners();
+    }
+
+    private void inicializarComponentes() {
         setLayout(null);
         setBorder(new EmptyBorder(5, 5, 5, 5));
 
+        // --- Painel Pesquisa Aluno ---
         panelPesquisarAluno = new JPanel();
         panelPesquisarAluno.setBounds(10, 11, 920, 73);
-        add(panelPesquisarAluno);
         panelPesquisarAluno.setLayout(null);
+        add(panelPesquisarAluno);
 
         lblPesquisarAluno = new JLabel("Pesquisar aluno:");
         lblPesquisarAluno.setFont(new Font("Tahoma", Font.PLAIN, 17));
         lblPesquisarAluno.setBounds(18, 21, 138, 24);
         panelPesquisarAluno.add(lblPesquisarAluno);
 
-        txtPesquisarAluno = new JTextField();
+        txtPesquisarAluno = new JTextField(HINT_TEXT);
         txtPesquisarAluno.setFont(new Font("Tahoma", Font.PLAIN, 17));
         txtPesquisarAluno.setBounds(148, 20, 414, 27);
-        panelPesquisarAluno.add(txtPesquisarAluno);
-        txtPesquisarAluno.setColumns(10);
-
-        txtPesquisarAluno.setText(HINT_TEXT);
         txtPesquisarAluno.setForeground(HINT_COLOR);
+        panelPesquisarAluno.add(txtPesquisarAluno);
 
+       
+     // --- Painel Dados ---
+        panelDados = new JPanel();
+        panelDados.setBorder(new TitledBorder(null, "Dados do Aluno", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        panelDados.setLayout(null);
+        panelDados.setBounds(10, 86, 920, 159);
+        add(panelDados);
+        panelDados.setVisible(false);
+
+        // Labels alinhados na mesma linha
+        lblNome = criarLabelBold("Nome: Carregando...", 20, 33, 220, 24);
+        panelDados.add(lblNome);
+
+        lblRA = criarLabelBold("RA: Carregando...", 260, 33, 150, 24);
+        panelDados.add(lblRA);
+
+        lblCurso = criarLabelBold("Curso: Carregando...", 420, 33, 300, 24);
+        panelDados.add(lblCurso);
+
+        // ComboBox Semestre
+        JLabel lblSemestre = new JLabel("Semestre:");
+        lblSemestre.setFont(new Font("Tahoma", Font.BOLD, 15));
+        lblSemestre.setBounds(20, 77, 90, 22);
+        panelDados.add(lblSemestre);
+
+        cmbSemestre = new JComboBox<>();
+        cmbSemestre.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        cmbSemestre.setBounds(111, 77, 95, 22);
+        panelDados.add(cmbSemestre);
+
+        // ComboBox Disciplina
+        JLabel lblDisciplina = new JLabel("Informe a disciplina:");
+        lblDisciplina.setFont(new Font("Tahoma", Font.BOLD, 15));
+        lblDisciplina.setBounds(20, 110, 160, 22);
+        panelDados.add(lblDisciplina);
+
+        cmbDisciplina = new JComboBox<>();
+        cmbDisciplina.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        cmbDisciplina.setBounds(190, 110, 430, 28);
+        panelDados.add(cmbDisciplina);
+
+
+        // --- Painel Notas/Faltas ---
+        panelNotasFaltas = new JPanel();
+        panelNotasFaltas.setBorder(new TitledBorder(null, "Notas e Faltas", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        panelNotasFaltas.setBounds(10, 247, 920, 142);
+        panelNotasFaltas.setLayout(null);
+        panelNotasFaltas.setVisible(false);
+        add(panelNotasFaltas);
+
+        txtNota = criarTextField(79, 33, 84, 25);
+        panelNotasFaltas.add(txtNota);
+
+        txtFalta = criarTextField(258, 33, 84, 25);
+        panelNotasFaltas.add(txtFalta);
+
+        btnAtribuir = criarBotao("Atribuir", 403, 22, 148, 45);
+        panelNotasFaltas.add(btnAtribuir);
+
+        btnProcessarFimSemestre = criarBotao("Processar Fim do Semestre", 579, 22, 264, 45);
+        panelNotasFaltas.add(btnProcessarFimSemestre);
+
+        txtStatus = criarTextField(153, 83, 280, 25);
+        panelNotasFaltas.add(txtStatus);
+        JLabel lblStatus = new JLabel("Situação atual:");
+        lblStatus.setFont(new Font("Tahoma", Font.PLAIN, 17));
+        lblStatus.setBounds(33, 83, 130, 24);
+        panelNotasFaltas.add(lblStatus);
+    }
+
+    private JLabel criarLabelBold(String texto, int x, int y, int w, int h) {
+        JLabel lbl = new JLabel(texto);
+        lbl.setFont(new Font("Tahoma", Font.BOLD, 15));
+        lbl.setBounds(x, y, w, h);
+        return lbl;
+    }
+
+    private JTextField criarTextField(int x, int y, int w, int h) {
+        JTextField tf = new JTextField();
+        tf.setBounds(x, y, w, h);
+        tf.setFont(new Font("Tahoma", Font.PLAIN, 17));
+        tf.setColumns(10);
+        return tf;
+    }
+
+    private JButton criarBotao(String texto, int x, int y, int w, int h) {
+        JButton btn = new JButton(texto);
+        btn.setBounds(x, y, w, h);
+        btn.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        btn.setForeground(Color.BLACK);
+        btn.setFocusPainted(false);
+        btn.setContentAreaFilled(false);
+        return btn;
+    }
+
+    private void adicionarListeners() {
+        // AutoComplete
         txtPesquisarAluno.addFocusListener(new FocusListener() {
-            @Override
             public void focusGained(FocusEvent e) {
                 if (txtPesquisarAluno.getText().equals(HINT_TEXT)) {
                     txtPesquisarAluno.setText("");
@@ -126,11 +214,7 @@ public class NotasFaltas extends JPanel {
                 }
             }
 
-            @Override
             public void focusLost(FocusEvent e) {
-                if (e.getOppositeComponent() != null && e.getOppositeComponent().getParent() == popupSugestoes) {
-                    return;
-                }
                 if (txtPesquisarAluno.getText().isEmpty()) {
                     txtPesquisarAluno.setText(HINT_TEXT);
                     txtPesquisarAluno.setForeground(HINT_COLOR);
@@ -139,152 +223,22 @@ public class NotasFaltas extends JPanel {
         });
 
         txtPesquisarAluno.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                atualizarSugestoes();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                atualizarSugestoes();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                atualizarSugestoes();
-            }
+            public void insertUpdate(DocumentEvent e) { atualizarSugestoes(); }
+            public void removeUpdate(DocumentEvent e) { atualizarSugestoes(); }
+            public void changedUpdate(DocumentEvent e) { atualizarSugestoes(); }
         });
 
-        panelDados = new JPanel();
-        panelDados.setBorder(new TitledBorder(null, "Dados do Aluno", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-        panelDados.setLayout(null);
-        panelDados.setBounds(10, 86, 920, 159);
-        add(panelDados);
-        panelDados.setVisible(false);
+        btnAtribuir.addActionListener(e -> atribuirNotaFalta());
+        btnProcessarFimSemestre.addActionListener(e -> processarFimSemestre());
 
-        lblCurso = new JLabel("Carregando...");
-        lblCurso.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblCurso.setBounds(550, 33, 199, 24);
-        panelDados.add(lblCurso);
-
-        lblNome = new JLabel("Carregando...");
-        lblNome.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblNome.setBounds(63, 33, 194, 24);
-        panelDados.add(lblNome);
-
-        lblRA = new JLabel("Carregando...");
-        lblRA.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblRA.setBounds(276, 33, 211, 24);
-        panelDados.add(lblRA);
-        
-        lblNewLabel = new JLabel("Nome:");
-        lblNewLabel.setFont(new Font("Tahoma", Font.BOLD, 15));
-        lblNewLabel.setBounds(10, 36, 56, 19);
-        panelDados.add(lblNewLabel);
-        
-        lblRa = new JLabel("RA:");
-        lblRa.setFont(new Font("Tahoma", Font.BOLD, 15));
-        lblRa.setBounds(243, 36, 32, 19);
-        panelDados.add(lblRa);
-        
-        lblCurso_1 = new JLabel("Curso:");
-        lblCurso_1.setFont(new Font("Tahoma", Font.BOLD, 15));
-        lblCurso_1.setBounds(497, 35, 48, 19);
-        panelDados.add(lblCurso_1);
-        
-        lblCurso_2 = new JLabel("Turma:");
-        lblCurso_2.setFont(new Font("Tahoma", Font.BOLD, 15));
-        lblCurso_2.setBounds(744, 36, 68, 19);
-        panelDados.add(lblCurso_2);
-
-        // --- INICIALIZAÇÃO E ADIÇÃO DO cmbSemestre (CORRIGIDO A ORDEM) ---
-        lblSemestre = new JLabel("Semestre:");
-        lblSemestre.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblSemestre.setBounds(10, 74, 85, 24);
-        panelDados.add(lblSemestre);
-
-        cmbSemestre = new JComboBox<>(); // O OBJETO cmbSemestre É CRIADO AQUI
-        cmbSemestre.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        cmbSemestre.setBounds(84, 77, 95, 22);
-        panelDados.add(cmbSemestre);
-        
-        // --- ADIÇÃO DO LISTENER DE cmbSemestre (AGORA FUNCIONA) ---
+        // COMBO DE SEMESTRES
         cmbSemestre.addActionListener(e -> {
-            String semestreSelecionado = (String) cmbSemestre.getSelectedItem();
-            // Apenas popula disciplinas se um semestre válido for selecionado
-            if (semestreSelecionado != null && !semestreSelecionado.isEmpty()) {
-                popularDisciplinas(semestreSelecionado);
+            if (!bloqueioSemestreListener && idAlunoSelecionado != -1 && cmbSemestre.getSelectedItem() != null) {
+                popularDisciplinas((String) cmbSemestre.getSelectedItem());
             }
         });
 
-        // --- INICIALIZAÇÃO E ADIÇÃO DO cmbDisciplina ---
-        lblInformeADisciplina = new JLabel("Informe a disciplina:");
-        lblInformeADisciplina.setFont(new Font("Tahoma", Font.BOLD, 15));
-        lblInformeADisciplina.setBounds(10, 118, 169, 24);
-        panelDados.add(lblInformeADisciplina);
-
-        cmbDisciplina = new JComboBox<>();
-        cmbDisciplina.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        cmbDisciplina.setBounds(177, 119, 430, 28);
-        panelDados.add(cmbDisciplina);
-        
-        // --- ADIÇÃO DO LISTENER DE cmbDisciplina ---
-        cmbDisciplina.addActionListener(e -> {
-            String disciplinaSelecionada = (String) cmbDisciplina.getSelectedItem();
-            if (disciplinaSelecionada != null && !disciplinaSelecionada.equals("Selecione uma disciplina")) {
-                int idDisciplina = extrairIdDisciplina(disciplinaSelecionada);
-                // Chama a lógica de carregamento ao selecionar a disciplina
-                carregarNotaFaltas(idDisciplina, (String) cmbSemestre.getSelectedItem());
-                panelNotasFaltas.setVisible(true);
-            } else {
-                panelNotasFaltas.setVisible(false);
-            }
-        });
-        
-        // --- PAINEL DE NOTAS E FALTAS ---
-        panelNotasFaltas = new JPanel();
-        panelNotasFaltas.setBorder(new TitledBorder(null, "Notas e Faltas", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-        panelNotasFaltas.setBounds(10, 247, 920, 85);
-        add(panelNotasFaltas);
-        panelNotasFaltas.setVisible(false);
-        panelNotasFaltas.setLayout(null);
-
-        lblNota = new JLabel("Nota:");
-        lblNota.setBounds(33, 33, 47, 24);
-        lblNota.setFont(new Font("Tahoma", Font.PLAIN, 17));
-        panelNotasFaltas.add(lblNota);
-
-        txtNota = new JTextField();
-        txtNota.setBounds(79, 33, 84, 25);
-        panelNotasFaltas.add(txtNota);
-        txtNota.setFont(new Font("Tahoma", Font.PLAIN, 17));
-        txtNota.setColumns(10);
-
-        lblFaltas = new JLabel("Faltas:");
-        lblFaltas.setBounds(203, 33, 52, 24);
-        lblFaltas.setFont(new Font("Tahoma", Font.PLAIN, 17));
-        panelNotasFaltas.add(lblFaltas);
-
-        txtFalta = new JTextField();
-        txtFalta.setBounds(258, 33, 84, 25);
-        panelNotasFaltas.add(txtFalta);
-        txtFalta.setFont(new Font("Tahoma", Font.PLAIN, 17));
-        txtFalta.setColumns(10);
-
-        btnAtribuir = new JButton("    Atribuir");
-        btnAtribuir.setBounds(403, 22, 148, 45);
-        btnAtribuir.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        btnAtribuir.setForeground(Color.black);
-        btnAtribuir.setContentAreaFilled(false); 
-        btnAtribuir.setFocusPainted(false);
-        btnAtribuir.setIcon(new ImageIcon(NotasFaltas.class.getResource("/Resources/imagens/salve-.png")));
-        btnAtribuir.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                salvarNotaFaltas();
-            }
-        });
-        panelNotasFaltas.add(btnAtribuir);
-        System.out.println("DEBUG: NotasFaltas inicializada");
+        cmbDisciplina.addActionListener(e -> carregarNotaFalta());
     }
 
     private void inicializarAutocomplete() {
@@ -295,8 +249,7 @@ public class NotasFaltas extends JPanel {
         listaSugestoes = new JList<>(listModelSugestoes);
 
         listaSugestoes.setCellRenderer(new DefaultListCellRenderer() {
-            @Override
-            public java.awt.Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof AlunoView) {
                     AlunoView aluno = (AlunoView) value;
@@ -306,214 +259,278 @@ public class NotasFaltas extends JPanel {
             }
         });
 
-        JScrollPane scrollPaneSugestoes = new JScrollPane(listaSugestoes);
-        popupSugestoes.add(scrollPaneSugestoes);
+        JScrollPane scrollPane = new JScrollPane(listaSugestoes);
+        popupSugestoes.add(scrollPane);
 
         listaSugestoes.addMouseListener(new MouseAdapter() {
-            @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 1) {
-                    selecionarAlunoSugerido();
-                }
+                if (e.getClickCount() == 1) selecionarAlunoSugerido();
             }
         });
     }
 
     private void atualizarSugestoes() {
-        String textoDigitado = txtPesquisarAluno.getText().trim();
-
-        if (textoDigitado.isEmpty() || textoDigitado.equals(HINT_TEXT)) {
+        String texto = txtPesquisarAluno.getText().trim();
+        if (texto.isEmpty() || texto.equals(HINT_TEXT)) {
             popupSugestoes.setVisible(false);
             return;
         }
 
         try {
-            List<AlunoView> alunosEncontrados = alunoDAO.listarPorFiltro(textoDigitado);
+            List<AlunoView> alunos = alunoDAO.listarPorFiltro(texto);
             listModelSugestoes.clear();
-            if (!alunosEncontrados.isEmpty()) {
-                for (AlunoView aluno : alunosEncontrados) {
-                    listModelSugestoes.addElement(aluno);
-                }
+            if (!alunos.isEmpty()) {
+                alunos.forEach(listModelSugestoes::addElement);
                 popupSugestoes.show(txtPesquisarAluno, 0, txtPesquisarAluno.getHeight());
                 popupSugestoes.setPopupSize(txtPesquisarAluno.getWidth(), 150);
             } else {
                 popupSugestoes.setVisible(false);
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (Exception e) {
             popupSugestoes.setVisible(false);
         }
     }
 
     private void selecionarAlunoSugerido() {
-        AlunoView alunoSelecionado = listaSugestoes.getSelectedValue();
-        if (alunoSelecionado != null) {
-            idAlunoSelecionado = alunoSelecionado.getIdAluno();
-            txtPesquisarAluno.setText(alunoSelecionado.getNome());
-            lblNome.setText(alunoSelecionado.getNome());
-            lblRA.setText(alunoSelecionado.getRa());
-            lblCurso.setText(alunoSelecionado.getNomeCurso());
-            
-            try {
-                idMatriculaSelecionada = alunoDAO.buscarIdMatricula(idAlunoSelecionado);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Erro ao buscar matrícula: " + e.getMessage());
-                return;
-            }
+        AlunoView aluno = listaSugestoes.getSelectedValue();
+        if (aluno == null) return;
 
-            panelDados.setVisible(true);
+        this.alunoSelecionado = aluno;
+        idAlunoSelecionado = aluno.getIdAluno();
+        txtPesquisarAluno.setText(aluno.getNome());
+        lblNome.setText(aluno.getNome());
+        lblRA.setText(aluno.getRa());
+        lblCurso.setText(aluno.getNomeCurso());
 
-            // 1. Popula e define o semestre atual
-            popularSemestres();
-            
-            // 2. Dispara a população de disciplinas com o semestre selecionado
-            // O popularSemestres já seta o semestreAtualSistema, que é a seleção
-            String semestreSelecionado = (String) cmbSemestre.getSelectedItem();
-            popularDisciplinas(semestreSelecionado);
-            
-            popupSugestoes.setVisible(false);
+        try {
+            idMatriculaSelecionada = alunoDAO.buscarIdMatricula(idAlunoSelecionado);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Erro ao buscar matrícula: " + e.getMessage());
+            return;
         }
-    }
 
+        panelDados.setVisible(true);
+
+        // --- POPULAR SEMESTRES ---
+        popularSemestres();
+
+        // Seleciona automaticamente o semestre com disciplina em status "Cursando"
+        String semestreAtual = matriculaDisciplinaDAO.calcularSemestreAtual();
+        cmbSemestre.setSelectedItem(semestreAtual);
+        bloqueioSemestreListener = false;
+
+        // --- CARREGAR DISCIPLINAS DO SEMESTRE SELECIONADO ---
+        popularDisciplinas(semestreAtual);
+
+        popupSugestoes.setVisible(false);
+    }
+    
     private void popularSemestres() {
         cmbSemestre.removeAllItems();
 
-        List<String> semestresAluno = new ArrayList<>();
+        if (idAlunoSelecionado == -1) return;
+
         try {
-            // Assume que este método busca todos os semestres que o aluno já cursou
-            semestresAluno = alunoDAO.listarSemestresPorAluno(idAlunoSelecionado);
+            // 1. Listar todos os semestres cursados pelo aluno
+            List<String> semestres = matriculaDisciplinaDAO.listarSemestresCursados(idAlunoSelecionado);
+            
+            //Adiciona o próximo semestre letivo, caso ele não esteja na lista
+            String proximoSemestreLetivo = matriculaDisciplinaDAO.calcularProximoSemestreDoAluno(idMatriculaSelecionada);
+            if (!semestres.contains(proximoSemestreLetivo)) {
+                // Adicionar no início para ser listado corretamente ou garantir que o último item seja o mais recente
+                semestres.add(proximoSemestreLetivo);
+            }
+
+            if (semestres.isEmpty()) {
+                // Isso não deve mais acontecer se o aluno tiver matrícula
+                cmbSemestre.addItem("N/A");
+                cmbSemestre.setEnabled(false);
+                return;
+            }
+
+            // 2. Adicionar todos os semestres no combo
+            // IMPORTANTE: Limpar e adicionar para garantir a ordem correta
+            cmbSemestre.removeAllItems(); // Já feito no início, mas reforçando
+            semestres.forEach(cmbSemestre::addItem);
+
+            // 3. Tentar selecionar o semestre com disciplina em status "Cursando" (Lógica original)
+            String semestreCursando = null;
+            for (String s : semestres) {
+                // Aqui usamos o ID do aluno, não da matrícula
+                if (matriculaDisciplinaDAO.temDisciplinaCursando(idAlunoSelecionado, s)) {
+                    semestreCursando = s;
+                    break;
+                }
+            }
+
+            // 4. Se não houver nada cursando, seleciona o último semestre (o mais recente, que deve ser o próximo letivo)
+            if (semestreCursando == null) {
+                semestreCursando = semestres.get(semestres.size() - 1);
+            }
+
+            cmbSemestre.setSelectedItem(semestreCursando);
+            cmbSemestre.setEnabled(true);
+
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao buscar semestres do aluno: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Erro ao carregar semestres: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
-
-        java.time.LocalDate hoje = java.time.LocalDate.now();
-        int anoAtual = hoje.getYear();
-        int semestreSistema = (hoje.getMonthValue() <= 6) ? 1 : 2;
-        String semestreAtualSistema = anoAtual + "/" + semestreSistema;
-
-        for (String s : semestresAluno) {
-            cmbSemestre.addItem(s);
-        }
-
-        if (!semestresAluno.contains(semestreAtualSistema)) {
-            cmbSemestre.addItem(semestreAtualSistema);
-        }
-
-        // Define o semestre atual do sistema como o padrão selecionado
-        cmbSemestre.setSelectedItem(semestreAtualSistema);
-        semestreAtual = semestreAtualSistema; 
     }
+
 
     private void popularDisciplinas(String semestre) {
         cmbDisciplina.removeAllItems();
-        cmbDisciplina.addItem("Selecione uma disciplina");
+        txtNota.setText("");
+        txtFalta.setText("");
+        txtStatus.setText("");
+        panelNotasFaltas.setVisible(false);
 
-        if (semestre == null || semestre.isEmpty() || idMatriculaSelecionada == -1) {
-            panelNotasFaltas.setVisible(false);
-            return;
-        }
+        if (idAlunoSelecionado == -1 || semestre == null) return;
 
         try {
-            int idCurso = matriculaDisciplinaDAO.obterIdCursoDaMatricula(idMatriculaSelecionada);
-            if (idCurso == -1) {
-                panelNotasFaltas.setVisible(false);
+            List<MatriculaDisciplinaDetalhe> detalhes = matriculaDisciplinaDAO.listarDisciplinasParaAlunoNoSemestre(idAlunoSelecionado, semestre);
+            cmbDisciplina.addItem(new DisciplinaComboItem(-1, "Selecione uma disciplina"));
+
+            if (detalhes.isEmpty()) {
+                cmbDisciplina.addItem("Nenhuma disciplina encontrada");
+                cmbDisciplina.setEnabled(false);
                 return;
             }
 
-            // Extrai apenas o número do semestre para buscar na tabela disciplina,
-            // que usa INT para o campo 'semestre'.
-            int semestreInt = Integer.parseInt(semestre.split("/")[1]); 
-            
-            List<String> disciplinas = matriculaDisciplinaDAO.listarDisciplinasPorCursoESemestre(idCurso, semestreInt);
-
-            for (String disc : disciplinas) {
-                cmbDisciplina.addItem(disc);
-            }
-
-            panelNotasFaltas.setVisible(false);
-            txtNota.setText("");
-            txtFalta.setText("");
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Erro de formato: semestre inválido (AAAA/N).", "Erro", JOptionPane.ERROR_MESSAGE);
+            detalhes.forEach(d -> cmbDisciplina.addItem(new DisciplinaComboItem(d.getIdDisciplina(), d.getNomeDisciplina())));
+            cmbDisciplina.setEnabled(true);
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao listar disciplinas: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Erro ao carregar disciplinas: " + e.getMessage());
         }
     }
 
-    private int extrairIdDisciplina(String item) {
-        return Integer.parseInt(item.split(" - ")[0]);
-    }
+    private void carregarNotaFalta() {
+        Object item = cmbDisciplina.getSelectedItem();
+        String semestre = (String) cmbSemestre.getSelectedItem();
 
-    /**
-     * Carrega a nota e a falta existentes para a disciplina e semestre selecionados.
-     * Tenta buscar com a String completa ("AAAA/N"). Se falhar, tenta buscar com
-     * apenas o número do semestre ("N"), caso o banco esteja inconsistente.
-     */
-    private void carregarNotaFaltas(int idDisciplina, String semestre) {
+        txtNota.setText("");
+        txtFalta.setText("");
+        txtStatus.setText("");
+        panelNotasFaltas.setVisible(false);
+
+        if (!(item instanceof DisciplinaComboItem) || idMatriculaSelecionada == -1 || semestre == null) return;
+        DisciplinaComboItem disciplinaItem = (DisciplinaComboItem) item;
+        if (disciplinaItem.getIdDisciplina() == -1) return;
+
         try {
-            NotaFaltas resultado = null;
-            
-            // 1. TENTA BUSCAR COM O FORMATO STRING COMPLETO (EX: "2025/2")
-            resultado = matriculaDisciplinaDAO.buscarNotaFaltas(idMatriculaSelecionada, idDisciplina, semestre);
-            
-            // 2. SE NÃO ENCONTROU, TENTA BUSCAR COM O NÚMERO DO SEMESTRE (EX: "2")
-            if (resultado == null && semestre != null && semestre.contains("/")) {
-                try {
-                    String semestreNumeroStr = semestre.split("/")[1];
-                    // Tenta buscar com o número do semestre como String (ex: "2")
-                    resultado = matriculaDisciplinaDAO.buscarNotaFaltas(idMatriculaSelecionada, idDisciplina, semestreNumeroStr);
-                } catch (Exception ex) {
-                    // Ignora
+            MatriculaDisciplina md = matriculaDisciplinaDAO.buscarNotaFaltas(idMatriculaSelecionada, disciplinaItem.getIdDisciplina(), semestre);
+            if (md != null) {
+                // Se nota e faltas são 0 e status é "Cursando", deixar campos vazios (ainda não inserido)
+                if (md.getNota() == 0.0 && md.getFaltas() == 0 && "Cursando".equals(md.getStatus())) {
+                    txtNota.setText("");
+                    txtFalta.setText("");
+                } else {
+                    txtNota.setText(String.format("%.2f", md.getNota()).replace(',', '.'));
+                    txtFalta.setText(String.valueOf(md.getFaltas()));
                 }
-            }
-            
-            if (resultado != null) {
-                // Se encontrou em qualquer das tentativas
-                txtNota.setText(String.valueOf(resultado.getNota()));
-                txtFalta.setText(String.valueOf(resultado.getFaltas())); 
-                System.out.println("DEBUG: Dados carregados - Nota: " + resultado.getNota() + ", Faltas: " + resultado.getFaltas());
+                txtStatus.setText(md.getStatus());
+                btnAtribuir.putClientProperty("idMatriculaDisciplina", md.getIdMatriculaDisciplina());
+
+                txtNota.setEnabled(true);
+                txtFalta.setEnabled(true);
+                btnAtribuir.setEnabled(true);
             } else {
-                // Se não encontrou, limpa os campos
-                txtNota.setText("");
-                txtFalta.setText("");
-                System.out.println("DEBUG: Nenhum dado encontrado para idMatricula=" + idMatriculaSelecionada + ", idDisciplina=" + idDisciplina + ", semestre=" + semestre);
+                btnAtribuir.putClientProperty("idMatriculaDisciplina", -1);
+                txtStatus.setText("Registro Inexistente (ERRO)");
+                txtNota.setEnabled(false);
+                txtFalta.setEnabled(false);
+                btnAtribuir.setEnabled(false);
+            }
+            panelNotasFaltas.setVisible(true);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Erro ao buscar nota/falta: " + e.getMessage());
+        }
+    }
+    
+    private void atribuirNotaFalta() {
+        Object disciplinaObj = cmbDisciplina.getSelectedItem();
+        String semestre = (String) cmbSemestre.getSelectedItem();
+
+        if (!(disciplinaObj instanceof DisciplinaComboItem) || idMatriculaSelecionada == -1 || semestre == null) {
+            JOptionPane.showMessageDialog(this, "Selecione um aluno, semestre e disciplina válidos.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        DisciplinaComboItem disciplinaItem = (DisciplinaComboItem) disciplinaObj;
+
+        double nota;
+        int faltas;
+        try {
+            nota = Double.parseDouble(txtNota.getText().replace(',', '.'));
+            faltas = Integer.parseInt(txtFalta.getText());
+            if (nota < 0 || nota > 10 || faltas < 0) {
+                JOptionPane.showMessageDialog(this, "Nota deve ser 0-10 e faltas >=0.", "Validação", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Nota e Faltas devem ser números válidos.", "Validação", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            MatriculaDisciplina md = new MatriculaDisciplina();
+            md.setNota(nota);
+            md.setFaltas(faltas);
+            int idMdExistente = (int) btnAtribuir.getClientProperty("idMatriculaDisciplina");
+
+            if (idMdExistente > 0) {
+                md.setIdMatriculaDisciplina(idMdExistente);
+                matriculaDisciplinaDAO.atribuirTemporariamenteNotaFaltas(md);
+                JOptionPane.showMessageDialog(this, "Notas e Faltas lançadas.", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                carregarNotaFalta();
+            } else {
+                JOptionPane.showMessageDialog(this, "Registro da matrícula-disciplina não encontrado.", "Erro", JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao carregar nota e faltas: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Falha ao salvar/atualizar: " + e.getMessage(), "Erro de BD", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void salvarNotaFaltas() {
-        String notaStr = txtNota.getText();
-        String faltasStr = txtFalta.getText();
-        if (notaStr.isEmpty() || faltasStr.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Preencha nota e faltas.");
+    private void processarFimSemestre() {
+        String semestreAtual = (String) cmbSemestre.getSelectedItem();
+
+        if (idMatriculaSelecionada == -1 || alunoSelecionado == null || semestreAtual == null) {
+            JOptionPane.showMessageDialog(this, "Selecione um aluno e um semestre válidos.", "Atenção", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         try {
-            double nota = Double.parseDouble(notaStr);
-            int faltas = Integer.parseInt(faltasStr);
-            
-            if (nota < 0 || nota > 10) {
-                JOptionPane.showMessageDialog(this, "Nota deve estar entre 0 e 10.");
-                return;
+            // Delegar totalmente para o método correto da DAO
+            List<String> novasDisciplinas = matriculaDisciplinaDAO.processarFimSemestre(
+                idMatriculaSelecionada,
+                alunoSelecionado.getIdCurso(),
+                semestreAtual
+            );
+
+            if (novasDisciplinas.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Sem novas disciplinas para matrícula neste semestre.", "Informação", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                    "Fim do semestre processado com sucesso!\n\nNovas matrículas realizadas em:\n - " +
+                    String.join("\n - ", novasDisciplinas),
+                    "Sucesso",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
             }
-            // Não há limite de faltas no seu código, adicione um se necessário (ex: 80)
+            popularSemestres(); // AGORA inclui o próximo semestre letivo
             
-            String semestre = (String) cmbSemestre.getSelectedItem();
-            // Verifica se a disciplina selecionada não é a opção padrão
-            if (cmbDisciplina.getSelectedItem().equals("Selecione uma disciplina")) {
-                JOptionPane.showMessageDialog(this, "Selecione uma disciplina válida.");
-                return;
-            }
-            int idDisciplina = extrairIdDisciplina((String) cmbDisciplina.getSelectedItem());
+            // O próximo semestre letivo DEVE ser selecionado agora que está na lista:
+            String proximoSemestreLetivo = matriculaDisciplinaDAO.calcularProximoSemestreLetivo(semestreAtual);
             
-            matriculaDisciplinaDAO.salvarNotaFaltas(idMatriculaSelecionada, idDisciplina, semestre, nota, faltas);
-            JOptionPane.showMessageDialog(this, "Salvo com sucesso!");
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Nota ou faltas inválidas (devem ser números).");
+            // Bloqueamos o listener para evitar uma chamada dupla a popularDisciplinas
+            bloqueioSemestreListener = true; 
+            cmbSemestre.setSelectedItem(proximoSemestreLetivo);
+            bloqueioSemestreListener = false;
+
+            // Carrega as disciplinas do novo semestre selecionado
+            popularDisciplinas(proximoSemestreLetivo);
+
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao salvar: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Erro ao processar fim do semestre: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
+
 }

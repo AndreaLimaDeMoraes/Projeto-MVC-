@@ -48,53 +48,6 @@ public class AlunoDAO {
             ConnectionFactory.closeConnection(conn, ps);  
         }
     }
-
-    public List<AlunoView> listarTodos() throws Exception {
-        List<AlunoView> lista = new ArrayList<>();
-        
-        String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus, m.semestreInicio AS maxSemestreAtual "
-                   + "FROM aluno a "
-                   + "INNER JOIN matricula m ON a.idAluno = m.idAluno AND m.idMatricula = ("
-                   + "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = a.idAluno"
-                   + ") "
-                   + "INNER JOIN curso c ON m.idCurso = c.idCurso "
-                   + "GROUP BY a.idAluno, a.ra, a.nome, a.dataNascimento, a.cpf, a.email, a.endereco, a.municipio, a.uf, a.celular, a.ativo, c.nome, c.campus, m.semestreInicio "
-                   + "ORDER BY a.nome";
-        
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
-        try {
-            conn = ConnectionFactory.getConnection(); 
-            ps = conn.prepareStatement(SQL);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                AlunoView aluno = new AlunoView(
-                        rs.getInt("idAluno"),
-                        rs.getString("ra"),
-                        rs.getString("nome"),
-                        rs.getString("dataNascimento"),
-                        rs.getString("cpf"),
-                        rs.getString("email"),
-                        rs.getString("endereco"),
-                        rs.getString("municipio"),
-                        rs.getString("uf"),
-                        rs.getString("celular"),
-                        rs.getBoolean("ativo"),
-                        rs.getString("nomeCurso"),
-                        rs.getString("campus"),
-                        rs.getString("maxSemestreAtual")
-                );
-                lista.add(aluno);
-            }
-        } catch (SQLException e) {
-            throw new Exception("Erro ao listar alunos: " + e.getMessage());
-        } finally {
-            ConnectionFactory.closeConnection(conn, ps, rs); 
-        }
-        return lista;
-    }
     
     public Aluno buscarPorId(int idAluno) throws Exception {
         Aluno aluno = null;
@@ -181,264 +134,331 @@ public class AlunoDAO {
             ConnectionFactory.closeConnection(conn, ps);  
         }
     }
-    
-    public List<AlunoView> listarPorFiltro(String filtro) throws Exception {
-        List<AlunoView> lista = new ArrayList<>();
-        
-        String filtroSQL = "%" + filtro + "%";
-        
-        String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus, m.semestreInicio AS maxSemestreAtual "
-                   + "FROM aluno a "
-                   + "INNER JOIN matricula m ON a.idAluno = m.idAluno AND m.idMatricula = ("
-                   + "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = a.idAluno"
-                   + ") "
-                   + "INNER JOIN curso c ON m.idCurso = c.idCurso "
-                   + "WHERE a.nome LIKE ? OR a.ra LIKE ? OR CONVERT(a.idAluno, CHAR) LIKE ? "
-                   + "GROUP BY a.idAluno, a.ra, a.nome, a.dataNascimento, a.cpf, a.email, a.endereco, a.municipio, a.uf, a.celular, a.ativo, c.nome, c.campus, m.semestreInicio "
-                   + "ORDER BY a.nome LIMIT 50";
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
-        try {
-            conn = ConnectionFactory.getConnection();  
-            ps = conn.prepareStatement(SQL);
-            ps.setString(1, filtroSQL); 
-            ps.setString(2, filtroSQL);
-            ps.setString(3, filtroSQL);
+    // Método listarTodos
+        public List<AlunoView> listarTodos() throws Exception {
+            List<AlunoView> lista = new ArrayList<>();
             
-            rs = ps.executeQuery();
+            String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus, m.semestreInicio AS maxSemestreAtual, m.idCurso " // ✅ INCLUÍDO: m.idCurso
+                       + "FROM aluno a "
+                       + "INNER JOIN matricula m ON a.idAluno = m.idAluno AND m.idMatricula = ("
+                       + "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = a.idAluno"
+                       + ") "
+                       + "INNER JOIN curso c ON m.idCurso = c.idCurso "
+                       + "GROUP BY a.idAluno, a.ra, a.nome, a.dataNascimento, a.cpf, a.email, a.endereco, a.municipio, a.uf, a.celular, a.ativo, c.nome, c.campus, m.semestreInicio, m.idCurso " // ✅ INCLUÍDO: m.idCurso no GROUP BY
+                       + "ORDER BY a.nome";
             
-            while (rs.next()) {
-                AlunoView aluno = new AlunoView(
-                        rs.getInt("idAluno"),
-                        rs.getString("ra"),
-                        rs.getString("nome"),
-                        rs.getString("dataNascimento"),
-                        rs.getString("cpf"),
-                        rs.getString("email"),
-                        rs.getString("endereco"),
-                        rs.getString("municipio"),
-                        rs.getString("uf"),
-                        rs.getString("celular"),
-                        rs.getBoolean("ativo"),
-                        rs.getString("nomeCurso"),
-                        rs.getString("campus"),
-                        rs.getString("maxSemestreAtual")
-                );
-                lista.add(aluno);
+            Connection conn = null;
+            PreparedStatement ps = null;
+            ResultSet rs = null;
+
+            try {
+                conn = ConnectionFactory.getConnection(); 
+                ps = conn.prepareStatement(SQL);
+                rs = ps.executeQuery();
+                while (rs.next()) {
+                    AlunoView aluno = new AlunoView(
+                            rs.getInt("idAluno"),
+                            rs.getString("ra"),
+                            rs.getString("nome"),
+                            rs.getString("dataNascimento"),
+                            rs.getString("cpf"),
+                            rs.getString("email"),
+                            rs.getString("endereco"),
+                            rs.getString("municipio"),
+                            rs.getString("uf"),
+                            rs.getString("celular"),
+                            rs.getBoolean("ativo"),
+                            rs.getString("nomeCurso"),
+                            rs.getString("campus"),
+                            rs.getString("maxSemestreAtual"),
+                            rs.getInt("idCurso") // ✅ NOVO PARÂMETRO
+                    );
+                    lista.add(aluno);
+                }
+            } catch (SQLException e) {
+                throw new Exception("Erro ao listar alunos: " + e.getMessage());
+            } finally {
+                ConnectionFactory.closeConnection(conn, ps, rs); 
             }
-        } catch (SQLException e) {
-            throw new Exception("Erro ao filtrar alunos: " + e.getMessage());
-        } finally {
-            ConnectionFactory.closeConnection(conn, ps, rs); 
+            return lista;
         }
-        return lista;
-    }
-    
-    public List<AlunoView> listarPorCurso(String nomeCurso) throws Exception {
-        List<AlunoView> listaAlunos = new ArrayList<>();
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
+           
+        // Método listarPorFiltro
+        public List<AlunoView> listarPorFiltro(String filtro) throws Exception {
+            List<AlunoView> lista = new ArrayList<>();
+            
+            String filtroSQL = "%" + filtro + "%";
+            
+            String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus, m.semestreInicio AS maxSemestreAtual, m.idCurso " // ✅ INCLUÍDO: m.idCurso
+                       + "FROM aluno a "
+                       + "INNER JOIN matricula m ON a.idAluno = m.idAluno AND m.idMatricula = ("
+                       + "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = a.idAluno"
+                       + ") "
+                       + "INNER JOIN curso c ON m.idCurso = c.idCurso "
+                       + "WHERE a.nome LIKE ? OR a.ra LIKE ? OR CONVERT(a.idAluno, CHAR) LIKE ? "
+                       + "GROUP BY a.idAluno, a.ra, a.nome, a.dataNascimento, a.cpf, a.email, a.endereco, a.municipio, a.uf, a.celular, a.ativo, c.nome, c.campus, m.semestreInicio, m.idCurso " // ✅ INCLUÍDO: m.idCurso no GROUP BY
+                       + "ORDER BY a.nome LIMIT 50";
+            Connection conn = null;
+            PreparedStatement ps = null;
+            ResultSet rs = null;
 
-        String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus, m.semestreInicio AS maxSemestreAtual "
-                   + "FROM aluno a "
-                   + "INNER JOIN matricula m ON a.idAluno = m.idAluno AND m.idMatricula = ("
-                   + "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = a.idAluno"
-                   + ") "
-                   + "INNER JOIN curso c ON m.idCurso = c.idCurso "
-                   + "WHERE a.ativo = true AND c.nome = ? "
-                   + "GROUP BY a.idAluno, a.ra, a.nome, a.dataNascimento, a.cpf, a.email, a.endereco, a.municipio, a.uf, a.celular, a.ativo, c.nome, c.campus, m.semestreInicio "
-                   + "ORDER BY a.nome";
-
-        try {
-            conn = ConnectionFactory.getConnection();
-            ps = conn.prepareStatement(SQL);
-            ps.setString(1, nomeCurso);
-            rs = ps.executeQuery();
-
-            while (rs.next()) {
-                AlunoView aluno = new AlunoView(
-                        rs.getInt("idAluno"),
-                        rs.getString("ra"),
-                        rs.getString("nome"),
-                        rs.getString("dataNascimento"),
-                        rs.getString("cpf"),
-                        rs.getString("email"),
-                        rs.getString("endereco"),
-                        rs.getString("municipio"),
-                        rs.getString("uf"),
-                        rs.getString("celular"),
-                        rs.getBoolean("ativo"),
-                        rs.getString("nomeCurso"),  
-                        rs.getString("campus"),
-                        rs.getString("maxSemestreAtual")
-                );
-                listaAlunos.add(aluno);
+            try {
+                conn = ConnectionFactory.getConnection();  
+                ps = conn.prepareStatement(SQL);
+                ps.setString(1, filtroSQL); 
+                ps.setString(2, filtroSQL);
+                ps.setString(3, filtroSQL);
+                
+                rs = ps.executeQuery();
+                
+                while (rs.next()) {
+                    AlunoView aluno = new AlunoView(
+                            rs.getInt("idAluno"),
+                            rs.getString("ra"),
+                            rs.getString("nome"),
+                            rs.getString("dataNascimento"),
+                            rs.getString("cpf"),
+                            rs.getString("email"),
+                            rs.getString("endereco"),
+                            rs.getString("municipio"),
+                            rs.getString("uf"),
+                            rs.getString("celular"),
+                            rs.getBoolean("ativo"),
+                            rs.getString("nomeCurso"),
+                            rs.getString("campus"),
+                            rs.getString("maxSemestreAtual"),
+                            rs.getInt("idCurso") // ✅ NOVO PARÂMETRO
+                    );
+                    lista.add(aluno);
+                }
+            } catch (SQLException e) {
+                throw new Exception("Erro ao filtrar alunos: " + e.getMessage());
+            } finally {
+                ConnectionFactory.closeConnection(conn, ps, rs); 
             }
-        } catch (SQLException e) {
-            throw new Exception("Erro ao listar alunos por curso: " + e.getMessage());
-        } finally {
-            ConnectionFactory.closeConnection(conn, ps, rs);
+            return lista;
         }
-        return listaAlunos;
-    }
-    
-    public BoletimAluno buscarDadosBoletimAluno(int idAluno) throws Exception {
-        BoletimAluno dados = null;
         
-        String SQL = "SELECT a.idAluno, a.ra, a.nome, c.nome AS nomeCurso, c.campus " +
-                     "FROM aluno a " +
-                     "JOIN matricula m ON a.idAluno = m.idAluno " +
-                     "JOIN curso c ON m.idCurso = c.idCurso " +
-                     "WHERE a.idAluno = ? AND a.ativo = TRUE AND m.ativo = TRUE " +
-                     "ORDER BY m.idMatricula DESC LIMIT 1";
-     
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
+        // Método listarPorCurso
+        public List<AlunoView> listarPorCurso(String nomeCurso) throws Exception {
+            List<AlunoView> listaAlunos = new ArrayList<>();
+            Connection conn = null;
+            PreparedStatement ps = null;
+            ResultSet rs = null;
 
-        try {
-            conn = ConnectionFactory.getConnection();
-            ps = conn.prepareStatement(SQL);
-            ps.setInt(1, idAluno);
-            rs = ps.executeQuery();
-            if (rs.next()) {
-                dados = new BoletimAluno();  
-                dados.setIdAluno(rs.getInt("idAluno"));
-                dados.setRa(rs.getString("ra"));
-                dados.setNome(rs.getString("nome"));
-                dados.setNomeCurso(rs.getString("nomeCurso"));
-                dados.setCampus(rs.getString("campus"));
+            String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus, m.semestreInicio AS maxSemestreAtual, m.idCurso " // ✅ INCLUÍDO: m.idCurso
+                       + "FROM aluno a "
+                       + "INNER JOIN matricula m ON a.idAluno = m.idAluno AND m.idMatricula = ("
+                       + "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = a.idAluno"
+                       + ") "
+                       + "INNER JOIN curso c ON m.idCurso = c.idCurso "
+                       + "WHERE a.ativo = true AND c.nome = ? "
+                       + "GROUP BY a.idAluno, a.ra, a.nome, a.dataNascimento, a.cpf, a.email, a.endereco, a.municipio, a.uf, a.celular, a.ativo, c.nome, c.campus, m.semestreInicio, m.idCurso " // ✅ INCLUÍDO: m.idCurso no GROUP BY
+                       + "ORDER BY a.nome";
+
+            try {
+                conn = ConnectionFactory.getConnection();
+                ps = conn.prepareStatement(SQL);
+                ps.setString(1, nomeCurso);
+                rs = ps.executeQuery();
+
+                while (rs.next()) {
+                    AlunoView aluno = new AlunoView(
+                            rs.getInt("idAluno"),
+                            rs.getString("ra"),
+                            rs.getString("nome"),
+                            rs.getString("dataNascimento"),
+                            rs.getString("cpf"),
+                            rs.getString("email"),
+                            rs.getString("endereco"),
+                            rs.getString("municipio"),
+                            rs.getString("uf"),
+                            rs.getString("celular"),
+                            rs.getBoolean("ativo"),
+                            rs.getString("nomeCurso"),  
+                            rs.getString("campus"),
+                            rs.getString("maxSemestreAtual"),
+                            rs.getInt("idCurso")
+                    );
+                    listaAlunos.add(aluno);
+                }
+            } catch (SQLException e) {
+                throw new Exception("Erro ao listar alunos por curso: " + e.getMessage());
+            } finally {
+                ConnectionFactory.closeConnection(conn, ps, rs);
             }
-        } catch (SQLException e) {
-            throw new Exception("Erro ao buscar dados do aluno para boletim: " + e.getMessage());
-        } finally {
-            ConnectionFactory.closeConnection(conn, ps, rs);
+            return listaAlunos;
         }
-        return dados;
-    }
-
-    public List<DisciplinaBoletim> buscarDisciplinasBoletim(int idAluno) throws Exception {
-        List<DisciplinaBoletim> disciplinas = new ArrayList<>();
-        String SQL = "SELECT d.nome AS nomeDisciplina, md.nota, md.faltas, md.status, m.semestreInicio AS semestreAtual " +
-                     "FROM aluno a " +
-                     "JOIN matricula m ON a.idAluno = m.idAluno " +  
-                     "JOIN matriculaDisciplina md ON m.idMatricula = md.idMatricula " +
-                     "JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
-                     "WHERE a.idAluno = ? AND a.ativo = TRUE AND m.ativo = TRUE AND md.ativo = TRUE " +
-                     "ORDER BY d.nome";
         
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
+        public BoletimAluno buscarDadosBoletimAluno(int idAluno) throws Exception {
+            BoletimAluno dados = null;
+            
+            String SQL = "SELECT a.idAluno, a.ra, a.nome, c.nome AS nomeCurso, c.campus " +
+                         "FROM aluno a " +
+                         "JOIN matricula m ON a.idAluno = m.idAluno " +
+                         "JOIN curso c ON m.idCurso = c.idCurso " +
+                         "WHERE a.idAluno = ? AND a.ativo = TRUE AND m.ativo = TRUE " +
+                         "ORDER BY m.idMatricula DESC LIMIT 1";
+         
+            Connection conn = null;
+            PreparedStatement ps = null;
+            ResultSet rs = null;
 
-        try {
-            conn = ConnectionFactory.getConnection();
-            ps = conn.prepareStatement(SQL);
-            ps.setInt(1, idAluno);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                DisciplinaBoletim disc = new DisciplinaBoletim(
-                    rs.getString("nomeDisciplina"),
-                    rs.getDouble("nota"),
-                    rs.getInt("faltas"),
-                    rs.getString("status"),
-                    rs.getString("semestreAtual")
-                );
-                disciplinas.add(disc);
+            try {
+                conn = ConnectionFactory.getConnection();
+                ps = conn.prepareStatement(SQL);
+                ps.setInt(1, idAluno);
+                rs = ps.executeQuery();
+                if (rs.next()) {
+                    dados = new BoletimAluno();  
+                    dados.setIdAluno(rs.getInt("idAluno"));
+                    dados.setRa(rs.getString("ra"));
+                    dados.setNome(rs.getString("nome"));
+                    dados.setNomeCurso(rs.getString("nomeCurso"));
+                    dados.setCampus(rs.getString("campus"));
+                }
+            } catch (SQLException e) {
+                throw new Exception("Erro ao buscar dados do aluno para boletim: " + e.getMessage());
+            } finally {
+                ConnectionFactory.closeConnection(conn, ps, rs);
             }
-        } catch (SQLException e) {
-            throw new Exception("Erro ao buscar disciplinas do boletim: " + e.getMessage());
-        } finally {
-            ConnectionFactory.closeConnection(conn, ps, rs);
+            return dados;
         }
-        return disciplinas;
-    }
-    
-    public List<DisciplinaBoletim> buscarHistoricoEscolar(int idAluno) throws Exception {
-        List<DisciplinaBoletim> disciplinas = new ArrayList<>();
-        String SQL = "SELECT d.nome AS nomeDisciplina, md.nota, md.faltas, md.status, m.semestreInicio AS semestreAtual " +
-                     "FROM aluno a " +
-                     "JOIN matricula m ON a.idAluno = m.idAluno " +
-                     "JOIN matriculaDisciplina md ON m.idMatricula = md.idMatricula " +
-                     "JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
-                     "WHERE a.idAluno = ? AND a.ativo = TRUE AND m.ativo = TRUE AND md.ativo = TRUE " +
-                     "ORDER BY m.semestreInicio, d.nome"; 
+
+        public List<DisciplinaBoletim> buscarDisciplinasBoletim(int idAluno) throws Exception {
+            List<DisciplinaBoletim> disciplinas = new ArrayList<>();
+            String SQL = "SELECT d.nome AS nomeDisciplina, md.nota, md.faltas, md.status, m.semestreInicio AS semestreAtual " +
+                         "FROM aluno a " +
+                         "JOIN matricula m ON a.idAluno = m.idAluno " +  
+                         "JOIN matriculaDisciplina md ON m.idMatricula = md.idMatricula " +
+                         "JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
+                         "WHERE a.idAluno = ? AND a.ativo = TRUE AND m.ativo = TRUE AND md.ativo = TRUE " +
+                         "ORDER BY d.nome";
+            
+            Connection conn = null;
+            PreparedStatement ps = null;
+            ResultSet rs = null;
+
+            try {
+                conn = ConnectionFactory.getConnection();
+                ps = conn.prepareStatement(SQL);
+                ps.setInt(1, idAluno);
+                rs = ps.executeQuery();
+                while (rs.next()) {
+                    DisciplinaBoletim disc = new DisciplinaBoletim(
+                        rs.getString("nomeDisciplina"),
+                        rs.getDouble("nota"),
+                        rs.getInt("faltas"),
+                        rs.getString("status"),
+                        rs.getString("semestreAtual")
+                    );
+                    disciplinas.add(disc);
+                }
+            } catch (SQLException e) {
+                throw new Exception("Erro ao buscar disciplinas do boletim: " + e.getMessage());
+            } finally {
+                ConnectionFactory.closeConnection(conn, ps, rs);
+            }
+            return disciplinas;
+        }
         
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
+        public List<DisciplinaBoletim> buscarHistoricoEscolar(int idAluno) throws Exception {
+            List<DisciplinaBoletim> disciplinas = new ArrayList<>();
+            String SQL = "SELECT d.nome AS nomeDisciplina, md.nota, md.faltas, md.status, m.semestreInicio AS semestreAtual " +
+                         "FROM aluno a " +
+                         "JOIN matricula m ON a.idAluno = m.idAluno " +
+                         "JOIN matriculaDisciplina md ON m.idMatricula = md.idMatricula " +
+                         "JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
+                         "WHERE a.idAluno = ? AND a.ativo = TRUE AND m.ativo = TRUE AND md.ativo = TRUE " +
+                         "ORDER BY m.semestreInicio, d.nome"; 
+            
+            Connection conn = null;
+            PreparedStatement ps = null;
+            ResultSet rs = null;
 
-        try {
-            conn = ConnectionFactory.getConnection();
-            ps = conn.prepareStatement(SQL);
-            ps.setInt(1, idAluno);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                DisciplinaBoletim disc = new DisciplinaBoletim(
-                    rs.getString("nomeDisciplina"),
-                    rs.getDouble("nota"),
-                    rs.getInt("faltas"),
-                    rs.getString("status"),
-                    rs.getString("semestreAtual")
-                );
-                disciplinas.add(disc);
+            try {
+                conn = ConnectionFactory.getConnection();
+                ps = conn.prepareStatement(SQL);
+                ps.setInt(1, idAluno);
+                rs = ps.executeQuery();
+                while (rs.next()) {
+                    DisciplinaBoletim disc = new DisciplinaBoletim(
+                        rs.getString("nomeDisciplina"),
+                        rs.getDouble("nota"),
+                        rs.getInt("faltas"),
+                        rs.getString("status"),
+                        rs.getString("semestreAtual")
+                    );
+                    disciplinas.add(disc);
+                }
+            } catch (SQLException e) {
+                throw new Exception("Erro ao buscar histórico escolar: " + e.getMessage());
+            } finally {
+                ConnectionFactory.closeConnection(conn, ps, rs);
             }
-        } catch (SQLException e) {
-            throw new Exception("Erro ao buscar histórico escolar: " + e.getMessage());
-        } finally {
-            ConnectionFactory.closeConnection(conn, ps, rs);
+            return disciplinas;
         }
-        return disciplinas;
-    }
 
-    public int buscarIdMatricula(int idAluno) throws Exception {
-        int idMatricula = -1;
-        String SQL = "SELECT idMatricula FROM matricula WHERE idAluno = ? AND ativo = 1 ORDER BY idMatricula DESC LIMIT 1";
+        public int buscarIdMatricula(int idAluno) throws Exception {
+            int idMatricula = -1;
+            String SQL = "SELECT idMatricula FROM matricula WHERE idAluno = ? AND ativo = 1 ORDER BY idMatricula DESC LIMIT 1";
+            
+            Connection conn = null;
+            PreparedStatement ps = null;
+            ResultSet rs = null;
+
+            try {
+                conn = ConnectionFactory.getConnection();
+                ps = conn.prepareStatement(SQL);
+                ps.setInt(1, idAluno);
+                rs = ps.executeQuery();
+                if (rs.next()) {
+                    idMatricula = rs.getInt("idMatricula");
+                }
+            } catch (SQLException e) {
+                throw new Exception("Erro ao buscar matrícula do aluno: " + e.getMessage());
+            } finally {
+                ConnectionFactory.closeConnection(conn, ps, rs);
+            }
+            return idMatricula;
+        }
         
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
+        public List<String> listarSemestresPorAluno(int idAluno) throws Exception {
+            List<String> semestres = new ArrayList<>();
+            // Busca o semestreInicio da matricula + semestres de matriculaDisciplina
+            String SQL = "SELECT DISTINCT CONCAT(YEAR(m.semestreInicio), '/', " +
+                         "CASE WHEN MONTH(m.semestreInicio) <= 6 THEN 1 ELSE 2 END) AS semestre " +
+                         "FROM matricula m " +
+                         "WHERE m.idAluno = ? AND m.ativo = 1 " +
+                         "UNION " +
+                         "SELECT DISTINCT CONCAT(YEAR(m.semestreInicio), '/', " +
+                         "CASE WHEN MONTH(m.semestreInicio) <= 6 THEN 1 ELSE 2 END) AS semestre " +
+                         "FROM matricula m " +
+                         "JOIN matriculaDisciplina md ON m.idMatricula = md.idMatricula " +
+                         "WHERE m.idAluno = ? AND m.ativo = 1 AND md.ativo = 1 " +
+                         "ORDER BY semestre";
 
-        try {
-            conn = ConnectionFactory.getConnection();
-            ps = conn.prepareStatement(SQL);
-            ps.setInt(1, idAluno);
-            rs = ps.executeQuery();
-            if (rs.next()) {
-                idMatricula = rs.getInt("idMatricula");
+            try (Connection conn = ConnectionFactory.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(SQL)) {
+
+                ps.setInt(1, idAluno);
+                ps.setInt(2, idAluno);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        semestres.add(rs.getString("semestre"));
+                    }
+                }
+            } catch (SQLException e) {
+                throw new Exception("Erro ao listar semestres por aluno: " + e.getMessage());
             }
-        } catch (SQLException e) {
-            throw new Exception("Erro ao buscar matrícula do aluno: " + e.getMessage());
-        } finally {
-            ConnectionFactory.closeConnection(conn, ps, rs);
+            return semestres;
         }
-        return idMatricula;
-    }
-
-    public List<String> listarSemestresPorAluno(int idAluno) throws Exception {
-        List<String> semestres = new ArrayList<>();
-        String SQL = "SELECT DISTINCT semestreInicio FROM matricula WHERE idAluno = ? AND ativo = 1 ORDER BY semestreInicio";
-
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
-        try {
-            conn = ConnectionFactory.getConnection();
-            ps = conn.prepareStatement(SQL);
-            ps.setInt(1, idAluno);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                semestres.add(rs.getString("semestreInicio"));
-            }
-        } catch (SQLException e) {
-            throw new Exception("Erro ao listar semestres: " + e.getMessage());
-        } finally {
-            ConnectionFactory.closeConnection(conn, ps, rs);
+        // Método auxiliar
+        private String calcularSemestreAtual() {
+            java.time.LocalDate hoje = java.time.LocalDate.now();
+            int ano = hoje.getYear();
+            int semestre = (hoje.getMonthValue() <= 6) ? 1 : 2;
+            return ano + "/" + semestre;
         }
-        return semestres;
-    }
 }
+    
