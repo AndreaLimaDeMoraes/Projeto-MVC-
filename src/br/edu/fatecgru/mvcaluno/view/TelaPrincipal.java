@@ -306,11 +306,13 @@ public class TelaPrincipal extends JFrame {
             trocarPainelConteudo(documentos);
         });
 
+        /*
         btnNotasFaltas.addActionListener(e -> {
             ativarBotaoMenu(btnNotasFaltas);
             NotasFaltas telaInicialNotasFaltas = new NotasFaltas(TelaPrincipal.this, 0);
             trocarPainelConteudo(telaInicialNotasFaltas);
         });
+		*/
 
         btnCursos.addActionListener(e -> {
             ativarBotaoMenu(btnCursos);
@@ -323,7 +325,8 @@ public class TelaPrincipal extends JFrame {
             pnlConteudoFaculdade.revalidate();
             pnlConteudoFaculdade.repaint();
         });
-
+        
+        /*
         btnDisciplinas.addActionListener(e -> {
             ativarBotaoMenu(btnDisciplinas);
             tabbedPane.setSelectedComponent(panelFaculdade);
@@ -335,6 +338,8 @@ public class TelaPrincipal extends JFrame {
             pnlConteudoFaculdade.revalidate();
             pnlConteudoFaculdade.repaint();
         });
+        */
+        
     }
         
 

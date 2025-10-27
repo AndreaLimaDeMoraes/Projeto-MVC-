@@ -327,12 +327,17 @@ public class AlunoDAO {
 
         public List<DisciplinaBoletim> buscarDisciplinasBoletim(int idAluno) throws Exception {
             List<DisciplinaBoletim> disciplinas = new ArrayList<>();
-            String SQL = "SELECT d.nome AS nomeDisciplina, md.nota, md.faltas, md.status, m.semestreInicio AS semestreAtual " +
+            
+            // 1. OBTÉM O SEMESTRE ATUAL (EX: "2025/2")
+            String semestreAtual = calcularSemestreAtual(); 
+            
+            String SQL = "SELECT d.nome AS nomeDisciplina, md.nota, md.faltas, md.status, md.semestreCursado AS semestreAtual " +
                          "FROM aluno a " +
                          "JOIN matricula m ON a.idAluno = m.idAluno " +  
                          "JOIN matriculaDisciplina md ON m.idMatricula = md.idMatricula " +
                          "JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
                          "WHERE a.idAluno = ? AND a.ativo = TRUE AND m.ativo = TRUE AND md.ativo = TRUE " +
+                         "AND md.semestreCursado = ? " + // <-- NOVO FILTRO: Semestre Atual
                          "ORDER BY d.nome";
             
             Connection conn = null;
@@ -343,7 +348,9 @@ public class AlunoDAO {
                 conn = ConnectionFactory.getConnection();
                 ps = conn.prepareStatement(SQL);
                 ps.setInt(1, idAluno);
+                ps.setString(2, semestreAtual); // <-- NOVO PARÂMETRO
                 rs = ps.executeQuery();
+                
                 while (rs.next()) {
                     DisciplinaBoletim disc = new DisciplinaBoletim(
                         rs.getString("nomeDisciplina"),
@@ -364,13 +371,13 @@ public class AlunoDAO {
         
         public List<DisciplinaBoletim> buscarHistoricoEscolar(int idAluno) throws Exception {
             List<DisciplinaBoletim> disciplinas = new ArrayList<>();
-            String SQL = "SELECT d.nome AS nomeDisciplina, md.nota, md.faltas, md.status, m.semestreInicio AS semestreAtual " +
-                         "FROM aluno a " +
-                         "JOIN matricula m ON a.idAluno = m.idAluno " +
-                         "JOIN matriculaDisciplina md ON m.idMatricula = md.idMatricula " +
-                         "JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
-                         "WHERE a.idAluno = ? AND a.ativo = TRUE AND m.ativo = TRUE AND md.ativo = TRUE " +
-                         "ORDER BY m.semestreInicio, d.nome"; 
+            String SQL = "SELECT d.nome AS nomeDisciplina, md.nota, md.faltas, md.status, md.semestreCursado AS semestreAtual " +
+                    "FROM aluno a " +
+                    "JOIN matricula m ON a.idAluno = m.idAluno " +
+                    "JOIN matriculaDisciplina md ON m.idMatricula = md.idMatricula " +
+                    "JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
+                    "WHERE a.idAluno = ? AND a.ativo = TRUE AND m.ativo = TRUE AND md.ativo = TRUE " +
+                    "ORDER BY md.semestreCursado, d.nome";
             
             Connection conn = null;
             PreparedStatement ps = null;
@@ -425,14 +432,9 @@ public class AlunoDAO {
         
         public List<String> listarSemestresPorAluno(int idAluno) throws Exception {
             List<String> semestres = new ArrayList<>();
-            // Busca o semestreInicio da matricula + semestres de matriculaDisciplina
-            String SQL = "SELECT DISTINCT CONCAT(YEAR(m.semestreInicio), '/', " +
-                         "CASE WHEN MONTH(m.semestreInicio) <= 6 THEN 1 ELSE 2 END) AS semestre " +
-                         "FROM matricula m " +
-                         "WHERE m.idAluno = ? AND m.ativo = 1 " +
-                         "UNION " +
-                         "SELECT DISTINCT CONCAT(YEAR(m.semestreInicio), '/', " +
-                         "CASE WHEN MONTH(m.semestreInicio) <= 6 THEN 1 ELSE 2 END) AS semestre " +
+            
+            // A correção simplificada usa o campo md.semestreCursado, que já está no formato 'YYYY/S'
+            String SQL = "SELECT DISTINCT md.semestreCursado AS semestre " +
                          "FROM matricula m " +
                          "JOIN matriculaDisciplina md ON m.idMatricula = md.idMatricula " +
                          "WHERE m.idAluno = ? AND m.ativo = 1 AND md.ativo = 1 " +
@@ -441,8 +443,8 @@ public class AlunoDAO {
             try (Connection conn = ConnectionFactory.getConnection();
                  PreparedStatement ps = conn.prepareStatement(SQL)) {
 
-                ps.setInt(1, idAluno);
-                ps.setInt(2, idAluno);
+                ps.setInt(1, idAluno); // Agora só precisa de um parâmetro
+                
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         semestres.add(rs.getString("semestre"));
@@ -453,6 +455,7 @@ public class AlunoDAO {
             }
             return semestres;
         }
+        
         // Método auxiliar
         private String calcularSemestreAtual() {
             java.time.LocalDate hoje = java.time.LocalDate.now();
