@@ -1,6 +1,25 @@
 package br.edu.fatecgru.mvcaluno.view;
 
-import javax.swing.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.List;
+
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
@@ -11,10 +30,6 @@ import br.edu.fatecgru.mvcaluno.dao.MatriculaDisciplinaDAO;
 import br.edu.fatecgru.mvcaluno.model.AlunoView;
 import br.edu.fatecgru.mvcaluno.model.MatriculaDisciplina;
 import br.edu.fatecgru.mvcaluno.model.MatriculaDisciplinaDetalhe;
-
-import java.awt.*;
-import java.awt.event.*;
-import java.util.List;
 
 /**
  * View para atribuição e consulta de Notas e Faltas dos alunos.
@@ -315,7 +330,12 @@ public class NotasFaltas extends JPanel {
         popularSemestres();
 
         // Seleciona automaticamente o semestre com disciplina em status "Cursando"
-        String semestreAtual = matriculaDisciplinaDAO.calcularSemestreAtual();
+        String semestreAtual = "";
+		try {
+			semestreAtual = matriculaDisciplinaDAO.obterSemestreAtualAluno(idAlunoSelecionado);
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, "Erro ao buscar carregar o semestre: " + e.getMessage());
+		}
         cmbSemestre.setSelectedItem(semestreAtual);
         bloqueioSemestreListener = false;
 

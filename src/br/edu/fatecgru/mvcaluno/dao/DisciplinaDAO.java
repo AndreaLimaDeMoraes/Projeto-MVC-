@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import br.edu.fatecgru.mvcaluno.model.Curso;
 import br.edu.fatecgru.mvcaluno.model.Disciplina;
 import br.edu.fatecgru.mvcaluno.util.ConnectionFactory;
 

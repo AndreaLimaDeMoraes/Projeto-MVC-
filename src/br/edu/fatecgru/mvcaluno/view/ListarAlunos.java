@@ -18,18 +18,18 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane; 
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
-import br.edu.fatecgru.mvcaluno.view.TelaPrincipal;
+
 import br.edu.fatecgru.mvcaluno.dao.AlunoDAO;
 import br.edu.fatecgru.mvcaluno.dao.CursoDAO;
-import br.edu.fatecgru.mvcaluno.model.AlunoView;
-import br.edu.fatecgru.mvcaluno.model.AlunoTableModelSimplificado; 
+import br.edu.fatecgru.mvcaluno.model.AlunoTableModelSimplificado;
+import br.edu.fatecgru.mvcaluno.model.AlunoView; 
 
 public class ListarAlunos extends JPanel {
 
