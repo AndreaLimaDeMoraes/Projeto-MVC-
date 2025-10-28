@@ -353,13 +353,6 @@ public class NotasFaltas extends JPanel {
         try {
             // 1. Listar todos os semestres cursados pelo aluno
             List<String> semestres = matriculaDisciplinaDAO.listarSemestresCursados(idAlunoSelecionado);
-            
-            //Adiciona o próximo semestre letivo, caso ele não esteja na lista
-            String proximoSemestreLetivo = matriculaDisciplinaDAO.calcularProximoSemestreDoAluno(idMatriculaSelecionada);
-            if (!semestres.contains(proximoSemestreLetivo)) {
-                // Adicionar no início para ser listado corretamente ou garantir que o último item seja o mais recente
-                semestres.add(proximoSemestreLetivo);
-            }
 
             if (semestres.isEmpty()) {
                 // Isso não deve mais acontecer se o aluno tiver matrícula
