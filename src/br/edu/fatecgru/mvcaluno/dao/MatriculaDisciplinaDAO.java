@@ -18,7 +18,7 @@ import br.edu.fatecgru.mvcaluno.util.ConnectionFactory;
 public class MatriculaDisciplinaDAO {
 
     private final double NOTA_MINIMA_APROVACAO = 6.0;
-    private final int MAX_FALTAS_PERMITIDAS = 7;
+    private final int MAX_FALTAS_PERMITIDAS = 20;
 
     // ===========================================
     // CÁLCULOS DE SEMESTRE

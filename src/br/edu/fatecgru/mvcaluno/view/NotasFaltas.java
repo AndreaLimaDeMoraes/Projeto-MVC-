@@ -30,6 +30,7 @@ import br.edu.fatecgru.mvcaluno.dao.MatriculaDisciplinaDAO;
 import br.edu.fatecgru.mvcaluno.model.AlunoView;
 import br.edu.fatecgru.mvcaluno.model.MatriculaDisciplina;
 import br.edu.fatecgru.mvcaluno.model.MatriculaDisciplinaDetalhe;
+import javax.swing.ImageIcon;
 
 /**
  * View para atribuição e consulta de Notas e Faltas dos alunos.
@@ -72,7 +73,7 @@ public class NotasFaltas extends JPanel {
     private JTextField txtPesquisarAluno;
 
     private JPanel panelDados;
-    private JLabel lblNome, lblRA, lblCurso;
+    private JLabel lblDadosAluno;
     private JComboBox<String> cmbSemestre;
     private JComboBox<Object> cmbDisciplina;
 
@@ -109,7 +110,7 @@ public class NotasFaltas extends JPanel {
 
         // --- Painel Pesquisa Aluno ---
         panelPesquisarAluno = new JPanel();
-        panelPesquisarAluno.setBounds(10, 11, 920, 73);
+        panelPesquisarAluno.setBounds(10, 11, 940, 73);
         panelPesquisarAluno.setLayout(null);
         add(panelPesquisarAluno);
 
@@ -129,19 +130,15 @@ public class NotasFaltas extends JPanel {
         panelDados = new JPanel();
         panelDados.setBorder(new TitledBorder(null, "Dados do Aluno", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         panelDados.setLayout(null);
-        panelDados.setBounds(10, 86, 920, 159);
+        panelDados.setBounds(10, 86, 940, 159);
         add(panelDados);
         panelDados.setVisible(false);
 
-        // Labels alinhados na mesma linha
-        lblNome = criarLabelBold("Nome: Carregando...", 20, 33, 220, 24);
-        panelDados.add(lblNome);
-
-        lblRA = criarLabelBold("RA: Carregando...", 260, 33, 150, 24);
-        panelDados.add(lblRA);
-
-        lblCurso = criarLabelBold("Curso: Carregando...", 420, 33, 300, 24);
-        panelDados.add(lblCurso);
+        // Label único para mostrar Nome, RA e Curso na mesma linha
+        lblDadosAluno = new JLabel("Carregando dados do aluno...");
+        lblDadosAluno.setFont(new Font("Tahoma", Font.BOLD, 15));
+        lblDadosAluno.setBounds(20, 33, 880, 24);
+        panelDados.add(lblDadosAluno);
 
         // ComboBox Semestre
         JLabel lblSemestre = new JLabel("Semestre:");
@@ -166,32 +163,78 @@ public class NotasFaltas extends JPanel {
         panelDados.add(cmbDisciplina);
 
 
-        // --- Painel Notas/Faltas ---
+     // --- Painel Notas/Faltas ---
         panelNotasFaltas = new JPanel();
         panelNotasFaltas.setBorder(new TitledBorder(null, "Notas e Faltas", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-        panelNotasFaltas.setBounds(10, 247, 920, 142);
+        panelNotasFaltas.setBounds(10, 247, 940, 142);
         panelNotasFaltas.setLayout(null);
         panelNotasFaltas.setVisible(false);
         add(panelNotasFaltas);
 
-        txtNota = criarTextField(79, 33, 84, 25);
+        // Label e campo de Nota
+        JLabel lblNota = new JLabel("Nota:");
+        lblNota.setFont(new Font("Tahoma", Font.PLAIN, 17));
+        lblNota.setBounds(30, 35, 60, 24);
+        panelNotasFaltas.add(lblNota);
+
+        txtNota = criarTextField(85, 35, 80, 25);
         panelNotasFaltas.add(txtNota);
 
-        txtFalta = criarTextField(258, 33, 84, 25);
+        // Label e campo de Faltas
+        JLabel lblFaltas = new JLabel("Faltas:");
+        lblFaltas.setFont(new Font("Tahoma", Font.PLAIN, 17));
+        lblFaltas.setBounds(190, 35, 70, 24);
+        panelNotasFaltas.add(lblFaltas);
+
+        txtFalta = criarTextField(255, 35, 80, 25);
         panelNotasFaltas.add(txtFalta);
 
-        btnAtribuir = criarBotao("Atribuir", 403, 22, 148, 45);
+        // Botão Atribuir
+        btnAtribuir = criarBotao("Atribuir", "/Resources/imagens/upload-de-arquivo.png", 360, 25, 140, 45);
         panelNotasFaltas.add(btnAtribuir);
 
-        btnProcessarFimSemestre = criarBotao("Processar Fim do Semestre", 579, 22, 264, 45);
+        // Botão Processar Fim do Semestre
+        btnProcessarFimSemestre = criarBotao("Processar Fim do Semestre", "/Resources/imagens/concluido.png", 520, 25, 270, 45);
         panelNotasFaltas.add(btnProcessarFimSemestre);
+        
+        // Botão Limpar
+        JButton btnLimpar = criarBotao("Limpar", "/Resources/imagens/escovar.png", 800, 25, 120, 45);
+        panelNotasFaltas.add(btnLimpar);
 
-        txtStatus = criarTextField(153, 83, 280, 25);
-        panelNotasFaltas.add(txtStatus);
+        // Situação atual
         JLabel lblStatus = new JLabel("Situação atual:");
         lblStatus.setFont(new Font("Tahoma", Font.PLAIN, 17));
-        lblStatus.setBounds(33, 83, 130, 24);
+        lblStatus.setBounds(30, 85, 130, 24);
         panelNotasFaltas.add(lblStatus);
+
+        txtStatus = criarTextField(160, 85, 300, 25);
+        panelNotasFaltas.add(txtStatus);
+        
+        //metodo para limpar a tela
+        btnLimpar.addActionListener(e -> {
+            // Limpar campos de texto
+            txtNota.setText("");
+            txtFalta.setText("");
+            txtStatus.setText("");
+
+            // Resetar o JTextField de pesquisa
+            txtPesquisarAluno.setText(HINT_TEXT);
+            txtPesquisarAluno.setForeground(HINT_COLOR);
+
+            // Resetar combos
+            if (cmbDisciplina.getItemCount() > 0) cmbDisciplina.setSelectedIndex(0);
+            if (cmbSemestre.getItemCount() > 0) cmbSemestre.setSelectedIndex(0);
+
+            // Ocultar os painéis
+            panelDados.setVisible(false);
+            panelNotasFaltas.setVisible(false);
+
+            // Resetar seleção do aluno
+            alunoSelecionado = null;
+            idAlunoSelecionado = -1;
+            idMatriculaSelecionada = -1;
+        });
+
     }
 
     private JLabel criarLabelBold(String texto, int x, int y, int w, int h) {
@@ -208,16 +251,20 @@ public class NotasFaltas extends JPanel {
         tf.setColumns(10);
         return tf;
     }
-
-    private JButton criarBotao(String texto, int x, int y, int w, int h) {
-        JButton btn = new JButton(texto);
+    
+    private JButton criarBotao(String texto, String icone, int x, int y, int w, int h) {
+        JButton btn = new JButton(" " + texto);
+        btn.setIcon(new ImageIcon(NotasFaltas.class.getResource(icone)));
         btn.setBounds(x, y, w, h);
         btn.setFont(new Font("Tahoma", Font.PLAIN, 15));
         btn.setForeground(Color.BLACK);
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(false);
+        btn.setHorizontalAlignment(JButton.LEFT);
         return btn;
     }
+
+
 
     private void adicionarListeners() {
         // AutoComplete
@@ -313,9 +360,11 @@ public class NotasFaltas extends JPanel {
         this.alunoSelecionado = aluno;
         idAlunoSelecionado = aluno.getIdAluno();
         txtPesquisarAluno.setText(aluno.getNome());
-        lblNome.setText(aluno.getNome());
-        lblRA.setText(aluno.getRa());
-        lblCurso.setText(aluno.getNomeCurso());
+        lblDadosAluno.setText(
+        	    "Nome completo: " + aluno.getNome() + "                     " +
+        	    "    RA: " + aluno.getRa() + "                     " +
+        	    "    Curso: " + aluno.getNomeCurso()
+        	);
 
         try {
             idMatriculaSelecionada = alunoDAO.buscarIdMatricula(idAlunoSelecionado);
