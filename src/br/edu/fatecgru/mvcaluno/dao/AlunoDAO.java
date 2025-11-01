@@ -375,40 +375,45 @@ public class AlunoDAO {
         
         public List<DisciplinaBoletim> buscarHistoricoEscolar(int idAluno) throws Exception {
             List<DisciplinaBoletim> disciplinas = new ArrayList<>();
-            String SQL = "SELECT d.nome AS nomeDisciplina, md.nota, md.faltas, md.status, md.semestreCursado AS semestreAtual " +
-                    "FROM aluno a " +
-                    "JOIN matricula m ON a.idAluno = m.idAluno " +
-                    "JOIN matriculaDisciplina md ON m.idMatricula = md.idMatricula " +
-                    "JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
-                    "WHERE a.idAluno = ? AND a.ativo = TRUE AND m.ativo = TRUE AND md.ativo = TRUE " +
-                    "ORDER BY md.semestreCursado, d.nome";
-            
-            Connection conn = null;
-            PreparedStatement ps = null;
-            ResultSet rs = null;
 
-            try {
-                conn = ConnectionFactory.getConnection();
-                ps = conn.prepareStatement(SQL);
+            // REMOÇÃO: Retiramos filtros de ativo para incluir TODAS as disciplinas cursadas (mesmo inativas)
+            // Mantemos apenas o aluno ativo para evitar lixo, mas se quiser tudo, remova também
+            String SQL = "SELECT d.nome AS nomeDisciplina, md.nota, md.faltas, md.status, md.semestreCursado " +
+                         "FROM matriculaDisciplina md " +
+                         "INNER JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
+                         "INNER JOIN matricula m ON md.idMatricula = m.idMatricula " +
+                         "INNER JOIN aluno a ON m.idAluno = a.idAluno " +
+                         "WHERE a.idAluno = ? " +
+                         "AND a.ativo = TRUE " +  // Mantém aluno ativo (opcional, remova se quiser histórico de alunos inativos)
+                         // REMOVIDO: AND md.ativo = TRUE (para incluir disciplinas "canceladas")
+                         "ORDER BY CAST(SUBSTRING_INDEX(md.semestreCursado, '/', 1) AS UNSIGNED), " +
+                         "         CAST(SUBSTRING_INDEX(md.semestreCursado, '/', -1) AS UNSIGNED), " +
+                         "         d.nome";
+
+            try (Connection conn = ConnectionFactory.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(SQL)) {
+
                 ps.setInt(1, idAluno);
-                rs = ps.executeQuery();
-                while (rs.next()) {
-                    DisciplinaBoletim disc = new DisciplinaBoletim(
-                        rs.getString("nomeDisciplina"),
-                        rs.getDouble("nota"),
-                        rs.getInt("faltas"),
-                        rs.getString("status"),
-                        rs.getString("semestreAtual")
-                    );
-                    disciplinas.add(disc);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        DisciplinaBoletim disc = new DisciplinaBoletim(
+                            rs.getString("nomeDisciplina"),
+                            rs.getDouble("nota"),
+                            rs.getInt("faltas"),
+                            rs.getString("status"),
+                            rs.getString("semestreCursado")
+                        );
+                        disciplinas.add(disc);
+                    }
                 }
             } catch (SQLException e) {
-                throw new Exception("Erro ao buscar histórico escolar: " + e.getMessage());
-            } finally {
-                ConnectionFactory.closeConnection(conn, ps, rs);
+                throw new Exception("Erro ao buscar histórico escolar: " + e.getMessage(), e);
             }
+
             return disciplinas;
         }
+
 
         public int buscarIdMatricula(int idAluno) throws Exception {
             int idMatricula = -1;
