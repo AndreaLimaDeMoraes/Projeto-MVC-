@@ -48,52 +48,45 @@ INSERT INTO aluno (ra, nome, dataNascimento, cpf, email, endereco, municipio, uf
 ('2025007', 'Carlos Lima', '2001-06-25', '123.456.789-06', 'carlos.lima@email.com', 'Rua do Sol, 15', 'Guarulhos', 'SP', '(11)99999-0007', TRUE),
 ('2025008', 'Fernanda Rocha', '1999-11-11', '123.456.789-07', 'fernanda.rocha@email.com', 'Rua Marfim, 77', 'São Paulo', 'SP', '(11)99999-0008', TRUE),
 ('2025009', 'Rafael Mendes', '2000-09-09', '123.456.789-08', 'rafael.mendes@email.com', 'Rua das Acácias, 10', 'Guarulhos', 'SP', '(11)99999-0009', TRUE),
-('2025010', 'Juliana Pereira', '2002-10-01', '123.456.789-09', 'juliana.pereira@email.com', 'Rua das Violetas, 88', 'São Paulo', 'SP', '(11)99999-0010', TRUE),
-('2025011', 'Thiago Ramos', '2000-08-12', '123.456.789-10', 'thiago.ramos@email.com', 'Rua Amarela, 10', 'Guarulhos', 'SP', '(11)99999-0011', TRUE),
-('2025012', 'Carla Martins', '1999-12-05', '123.456.789-11', 'carla.martins@email.com', 'Av. Laranjeiras, 20', 'São Paulo', 'SP', '(11)99999-0012', TRUE),
-('2025013', 'Diego Fernandes', '2001-03-08', '123.456.789-12', 'diego.fernandes@email.com', 'Rua das Orquídeas, 15', 'Guarulhos', 'SP', '(11)99999-0013', TRUE);
-
+('2025010', 'Juliana Pereira', '2002-10-01', '123.456.789-09', 'juliana.pereira@email.com', 'Rua das Violetas, 88', 'São Paulo', 'SP', '(11)99999-0010', TRUE);
 -- ===== MATRÍCULAS =====
-INSERT INTO matricula (idAluno, idCurso, semestreInicio, ativo) VALUES
-(1, 1, '2025/1', TRUE),
-(2, 1, '2025/1', TRUE),
-(3, 1, '2025/1', TRUE),
-(4, 1, '2025/1', TRUE),
-(5, 2, '2025/1', TRUE),
-(6, 2, '2025/1', TRUE),
-(7, 2, '2025/1', TRUE),
-(8, 3, '2025/1', TRUE),
-(9, 3, '2025/1', TRUE),
-(10, 3, '2025/1', TRUE),
-(11, 1, '2025/1', TRUE),
-(12, 1, '2025/1', TRUE),
-(13, 1, '2025/1', TRUE);
+INSERT INTO matricula (idAluno, idCurso, ativo) VALUES
+(1, 1, TRUE),
+(2, 1, TRUE),
+(3, 1, TRUE),
+(4, 1, TRUE),
+(5, 2, TRUE),
+(6, 2, TRUE),
+(7, 2, TRUE),
+(8, 3, TRUE),
+(9, 3, TRUE),
+(10, 3, TRUE);
 
 -- ===== MATRÍCULA DISCIPLINA - VINCULADA AO SEMESTRE '2025/1' =====
 INSERT INTO matriculaDisciplina (idMatricula, idDisciplina, semestreCursado, faltas, nota, status, ativo) VALUES
 -- Curso 1 (ADS): disciplinas 1 (Introdução à Programação) e 2 (Matemática Discreta)
 -- Alunos APROVADOS (ID Matrícula 1, 2, 3, 4)
-(1, 1, '2025/1', 2, 8.5, 'Aprovado', TRUE),
-(1, 2, '2025/1', 0, 8.0, 'Aprovado', TRUE),
-(2, 1, '2025/1', 1, 6.5, 'Aprovado', TRUE),
-(2, 2, '2025/1', 3, 8.25, 'Aprovado', TRUE),
-(3, 1, '2025/1', 0, 9.25, 'Aprovado', TRUE),
-(3, 2, '2025/1', 2, 7.5, 'Aprovado', TRUE),
-(4, 1, '2025/1', 4, 7.0, 'Aprovado', TRUE),
-(4, 2, '2025/1', 1, 8.25, 'Aprovado', TRUE),
+(1, 1, '2025/1', 2, 8.5, 'Cursando', TRUE),
+(1, 2, '2025/1', 0, 8.0, 'Cursando', TRUE),
+(2, 1, '2025/1', 1, 6.5, 'Cursando', TRUE),
+(2, 2, '2025/1', 3, 8.25, 'Cursando', TRUE),
+(3, 1, '2025/1', 0, 9.25, 'Cursando', TRUE),
+(3, 2, '2025/1', 2, 7.5, 'Cursando', TRUE),
+(4, 1, '2025/1', 4, 7.0, 'Cursando', TRUE),
+(4, 2, '2025/1', 1, 8.25, 'Cursando', TRUE),
 
 -- Curso 2 (Gestão): disciplinas 7 (Fund. de Admin.) e 8 (Economia) - Alunos APROVADOS
-(5, 7, '2025/1', 2, 7.5, 'Aprovado', TRUE),
-(5, 8, '2025/1', 0, 9.25, 'Aprovado', TRUE),
-(6, 7, '2025/1', 1, 6.75, 'Aprovado', TRUE),
-(6, 8, '2025/1', 3, 8.5, 'Aprovado', TRUE),
-(7, 7, '2025/1', 2, 7.75, 'Aprovado', TRUE),
-(7, 8, '2025/1', 1, 6.75, 'Aprovado', TRUE),
+(5, 7, '2025/1', 2, 7.5, 'Cursando', TRUE),
+(5, 8, '2025/1', 0, 9.25, 'Cursando', TRUE),
+(6, 7, '2025/1', 1, 6.75, 'Cursando', TRUE),
+(6, 8, '2025/1', 3, 8.5, 'Cursando', TRUE),
+(7, 7, '2025/1', 2, 7.75, 'Cursando', TRUE),
+(7, 8, '2025/1', 1, 6.75, 'Cursando', TRUE),
 
 -- Curso 3 (Moda): disciplinas 13 (História da Moda) e 14 (Introdução ao Design) - Alunos APROVADOS
-(8, 13, '2025/1', 0, 8.75, 'Aprovado', TRUE),
-(8, 14, '2025/1', 1, 9.25, 'Aprovado', TRUE),
-(9, 13, '2025/1', 3, 7.5, 'Aprovado', TRUE),
-(9, 14, '2025/1', 0, 7.0, 'Aprovado', TRUE),
-(10, 13, '2025/1', 1, 8.25, 'Aprovado', TRUE),
-(10, 14, '2025/1', 2, 9.25, 'Aprovado', TRUE);
+(8, 13, '2025/1', 0, 8.75, 'Cursando', TRUE),
+(8, 14, '2025/1', 1, 9.25, 'Cursando', TRUE),
+(9, 13, '2025/1', 3, 7.5, 'Cursando', TRUE),
+(9, 14, '2025/1', 0, 7.0, 'Cursando', TRUE),
+(10, 13, '2025/1', 1, 8.25, 'Cursando', TRUE),
+(10, 14, '2025/1', 2, 9.25, 'Cursando', TRUE);

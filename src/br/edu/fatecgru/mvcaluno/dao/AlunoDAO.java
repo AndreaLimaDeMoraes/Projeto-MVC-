@@ -135,161 +135,165 @@ public class AlunoDAO {
         }
     }
     // Método listarTodos
-        public List<AlunoView> listarTodos() throws Exception {
-            List<AlunoView> lista = new ArrayList<>();
-            
-            String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus, m.semestreInicio AS maxSemestreAtual, m.idCurso " // ✅ INCLUÍDO: m.idCurso
-                       + "FROM aluno a "
-                       + "INNER JOIN matricula m ON a.idAluno = m.idAluno AND m.idMatricula = ("
-                       + "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = a.idAluno"
-                       + ") "
-                       + "INNER JOIN curso c ON m.idCurso = c.idCurso "
-                       + "GROUP BY a.idAluno, a.ra, a.nome, a.dataNascimento, a.cpf, a.email, a.endereco, a.municipio, a.uf, a.celular, a.ativo, c.nome, c.campus, m.semestreInicio, m.idCurso " // ✅ INCLUÍDO: m.idCurso no GROUP BY
-                       + "ORDER BY a.nome";
-            
-            Connection conn = null;
-            PreparedStatement ps = null;
-            ResultSet rs = null;
+    public List<AlunoView> listarTodos() throws Exception {
+        List<AlunoView> lista = new ArrayList<>();
+        
+        String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus, " +
+                "COALESCE((SELECT MAX(md.semestreCursado) FROM matriculaDisciplina md WHERE md.idMatricula = m.idMatricula AND md.status = 'Cursando' AND md.ativo = TRUE), 'N/A') AS semestreAtual, " +
+                "m.idCurso " +
+                "FROM aluno a " +
+                "INNER JOIN matricula m ON a.idAluno = m.idAluno AND m.idMatricula = (" +
+                "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = a.idAluno" +
+                ") AND m.ativo = TRUE " +  // <-- ALTERAÇÃO: Filtrar apenas matrículas ativas
+                "INNER JOIN curso c ON m.idCurso = c.idCurso " +
+                "GROUP BY a.idAluno, a.ra, a.nome, a.dataNascimento, a.cpf, a.email, a.endereco, a.municipio, a.uf, a.celular, a.ativo, c.nome, c.campus, semestreAtual, m.idCurso " +
+                "ORDER BY a.nome";
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
 
-            try {
-                conn = ConnectionFactory.getConnection(); 
-                ps = conn.prepareStatement(SQL);
-                rs = ps.executeQuery();
-                while (rs.next()) {
-                    AlunoView aluno = new AlunoView(
-                            rs.getInt("idAluno"),
-                            rs.getString("ra"),
-                            rs.getString("nome"),
-                            rs.getString("dataNascimento"),
-                            rs.getString("cpf"),
-                            rs.getString("email"),
-                            rs.getString("endereco"),
-                            rs.getString("municipio"),
-                            rs.getString("uf"),
-                            rs.getString("celular"),
-                            rs.getBoolean("ativo"),
-                            rs.getString("nomeCurso"),
-                            rs.getString("campus"),
-                            rs.getString("maxSemestreAtual"),
-                            rs.getInt("idCurso") // ✅ NOVO PARÂMETRO
-                    );
-                    lista.add(aluno);
-                }
-            } catch (SQLException e) {
-                throw new Exception("Erro ao listar alunos: " + e.getMessage());
-            } finally {
-                ConnectionFactory.closeConnection(conn, ps, rs); 
+
+        try {
+            conn = ConnectionFactory.getConnection(); 
+            ps = conn.prepareStatement(SQL);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                AlunoView aluno = new AlunoView(
+                        rs.getInt("idAluno"),
+                        rs.getString("ra"),
+                        rs.getString("nome"),
+                        rs.getString("dataNascimento"),
+                        rs.getString("cpf"),
+                        rs.getString("email"),
+                        rs.getString("endereco"),
+                        rs.getString("municipio"),
+                        rs.getString("uf"),
+                        rs.getString("celular"),
+                        rs.getBoolean("ativo"),
+                        rs.getString("nomeCurso"),
+                        rs.getString("campus"),
+                        rs.getString("semestreAtual"),  // <-- ALTERAÇÃO: Usar o alias correto
+                        rs.getInt("idCurso")
+                );
+                lista.add(aluno);
             }
-            return lista;
+        } catch (SQLException e) {
+            throw new Exception("Erro ao listar alunos: " + e.getMessage());
+        } finally {
+            ConnectionFactory.closeConnection(conn, ps, rs); 
         }
+        return lista;
+    }
            
         // Método listarPorFiltro
-        public List<AlunoView> listarPorFiltro(String filtro) throws Exception {
-            List<AlunoView> lista = new ArrayList<>();
-            
-            String filtroSQL = "%" + filtro + "%";
-            
-            String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus, m.semestreInicio AS maxSemestreAtual, m.idCurso " // ✅ INCLUÍDO: m.idCurso
-                       + "FROM aluno a "
-                       + "INNER JOIN matricula m ON a.idAluno = m.idAluno AND m.idMatricula = ("
-                       + "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = a.idAluno"
-                       + ") "
-                       + "INNER JOIN curso c ON m.idCurso = c.idCurso "
-                       + "WHERE a.nome LIKE ? OR a.ra LIKE ? OR CONVERT(a.idAluno, CHAR) LIKE ? "
-                       + "GROUP BY a.idAluno, a.ra, a.nome, a.dataNascimento, a.cpf, a.email, a.endereco, a.municipio, a.uf, a.celular, a.ativo, c.nome, c.campus, m.semestreInicio, m.idCurso " // ✅ INCLUÍDO: m.idCurso no GROUP BY
-                       + "ORDER BY a.nome LIMIT 50";
-            Connection conn = null;
-            PreparedStatement ps = null;
-            ResultSet rs = null;
-
-            try {
-                conn = ConnectionFactory.getConnection();  
-                ps = conn.prepareStatement(SQL);
-                ps.setString(1, filtroSQL); 
-                ps.setString(2, filtroSQL);
-                ps.setString(3, filtroSQL);
-                
-                rs = ps.executeQuery();
-                
-                while (rs.next()) {
-                    AlunoView aluno = new AlunoView(
-                            rs.getInt("idAluno"),
-                            rs.getString("ra"),
-                            rs.getString("nome"),
-                            rs.getString("dataNascimento"),
-                            rs.getString("cpf"),
-                            rs.getString("email"),
-                            rs.getString("endereco"),
-                            rs.getString("municipio"),
-                            rs.getString("uf"),
-                            rs.getString("celular"),
-                            rs.getBoolean("ativo"),
-                            rs.getString("nomeCurso"),
-                            rs.getString("campus"),
-                            rs.getString("maxSemestreAtual"),
-                            rs.getInt("idCurso") // ✅ NOVO PARÂMETRO
-                    );
-                    lista.add(aluno);
-                }
-            } catch (SQLException e) {
-                throw new Exception("Erro ao filtrar alunos: " + e.getMessage());
-            } finally {
-                ConnectionFactory.closeConnection(conn, ps, rs); 
-            }
-            return lista;
-        }
+    public List<AlunoView> listarPorFiltro(String filtro) throws Exception {
+        List<AlunoView> lista = new ArrayList<>();
         
+        String filtroSQL = "%" + filtro + "%";
+        String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus, " +
+                "COALESCE((SELECT MAX(md.semestreCursado) FROM matriculaDisciplina md WHERE md.idMatricula = m.idMatricula AND md.status = 'Cursando' AND md.ativo = TRUE), 'N/A') AS semestreAtual, " +
+                "m.idCurso " +
+                "FROM aluno a " +
+                "INNER JOIN matricula m ON a.idAluno = m.idAluno AND m.idMatricula = (" +
+                "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = a.idAluno" +
+                ") AND m.ativo = TRUE " +  // <-- ALTERAÇÃO: Filtrar apenas matrículas ativas
+                "INNER JOIN curso c ON m.idCurso = c.idCurso " +
+                "WHERE a.nome LIKE ? OR a.ra LIKE ? OR CONVERT(a.idAluno, CHAR) LIKE ? " +
+                "GROUP BY a.idAluno, a.ra, a.nome, a.dataNascimento, a.cpf, a.email, a.endereco, a.municipio, a.uf, a.celular, a.ativo, c.nome, c.campus, semestreAtual, m.idCurso " +
+                "ORDER BY a.nome LIMIT 50";
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = ConnectionFactory.getConnection();  
+            ps = conn.prepareStatement(SQL);
+            ps.setString(1, filtroSQL); 
+            ps.setString(2, filtroSQL);
+            ps.setString(3, filtroSQL);
+            
+            rs = ps.executeQuery();
+            
+            while (rs.next()) {
+            	 AlunoView aluno = new AlunoView(
+                         rs.getInt("idAluno"),
+                         rs.getString("ra"),
+                         rs.getString("nome"),
+                         rs.getString("dataNascimento"),
+                         rs.getString("cpf"),
+                         rs.getString("email"),
+                         rs.getString("endereco"),
+                         rs.getString("municipio"),
+                         rs.getString("uf"),
+                         rs.getString("celular"),
+                         rs.getBoolean("ativo"),
+                         rs.getString("nomeCurso"),
+                         rs.getString("campus"),
+                         rs.getString("semestreAtual"),  // <-- ALTERAÇÃO: Usar o alias correto
+                         rs.getInt("idCurso")
+                 );
+                 lista.add(aluno);
+            }
+        } catch (SQLException e) {
+            throw new Exception("Erro ao filtrar alunos: " + e.getMessage());
+        } finally {
+            ConnectionFactory.closeConnection(conn, ps, rs); 
+        }
+        return lista;
+    }
+    
         // Método listarPorCurso
-        public List<AlunoView> listarPorCurso(String nomeCurso) throws Exception {
-            List<AlunoView> listaAlunos = new ArrayList<>();
-            Connection conn = null;
-            PreparedStatement ps = null;
-            ResultSet rs = null;
-
-            String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus, m.semestreInicio AS maxSemestreAtual, m.idCurso " // ✅ INCLUÍDO: m.idCurso
-                       + "FROM aluno a "
-                       + "INNER JOIN matricula m ON a.idAluno = m.idAluno AND m.idMatricula = ("
-                       + "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = a.idAluno"
-                       + ") "
-                       + "INNER JOIN curso c ON m.idCurso = c.idCurso "
-                       + "WHERE a.ativo = true AND c.nome = ? "
-                       + "GROUP BY a.idAluno, a.ra, a.nome, a.dataNascimento, a.cpf, a.email, a.endereco, a.municipio, a.uf, a.celular, a.ativo, c.nome, c.campus, m.semestreInicio, m.idCurso " // ✅ INCLUÍDO: m.idCurso no GROUP BY
-                       + "ORDER BY a.nome";
-
-            try {
-                conn = ConnectionFactory.getConnection();
-                ps = conn.prepareStatement(SQL);
-                ps.setString(1, nomeCurso);
-                rs = ps.executeQuery();
-
-                while (rs.next()) {
-                    AlunoView aluno = new AlunoView(
-                            rs.getInt("idAluno"),
-                            rs.getString("ra"),
-                            rs.getString("nome"),
-                            rs.getString("dataNascimento"),
-                            rs.getString("cpf"),
-                            rs.getString("email"),
-                            rs.getString("endereco"),
-                            rs.getString("municipio"),
-                            rs.getString("uf"),
-                            rs.getString("celular"),
-                            rs.getBoolean("ativo"),
-                            rs.getString("nomeCurso"),  
-                            rs.getString("campus"),
-                            rs.getString("maxSemestreAtual"),
-                            rs.getInt("idCurso")
-                    );
-                    listaAlunos.add(aluno);
-                }
-            } catch (SQLException e) {
-                throw new Exception("Erro ao listar alunos por curso: " + e.getMessage());
-            } finally {
-                ConnectionFactory.closeConnection(conn, ps, rs);
+    public List<AlunoView> listarPorCurso(String nomeCurso) throws Exception {
+        List<AlunoView> listaAlunos = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus, " +
+                "COALESCE((SELECT MAX(md.semestreCursado) FROM matriculaDisciplina md WHERE md.idMatricula = m.idMatricula AND md.status = 'Cursando' AND md.ativo = TRUE), 'N/A') AS semestreAtual, " +
+                "m.idCurso " +
+                "FROM aluno a " +
+                "INNER JOIN matricula m ON a.idAluno = m.idAluno AND m.idMatricula = (" +
+                "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = a.idAluno" +
+                ") AND m.ativo = TRUE " +  // <-- ALTERAÇÃO: Filtrar apenas matrículas ativas
+                "INNER JOIN curso c ON m.idCurso = c.idCurso " +
+                "WHERE a.ativo = true AND c.nome = ? " +
+                "GROUP BY a.idAluno, a.ra, a.nome, a.dataNascimento, a.cpf, a.email, a.endereco, a.municipio, a.uf, a.celular, a.ativo, c.nome, c.campus, semestreAtual, m.idCurso " +
+                "ORDER BY a.nome";
+   
+        try {
+            conn = ConnectionFactory.getConnection();
+            ps = conn.prepareStatement(SQL);
+            ps.setString(1, nomeCurso);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                AlunoView aluno = new AlunoView(
+                        rs.getInt("idAluno"),
+                        rs.getString("ra"),
+                        rs.getString("nome"),
+                        rs.getString("dataNascimento"),
+                        rs.getString("cpf"),
+                        rs.getString("email"),
+                        rs.getString("endereco"),
+                        rs.getString("municipio"),
+                        rs.getString("uf"),
+                        rs.getString("celular"),
+                        rs.getBoolean("ativo"),
+                        rs.getString("nomeCurso"),  
+                        rs.getString("campus"),
+                        rs.getString("semestreAtual"),  // <-- ALTERAÇÃO: Usar o alias correto
+                        rs.getInt("idCurso")
+                );
+                listaAlunos.add(aluno);
             }
-            return listaAlunos;
+        } catch (SQLException e) {
+            throw new Exception("Erro ao listar alunos por curso: " + e.getMessage());
+        } finally {
+            ConnectionFactory.closeConnection(conn, ps, rs);
         }
-        
+        return listaAlunos;
+    }
+    
+
         public BoletimAluno buscarDadosBoletimAluno(int idAluno) throws Exception {
             BoletimAluno dados = null;
             

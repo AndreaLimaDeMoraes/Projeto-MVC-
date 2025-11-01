@@ -54,7 +54,7 @@ public class MatriculaDisciplinaDAO {
         }
 
         // Se o aluno já está no semestre 3, não cria mais matrículas
-        if (semestreAtual >= 3) {
+        if (semestreAtual >= 6) {
             return -1; // ou 0 para indicar "fim do curso"
         }
 
@@ -231,10 +231,16 @@ public class MatriculaDisciplinaDAO {
         }
         return false;
     }
+
     public List<MatriculaDisciplina> listarDisciplinasPorStatus(int idMatricula, String status) throws Exception {
         List<MatriculaDisciplina> lista = new ArrayList<>();
         
-        String sql = "SELECT * FROM matriculaDisciplina WHERE idMatricula = ? AND status = ? AND ativo = TRUE";
+        // <-- ALTERAÇÃO: Remover filtro ativo para 'Aprovado' e 'Reprovado' (histórico/status final)
+        String sql = "SELECT * FROM matriculaDisciplina WHERE idMatricula = ? AND status = ?";
+        if (!"Aprovado".equals(status) && !"Reprovado".equals(status)) {
+            sql += " AND ativo = TRUE";  // Manter filtro ativo apenas para 'Cursando'
+        }
+        
         try (Connection conn = ConnectionFactory.getConnection(); 
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idMatricula);
@@ -255,6 +261,7 @@ public class MatriculaDisciplinaDAO {
         }
         return lista;
     }
+
 
     public void matricularDisciplinaNoSemestre(int idDisciplina, int idMatricula, String semestre) throws Exception {
     	Connection conn = ConnectionFactory.getConnection();
@@ -328,12 +335,49 @@ public boolean verificarPendenciasNoSemestre(int idMatricula, String semestre) t
     return false;
 }
 
+/** Verifica se o aluno concluiu todas as disciplinas obrigatórias do curso. */
+public boolean alunoConcluiuCurso(int idMatricula, int idCurso) throws Exception {
+    // 1. Contar total de disciplinas obrigatórias do curso
+    String sqlTotal = "SELECT COUNT(*) FROM disciplina WHERE idCurso = ? AND ativo = TRUE";
+    int totalDisciplinas = 0;
+    try (Connection conn = ConnectionFactory.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sqlTotal)) {
+        ps.setInt(1, idCurso);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                totalDisciplinas = rs.getInt(1);
+            }
+        }
+    }
+
+
+// 2. Contar disciplinas aprovadas pelo aluno (status 'Aprovado', independente de ativo)
+String sqlAprovadas = "SELECT COUNT(DISTINCT md.idDisciplina) FROM matriculaDisciplina md " +
+                     "JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
+                     "WHERE md.idMatricula = ? AND d.idCurso = ? AND md.status = 'Aprovado'";
+int totalAprovadas = 0;
+try (Connection conn = ConnectionFactory.getConnection();
+     PreparedStatement ps = conn.prepareStatement(sqlAprovadas)) {
+    ps.setInt(1, idMatricula);
+    ps.setInt(2, idCurso);
+    try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+            totalAprovadas = rs.getInt(1);
+        }
+    }
+}
+// 3. Se total de aprovadas == total de disciplinas do curso, concluiu
+return totalAprovadas == totalDisciplinas;
+}
+
+
+
 public List<String> processarFimSemestre(int idMatricula, int idCurso, String semestreAtualAluno) throws Exception {
     List<String> disciplinasMatriculadas = new ArrayList<>();
     Connection conn = null;
 
     try {
-        // 0️ VERIFICAÇÃO DE PENDÊNCIAS (NOVO PASSO)
+        // 0️ VERIFICAÇÃO DE PENDÊNCIAS
         if (verificarPendenciasNoSemestre(idMatricula, semestreAtualAluno)) {
             throw new Exception("Não é possível finalizar o semestre. Existem disciplinas pendentes ('Cursando') sem nota ou falta atribuídas.");
         }
@@ -341,16 +385,12 @@ public List<String> processarFimSemestre(int idMatricula, int idCurso, String se
         conn = ConnectionFactory.getConnection();
         conn.setAutoCommit(false); // Inicia a transação
 
-        // 1️Atualizar status (Aprovado/Reprovado) das disciplinas do semestre encerrado
-        String sqlUpdateStatus = "UPDATE matriculaDisciplina SET status = CASE " +
-                                 "WHEN nota >= ? AND faltas <= ? THEN 'Aprovado' " +
-                                 "ELSE 'Reprovado' END " +
-                                 "WHERE idMatricula = ? AND semestreCursado = ? AND ativo = TRUE AND status = 'Cursando'";
+        // 1️ Inativar (ativo = FALSE) as disciplinas já avaliadas (Aprovado/Reprovado) do semestre encerrado
+        String sqlUpdateStatus = "UPDATE matriculaDisciplina SET ativo = FALSE " +
+                                 "WHERE idMatricula = ? AND semestreCursado = ? AND ativo = TRUE AND status IN ('Aprovado', 'Reprovado')";
         try (PreparedStatement ps = conn.prepareStatement(sqlUpdateStatus)) {
-            ps.setDouble(1, NOTA_MINIMA_APROVACAO);
-            ps.setInt(2, MAX_FALTAS_PERMITIDAS);
-            ps.setInt(3, idMatricula);
-            ps.setString(4, semestreAtualAluno);
+            ps.setInt(1, idMatricula);
+            ps.setString(2, semestreAtualAluno);
             ps.executeUpdate();
         }
 
@@ -419,11 +459,23 @@ public List<String> processarFimSemestre(int idMatricula, int idCurso, String se
             }
         }
 
+        // <-- LOG TEMPORÁRIO: Verificar valores antes da condição
+        System.out.println("proximoSemestreCurso: " + proximoSemestreCurso);
+        System.out.println("disciplinasParaMatricular.size(): " + disciplinasParaMatricular.size());
+
         // O curso só termina se não há mais disciplinas novas E não há pendências de repetição.
-        if (proximoSemestreCurso == -1 && disciplinasParaMatricular.isEmpty()) {
-             System.out.println("Aluno concluiu todas as disciplinas do curso e não tem pendências.");
-             conn.commit();
-             return disciplinasMatriculadas;
+        if (disciplinasParaMatricular.isEmpty() && alunoConcluiuCurso(idMatricula, idCurso)) {
+            System.out.println("Aluno concluiu todas as disciplinas do curso e não tem pendências.");
+           
+            String sqlInativarMatricula = "UPDATE matricula SET ativo = FALSE WHERE idMatricula = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sqlInativarMatricula)) {
+                ps.setInt(1, idMatricula);
+                ps.executeUpdate();
+            }
+            
+            conn.commit();
+            return disciplinasMatriculadas;
+       
         }
 
         // 7️ Matricular as disciplinas selecionadas
@@ -465,6 +517,8 @@ public List<String> processarFimSemestre(int idMatricula, int idCurso, String se
 
     return disciplinasMatriculadas;
 }
+
+
 
 /** Lista todas as IDs de disciplinas obrigatórias do curso, de 1 até o semestre alvo-1. */
 public List<Integer> listarDisciplinasSemestreAte(int idCurso, int semestreAlvo) throws Exception {

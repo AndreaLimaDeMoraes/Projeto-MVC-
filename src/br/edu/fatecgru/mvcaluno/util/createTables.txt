@@ -53,7 +53,6 @@ CREATE TABLE matricula (
     idMatricula INT AUTO_INCREMENT PRIMARY KEY,
     idAluno INT NOT NULL,
     idCurso INT NOT NULL,
-    semestreInicio VARCHAR(20) NOT NULL,
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
     FOREIGN KEY (idAluno) REFERENCES aluno(idAluno)
         ON DELETE CASCADE
