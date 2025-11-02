@@ -173,7 +173,7 @@ public class Documentos extends JPanel {
         Font tableFont = new Font("Tahoma", Font.PLAIN, 15);
         Font headerFont = new Font("Tahoma", Font.BOLD, 15); 
 
-        String[] colunas = {"Disciplina", "Nota", "Faltas", "Semestre"};
+        String[] colunas = {"Disciplina", "Nota", "Faltas", "Semestre", "Status"};
         modelDisciplinas = new DefaultTableModel(colunas, 0);
         tableDisciplinas = new JTable(modelDisciplinas);
         
@@ -465,7 +465,8 @@ public class Documentos extends JPanel {
                 disc.getNomeDisciplina(),
                 String.format("%.2f", disc.getNota()),
                 disc.getFaltas(),
-                disc.getSemestreAtual()
+                disc.getSemestreAtual(),
+                disc.getStatus()
             });
         }
 
@@ -548,11 +549,11 @@ public class Documentos extends JPanel {
             document.add(new Paragraph("\n"));
 
             // --- Tabela das disciplinas ---
-            Table tabelaDisciplinas = new Table(UnitValue.createPercentArray(new float[]{3, 1, 1, 1}))
+            Table tabelaDisciplinas = new Table(UnitValue.createPercentArray(new float[]{3, 1, 1, 1, 1}))
                     .useAllAvailableWidth();
 
             // Cabeçalho
-            String[] headers = {"Disciplina", "Nota", "Faltas", "Semestre"};
+            String[] headers = {"Disciplina", "Nota", "Faltas", "Semestre", "Status"};
             for (String h : headers) {
                 tabelaDisciplinas.addHeaderCell(
                     new Cell().add(new Paragraph(h).setBold().setTextAlignment(TextAlignment.CENTER))
@@ -575,6 +576,9 @@ public class Documentos extends JPanel {
                         .setBackgroundColor(bgColor).setTextAlignment(TextAlignment.CENTER));
                 tabelaDisciplinas.addCell(new Cell().add(new Paragraph(disc.getSemestreAtual()))
                         .setBackgroundColor(bgColor).setTextAlignment(TextAlignment.CENTER));
+                tabelaDisciplinas.addCell(new Cell().add(new Paragraph(disc.getStatus()))
+                        .setBackgroundColor(bgColor).setTextAlignment(TextAlignment.CENTER));
+
             }
 
             document.add(tabelaDisciplinas);
@@ -603,12 +607,7 @@ public class Documentos extends JPanel {
     }
 
 
-    private void voltarParaListagem() {
-        if (framePai instanceof TelaPrincipal) {
-            TelaPrincipal telaPrincipal = (TelaPrincipal) framePai;
-            telaPrincipal.trocarPainelConteudo(new ListarAlunos(telaPrincipal));
-        }
-    }
+   
 
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
