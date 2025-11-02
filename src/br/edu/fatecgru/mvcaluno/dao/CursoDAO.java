@@ -220,7 +220,7 @@ public class CursoDAO {
         ResultSet rs = null;
 
         // A consulta usa DISTINCT para garantir que não haja repetição
-        String SQL = "SELECT nome, campus FROM curso WHERE ativo = true ORDER BY nome, campus";
+        String SQL = "SELECT DISTINCT nome, campus FROM curso WHERE ativo = true ORDER BY nome, campus";
 
         try {
             conn = ConnectionFactory.getConnection();
