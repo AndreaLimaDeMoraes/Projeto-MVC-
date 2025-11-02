@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -89,13 +90,14 @@ public class TelaDisciplina extends JPanel {
         panel.add(cmbSemestre);
 
         // Botão Nova Disciplina
-        JButton btnNovaDisciplina = new JButton("Nova Disciplina");
-        btnNovaDisciplina.setBounds(750, 33, 133, 26);
+        JButton btnNovaDisciplina = new JButton("Criar");
+        btnNovaDisciplina.setBounds(750, 26, 120, 38);
+        btnNovaDisciplina.setIcon(new ImageIcon(TelaCurso.class.getResource("/Resources/imagens/novo-documento.png")));
         btnNovaDisciplina.setPreferredSize(new Dimension(120, 30));
-        btnNovaDisciplina.setForeground(Color.WHITE);
-        btnNovaDisciplina.setFont(new Font("Tahoma", Font.BOLD, 12));
+        btnNovaDisciplina.setForeground(new Color(0, 0, 0));
+        btnNovaDisciplina.setFont(new Font("Tahoma", Font.BOLD, 11));
         btnNovaDisciplina.setFocusPainted(false);
-        btnNovaDisciplina.setBackground(new Color(54, 70, 78));
+        btnNovaDisciplina.setBackground(new Color(255, 255, 255));
         panel.add(btnNovaDisciplina);
 
         // Painel de lista
