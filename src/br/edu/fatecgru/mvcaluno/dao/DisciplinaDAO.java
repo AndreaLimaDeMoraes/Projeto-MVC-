@@ -126,6 +126,51 @@ public class DisciplinaDAO {
         }
     }
 
+    public Disciplina buscarPorNomeECurso(String nome, int idCurso) throws Exception {
+        String sql = "SELECT * FROM disciplina WHERE nome = ? AND idCurso = ?";
+        Disciplina disciplina = null;
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, nome);
+            stmt.setInt(2, idCurso);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                disciplina = new Disciplina();
+                disciplina.setIdDisciplina(rs.getInt("idDisciplina"));
+                disciplina.setIdCurso(rs.getInt("idCurso"));
+                disciplina.setNome(rs.getString("nome"));
+                disciplina.setSemestre(rs.getInt("semestre"));
+                disciplina.setAtivo(rs.getBoolean("ativo"));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw e; // opcional — deixa o método propagar o erro pra quem chamou
+        }
+
+        return disciplina;
+    }
+
+
+    public void reativarDisciplina(int idDisciplina) throws Exception {
+        String sql = "UPDATE disciplina SET ativo = 1 WHERE idDisciplina = ?";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, idDisciplina);
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw e; // opcional: propaga o erro para o método que chamou
+        }
+    }
+
+
     
     
 }
