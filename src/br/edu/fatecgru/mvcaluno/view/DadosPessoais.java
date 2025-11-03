@@ -71,22 +71,22 @@ public class DadosPessoais extends JPanel {
     // LAYOUT E COMPONENTES
     // ===================================
     private void setupLayout() {
-        // 1. Configuração do Painel Principal (do esqueleto)
+        // 1. Configuração do Painel Principal
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(15, 15, 15, 15)); 
         
-        // 2. Título (do esqueleto)
+        // 2. Título
         String titulo = (idAluno > 0) ? "EM EDIÇÃO: Dados Pessoais do Aluno ID: " + idAluno : "CADASTRAR NOVO ALUNO";
         JLabel lblTitulo = new JLabel(titulo);
         lblTitulo.setFont(new Font("Tahoma", Font.BOLD, 20));
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         add(lblTitulo, BorderLayout.NORTH);
         
-        // --- 3. Painel de Conteúdo ---
+        // 3. Painel de Conteúdo
         JPanel pnlConteudo = new JPanel();
-        pnlConteudo.setBackground(new Color(230, 230, 230)); // Cor de fundo cinza claro
+        pnlConteudo.setBackground(new Color(230, 230, 230));
         
-        // --- Inicialização dos componentes (Corrigido com RA) ---
+        // Inicialização dos componentes
         lblRa = new JLabel("RA"); 
         lblNome = new JLabel("Nome");
         lblDataNasc = new JLabel("Data de Nascimento");
@@ -99,12 +99,25 @@ public class DadosPessoais extends JPanel {
         lblCurso = new JLabel("Curso");
 
         txtRa = new JTextField(10); 
+        txtRa.setEditable(false); // o usuário não pode editar, RA é gerado automaticamente
+        	
+        // --- Gerar RA automático se for novo aluno ---
+        if (idAluno == 0) { // novo aluno
+            try {
+                AlunoDAO alunoDAO = new AlunoDAO();
+                txtRa.setText(alunoDAO.gerarProximoRA());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Erro ao gerar RA automático: " + ex.getMessage(),
+                                              "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        
         txtNome = new JTextField(20);
         txtEmail = new JTextField(30);
         txtEndereco = new JTextField(30);
         txtMunicipio = new JTextField(15);
 
-        // Campos formatados (com máscara)
         try {
             txtDataNasc = new JFormattedTextField(new MaskFormatter("##/##/####"));
             txtCpf = new JFormattedTextField(new MaskFormatter("###.###.###-##"));
@@ -116,14 +129,11 @@ public class DadosPessoais extends JPanel {
             txtCelular = new JFormattedTextField();
         }
 
-        // ComboBox de UF
         String[] ufs = {"SP", "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SE", "TO"};
         jcbUf = new JComboBox<>(ufs);
-
-        // ComboBox de Cursos (será populado)
         jcbCursos = new JComboBox<>();
 
-        // --- Configuração do GroupLayout para o pnlConteudo ---
+        // Layout do painel de conteúdo
         GroupLayout layout = new GroupLayout(pnlConteudo);
         pnlConteudo.setLayout(layout);
         layout.setAutoCreateGaps(true);
@@ -131,16 +141,14 @@ public class DadosPessoais extends JPanel {
 
         layout.setHorizontalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            // Linha RA e Nome
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(lblRa) 
-                    .addComponent(txtRa, GroupLayout.PREFERRED_SIZE, 120, GroupLayout.PREFERRED_SIZE)) 
+                    .addComponent(lblRa)
+                    .addComponent(txtRa, GroupLayout.PREFERRED_SIZE, 120, GroupLayout.PREFERRED_SIZE))
                 .addGap(20)
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addComponent(lblNome)
                     .addComponent(txtNome)))
-            // Linha Data de Nascimento e CPF
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addComponent(lblDataNasc)
@@ -149,15 +157,12 @@ public class DadosPessoais extends JPanel {
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addComponent(lblCpf)
                     .addComponent(txtCpf, GroupLayout.PREFERRED_SIZE, 150, GroupLayout.PREFERRED_SIZE)))
-            // Linha Email
             .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addComponent(lblEmail)
                 .addComponent(txtEmail))
-            // Linha Endereço
             .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addComponent(lblEndereco)
                 .addComponent(txtEndereco))
-            // Linha Município, UF e Celular
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addComponent(lblMunicipio)
@@ -170,7 +175,6 @@ public class DadosPessoais extends JPanel {
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addComponent(lblCelular)
                     .addComponent(txtCelular, GroupLayout.PREFERRED_SIZE, 130, GroupLayout.PREFERRED_SIZE)))
-            // Linha Curso
             .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addComponent(lblCurso)
                 .addComponent(jcbCursos))
@@ -178,15 +182,13 @@ public class DadosPessoais extends JPanel {
 
         layout.setVerticalGroup(
             layout.createSequentialGroup()
-            // --- Corrigido com RA ---
             .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addComponent(lblRa) 
+                .addComponent(lblRa)
                 .addComponent(lblNome))
             .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addComponent(txtRa) 
+                .addComponent(txtRa)
                 .addComponent(txtNome))
-            // --- Fim da Correção ---
-            .addGap(15) // Espaçamento
+            .addGap(15)
             .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                 .addComponent(lblDataNasc)
                 .addComponent(lblCpf))
@@ -211,38 +213,70 @@ public class DadosPessoais extends JPanel {
             .addGap(15)
             .addComponent(lblCurso)
             .addComponent(jcbCursos)
-            .addContainerGap(20, Short.MAX_VALUE) // Espaço no final
+            .addContainerGap(20, Short.MAX_VALUE)
         );
-        
-        //(JScrollPane)
+
         JScrollPane scrollPane = new JScrollPane(pnlConteudo);
         scrollPane.setBorder(BorderFactory.createEmptyBorder()); 
         add(scrollPane, BorderLayout.CENTER);
-        
 
-        // --- 4. Painel de Botões (SUL)---
-        JPanel pnlBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        // 4. Painel de Botões com Excluir à esquerda
+        JPanel pnlBotoes = new JPanel(new BorderLayout());
+
+        // Painel Esquerdo -> Excluir
+        JPanel pnlEsquerda = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton btnExcluir = new JButton("Excluir Aluno");
+        btnExcluir.setVisible(idAluno > 0);
+        btnExcluir.addActionListener(ev -> {
+            int opcao = JOptionPane.showConfirmDialog(
+                this,
+                "Tem certeza que deseja excluir este aluno?",
+                "Confirmação de Exclusão",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+            );
+            if (opcao == JOptionPane.YES_OPTION) {
+                try {
+                    AlunoDAO alunoDAO = new AlunoDAO();
+                    alunoDAO.excluir(idAluno);
+                    JOptionPane.showMessageDialog(this, 
+                        "Aluno excluído com sucesso!",
+                        "Exclusão Concluída",
+                        JOptionPane.INFORMATION_MESSAGE);
+                    voltarParaListagem();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(this,
+                        "Erro ao excluir aluno: " + ex.getMessage(),
+                        "Erro",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+        pnlEsquerda.add(btnExcluir);
+
+        // Painel Direito -> Voltar, Salvar, Registrar
+        JPanel pnlDireita = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton btnVoltar = new JButton("Voltar para Listagem");
-        
-        // Botão para NOVO CADASTRO
         btnRegistrar = new JButton("Registrar Aluno");
-        btnRegistrar.setVisible(idAluno == 0); // Só aparece no modo CADASTRO
-        btnRegistrar.addActionListener(this::registrarAluno); // 'this::' é um method reference
-        
-        // Botão para EDIÇÃO
+        btnRegistrar.setVisible(idAluno == 0);
+        btnRegistrar.addActionListener(this::registrarAluno);
         btnSalvar = new JButton("Salvar Alterações");
-        btnSalvar.setVisible(idAluno > 0); // Só aparece no modo EDIÇÃO
+        btnSalvar.setVisible(idAluno > 0);
         btnSalvar.addActionListener(this::salvarAlteracoes);
-        
-        pnlBotoes.add(btnVoltar);
-        pnlBotoes.add(btnSalvar);    // Adiciona o botão Salvar
-        pnlBotoes.add(btnRegistrar); // Adiciona o botão Registrar
-        
+
+        pnlDireita.add(btnVoltar);
+        pnlDireita.add(btnSalvar);
+        pnlDireita.add(btnRegistrar);
+
+        pnlBotoes.add(pnlEsquerda, BorderLayout.WEST);
+        pnlBotoes.add(pnlDireita, BorderLayout.EAST);
+
         add(pnlBotoes, BorderLayout.SOUTH);
-        
-        // 5. Adiciona a ação de Voltar (do seu esqueleto)
+
         btnVoltar.addActionListener(e -> voltarParaListagem());
     }
+
 
     // ===============================================
     // LÓGICA DE BANCO DE DADOS (Métodos Adicionados)
@@ -464,72 +498,119 @@ public class DadosPessoais extends JPanel {
      * Método de Ação do Botão "Salvar Alterações" (idAluno > 0).
      */
     private void salvarAlteracoes(ActionEvent e) {
-        try {
-            // --- 1. Obter dados da interface ---
-            String ra = txtRa.getText();
-            String nome = txtNome.getText();
-            String dataNascString = txtDataNasc.getText();
-            String cpf = txtCpf.getText();
-            String email = txtEmail.getText();
-            String endereco = txtEndereco.getText();
-            String municipio = txtMunicipio.getText();
-            String uf = (String) jcbUf.getSelectedItem();
-            String celular = txtCelular.getText();
-            Curso cursoSelecionado = (Curso) jcbCursos.getSelectedItem();
+        String ra = txtRa.getText(); 
+        String nome = txtNome.getText();
+        String dataNascString = txtDataNasc.getText(); 
+        String cpf = txtCpf.getText();
+        String email = txtEmail.getText();
+        String endereco = txtEndereco.getText();
+        String municipio = txtMunicipio.getText();
+        String uf = (String) jcbUf.getSelectedItem();
+        String celular = txtCelular.getText();
+        Curso cursoSelecionado = (Curso) jcbCursos.getSelectedItem();
 
-            // --- Validação simples ---
-            if (nome.isEmpty() || ra.isEmpty() || cpf.equals("   .   .   -  ") || cursoSelecionado == null) {
-                JOptionPane.showMessageDialog(this, 
-                    "Preencha pelo menos RA, Nome, CPF e selecione um Curso.", 
-                    "Campos Obrigatórios", 
-                    JOptionPane.WARNING_MESSAGE);
+        if (nome.isEmpty() || ra.isEmpty() || cpf.equals("   .   .   -  ") || cursoSelecionado == null) {
+            JOptionPane.showMessageDialog(this, 
+                "Preencha pelo menos RA, Nome, CPF e selecione um Curso.", 
+                "Campos Obrigatórios", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        java.sql.Date dataNascimentoSQL = null;
+        if (!dataNascString.equals("  /  /    ") && !dataNascString.trim().isEmpty()) {
+            try {
+                DateTimeFormatter formatoBrasileiro = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                LocalDate dataNascimentoObj = LocalDate.parse(dataNascString, formatoBrasileiro);
+                dataNascimentoSQL = java.sql.Date.valueOf(dataNascimentoObj);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                    "Formato de Data de Nascimento inválido. Use dd/MM/yyyy.",
+                    "Erro de Validação",
+                    JOptionPane.ERROR_MESSAGE);
                 return;
             }
+        }
 
-            // --- Conversão da Data ---
-            String dataNascFormatada = null;
-            if (!dataNascString.equals("  /  /    ") && !dataNascString.trim().isEmpty()) {
-                try {
-                    DateTimeFormatter formatoBrasileiro = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-                    LocalDate dataNascimentoObj = LocalDate.parse(dataNascString, formatoBrasileiro);
-                    dataNascFormatada = dataNascimentoObj.toString(); // converte para "yyyy-MM-dd" para o banco
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, 
-                        "Formato de Data de Nascimento inválido. Use dd/MM/yyyy.",
-                        "Erro", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
+        Connection conn = null;
+        PreparedStatement psUpdateAluno = null;
+        PreparedStatement psUpdateMatricula = null;
+        PreparedStatement psSelectDisciplinas = null;
+        PreparedStatement psInsertMatDisc = null;
+        ResultSet rsDisciplinas = null;
+
+        try {
+            conn = ConnectionFactory.getConnection();
+            conn.setAutoCommit(false); // iniciar transação
+
+            // --- 1. Atualizar tabela aluno ---
+            String sqlUpdateAluno = "UPDATE aluno SET ra=?, nome=?, dataNascimento=?, cpf=?, email=?, endereco=?, municipio=?, uf=?, celular=?, ativo=? WHERE idAluno=?";
+            psUpdateAluno = conn.prepareStatement(sqlUpdateAluno);
+            psUpdateAluno.setString(1, ra);
+            psUpdateAluno.setString(2, nome);
+            psUpdateAluno.setString(3, dataNascimentoSQL != null ? dataNascimentoSQL.toString() : null);
+            psUpdateAluno.setString(4, cpf);
+            psUpdateAluno.setString(5, email);
+            psUpdateAluno.setString(6, endereco);
+            psUpdateAluno.setString(7, municipio);
+            psUpdateAluno.setString(8, uf);
+            psUpdateAluno.setString(9, celular);
+            psUpdateAluno.setBoolean(10, true);
+            psUpdateAluno.setInt(11, idAluno);
+            psUpdateAluno.executeUpdate();
+
+            // --- 2. Atualizar matrícula (troca de curso) ---
+            int idCurso = cursoSelecionado.getIdCurso();
+            int idMatricula = new AlunoDAO().buscarIdMatricula(idAluno); 
+            if (idMatricula > 0) {
+                String sqlUpdateMatricula = "UPDATE matricula SET idCurso=? WHERE idMatricula=?";
+                psUpdateMatricula = conn.prepareStatement(sqlUpdateMatricula);
+                psUpdateMatricula.setInt(1, idCurso);
+                psUpdateMatricula.setInt(2, idMatricula);
+                psUpdateMatricula.executeUpdate();
             }
 
-            // --- 2. Criar objeto Aluno ---
-            Aluno aluno = new Aluno();
-            aluno.setIdAluno(idAluno); // importante para o UPDATE
-            aluno.setRa(ra);
-            aluno.setNome(nome);
-            aluno.setDataNascimento(dataNascFormatada);
-            aluno.setCpf(cpf);
-            aluno.setEmail(email);
-            aluno.setEndereco(endereco);
-            aluno.setMunicipio(municipio);
-            aluno.setUf(uf);
-            aluno.setCelular(celular);
-            aluno.setAtivo(true);
+            // --- 3. Atualizar disciplinas da matrícula ---
+            String semestreAtual = calcularSemestreAtual(); // seu método existente
+            String sqlSelectDisciplinas = "SELECT idDisciplina FROM disciplina WHERE idCurso=? AND semestre=1"; // assume semestre 1
+            psSelectDisciplinas = conn.prepareStatement(sqlSelectDisciplinas);
+            psSelectDisciplinas.setInt(1, idCurso);
+            rsDisciplinas = psSelectDisciplinas.executeQuery();
 
-            // --- 3. Atualizar no banco ---
-            AlunoDAO alunoDAO = new AlunoDAO();
-            alunoDAO.atualizar(aluno);
+            ArrayList<Integer> idsDisciplinas = new ArrayList<>();
+            while (rsDisciplinas.next()) {
+                idsDisciplinas.add(rsDisciplinas.getInt("idDisciplina"));
+            }
 
-            JOptionPane.showMessageDialog(this, 
-                "Dados do aluno atualizados com sucesso!",
-                "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+            if (!idsDisciplinas.isEmpty()) {
+                String sqlInsertMatDisc = "INSERT IGNORE INTO matriculaDisciplina (idMatricula, idDisciplina, semestreCursado, faltas, nota) VALUES (?, ?, ?, 0, 0.0)";
+                psInsertMatDisc = conn.prepareStatement(sqlInsertMatDisc);
+                for (int idDisc : idsDisciplinas) {
+                    psInsertMatDisc.setInt(1, idMatricula);
+                    psInsertMatDisc.setInt(2, idDisc);
+                    psInsertMatDisc.setString(3, semestreAtual);
+                    psInsertMatDisc.addBatch();
+                }
+                psInsertMatDisc.executeBatch();
+            }
+
+            conn.commit();
+            JOptionPane.showMessageDialog(this, "Aluno e matrícula atualizados com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
 
         } catch (Exception ex) {
+            try { if (conn != null) conn.rollback(); } catch (Exception exRollback) {}
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(this,
-                "Erro ao atualizar aluno: " + ex.getMessage(),
-                "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Erro ao atualizar aluno: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            try { if (rsDisciplinas != null) rsDisciplinas.close(); } catch (Exception ex) {}
+            try { if (psUpdateAluno != null) psUpdateAluno.close(); } catch (Exception ex) {}
+            try { if (psUpdateMatricula != null) psUpdateMatricula.close(); } catch (Exception ex) {}
+            try { if (psSelectDisciplinas != null) psSelectDisciplinas.close(); } catch (Exception ex) {}
+            try { if (psInsertMatDisc != null) psInsertMatDisc.close(); } catch (Exception ex) {}
+            try { if (conn != null) { conn.setAutoCommit(true); conn.close(); } } catch (Exception ex) {}
         }
     }
+
 
     
     //carrega os dados do aluno selecionado

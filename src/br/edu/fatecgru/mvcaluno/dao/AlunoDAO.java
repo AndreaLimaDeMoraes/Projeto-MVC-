@@ -557,5 +557,32 @@ public class AlunoDAO {
             int semestre = (hoje.getMonthValue() <= 6) ? 1 : 2;
             return ano + "/" + semestre;
         }
+        
+        //Método para gerar RA automaticamente
+        public String gerarProximoRA() throws Exception {
+            String anoAtual = String.valueOf(java.time.Year.now().getValue());
+            String sql = "SELECT MAX(ra) AS maxRa FROM aluno WHERE ra LIKE ?"; // RA do ano atual
+
+            try (Connection conn = ConnectionFactory.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                
+                ps.setString(1, anoAtual + "%"); // pega só RA do ano corrente
+                ResultSet rs = ps.executeQuery();
+                
+                int proxNumero = 1;
+                if (rs.next()) {
+                    String maxRa = rs.getString("maxRa");
+                    if (maxRa != null) {
+                        // pega os últimos 3 dígitos
+                        String ultimos3 = maxRa.substring(4);
+                        proxNumero = Integer.parseInt(ultimos3) + 1;
+                    }
+                }
+                return String.format("%s%03d", anoAtual, proxNumero); // ex: 2025011
+            } catch (SQLException e) {
+                throw new Exception("Erro ao gerar RA: " + e.getMessage());
+            }
+        }
+
 }
     
