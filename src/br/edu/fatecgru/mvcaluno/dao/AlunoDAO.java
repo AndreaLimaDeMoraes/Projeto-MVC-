@@ -11,6 +11,7 @@ import br.edu.fatecgru.mvcaluno.model.Aluno;
 import br.edu.fatecgru.mvcaluno.model.AlunoView;
 import br.edu.fatecgru.mvcaluno.model.BoletimAluno;
 import br.edu.fatecgru.mvcaluno.model.DisciplinaBoletim;
+import br.edu.fatecgru.mvcaluno.model.Matricula;
 import br.edu.fatecgru.mvcaluno.util.ConnectionFactory;
 
 public class AlunoDAO {
@@ -421,8 +422,7 @@ public class AlunoDAO {
 
         public int buscarIdMatricula(int idAluno) throws Exception {
             int idMatricula = -1;
-            String SQL = "SELECT idMatricula FROM matricula WHERE idAluno = ? ORDER BY idMatricula DESC LIMIT 1";
-            
+            String SQL = "SELECT idMatricula FROM matricula WHERE idAluno = ? ORDER BY idMatricula DESC LIMIT 1";            
             Connection conn = null;
             PreparedStatement ps = null;
             ResultSet rs = null;
@@ -443,6 +443,27 @@ public class AlunoDAO {
             return idMatricula;
         }
         
+        public Matricula buscarMatriculaPorId(int idMatricula) throws Exception {
+            Matricula m = null;
+            String SQL = "SELECT * FROM matricula WHERE idMatricula = ?";
+            try (Connection conn = ConnectionFactory.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(SQL)) {
+                ps.setInt(1, idMatricula);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    m = new Matricula(
+                        rs.getInt("idMatricula"),
+                        rs.getInt("idAluno"),
+                        rs.getInt("idCurso"),
+                        rs.getBoolean("ativo")
+                    );
+                }
+            } catch (SQLException e) {
+                throw new Exception("Erro ao buscar matrícula: " + e.getMessage());
+            }
+            return m;
+        }
+
 
      // NOVO SQL (Substitua no AlunoDAO)
         public List<AlunoView> listarPorCursoECampusEFiltro(String nomeCurso, String campus, String filtro) throws Exception {
@@ -546,7 +567,7 @@ public class AlunoDAO {
         }
         
         // Método auxiliar
-        private String calcularSemestreAtual() {
+        public static String calcularSemestreAtual() {
             java.time.LocalDate hoje = java.time.LocalDate.now();
             int ano = hoje.getYear();
             int semestre = (hoje.getMonthValue() <= 6) ? 1 : 2;

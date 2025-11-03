@@ -11,8 +11,11 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
+import br.edu.fatecgru.mvcaluno.dao.AlunoDAO;
+import br.edu.fatecgru.mvcaluno.model.Aluno;
 // --- IMPORTS ADICIONADOS DO NOVO FORMULÁRIO ---
-import br.edu.fatecgru.mvcaluno.model.Curso; 
+import br.edu.fatecgru.mvcaluno.model.Curso;
+import br.edu.fatecgru.mvcaluno.model.Matricula;
 import br.edu.fatecgru.mvcaluno.util.ConnectionFactory; // Sua classe de conexão
 
 import javax.swing.*;
@@ -120,7 +123,7 @@ public class DadosPessoais extends JPanel {
         // ComboBox de Cursos (será populado)
         jcbCursos = new JComboBox<>();
 
-        // --- Configuração do GroupLayout para o pnlConteudo (Corrigido com RA) ---
+        // --- Configuração do GroupLayout para o pnlConteudo ---
         GroupLayout layout = new GroupLayout(pnlConteudo);
         pnlConteudo.setLayout(layout);
         layout.setAutoCreateGaps(true);
@@ -211,13 +214,13 @@ public class DadosPessoais extends JPanel {
             .addContainerGap(20, Short.MAX_VALUE) // Espaço no final
         );
         
-        // --- CORREÇÃO DE RESPONSIVIDADE (JScrollPane) ---
+        //(JScrollPane)
         JScrollPane scrollPane = new JScrollPane(pnlConteudo);
         scrollPane.setBorder(BorderFactory.createEmptyBorder()); 
         add(scrollPane, BorderLayout.CENTER);
-        // --- FIM DA CORREÇÃO ---
+        
 
-        // --- 4. Painel de Botões (SUL) (Modificado) ---
+        // --- 4. Painel de Botões (SUL)---
         JPanel pnlBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton btnVoltar = new JButton("Voltar para Listagem");
         
@@ -277,12 +280,10 @@ public class DadosPessoais extends JPanel {
      * para permitir a edição.
      */
     private void carregarDadosParaEdicao() {
-        // TODO: Implementar a lógica de EDIÇÃO
-        JOptionPane.showMessageDialog(this, 
-            "Modo de Edição.\nLógica para carregar dados (idAluno=" + idAluno + ") ainda não implementada.",
-            "Aviso", JOptionPane.INFORMATION_MESSAGE);
-        jcbCursos.setEnabled(false);
-        btnRegistrar.setEnabled(false);
+    	if (this.idAluno > 0) {
+    	    carregarDadosAluno(this.idAluno); 
+    	}
+
     }
     
     /**
@@ -319,7 +320,7 @@ public class DadosPessoais extends JPanel {
         ResultSet rsAluno = null, rsMatricula = null, rsDisciplinas = null;
 
         String sqlInsertAluno = "INSERT INTO aluno (ra, nome, dataNascimento, cpf, email, endereco, municipio, uf, celular, ativo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        String sqlInsertMatricula = "INSERT INTO matricula (idAluno, idCurso, semestreInicio, ativo) VALUES (?, ?, ?, 1)";
+        String sqlInsertMatricula = "INSERT INTO matricula (idAluno, idCurso, ativo) VALUES (?, ?, 1)";
         String sqlSelectDisciplinas = "SELECT idDisciplina FROM disciplina WHERE idCurso = ? AND semestre = ?"; 
         
         // ========================================================
@@ -370,12 +371,17 @@ public class DadosPessoais extends JPanel {
             
             // LÓGICA PARA PEGAR O SEMESTRE CORRETO (ex: "2025/1")
             String anoAtual = java.time.Year.now().toString();
-            String semestreInicioTexto = anoAtual + "/1"; // Assumindo sempre o primeiro semestre do ano atual
+            String semestreInicioTexto = null;
+			try {
+				semestreInicioTexto = calcularSemestreAtual();
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} 
             
             stmtMatricula = conn.prepareStatement(sqlInsertMatricula, Statement.RETURN_GENERATED_KEYS);
             stmtMatricula.setInt(1, idAlunoGerado);
             stmtMatricula.setInt(2, idCurso);
-            stmtMatricula.setString(3, semestreInicioTexto); // <-- O valor "2025/1"
             
             stmtMatricula.executeUpdate();
             
@@ -408,7 +414,7 @@ public class DadosPessoais extends JPanel {
                 // Adicionamos o valor '0.0f' para a coluna 'nota'
                 stmtMatriculaDisc.setInt(1, idMatriculaGerada);
                 stmtMatriculaDisc.setInt(2, idDisciplina);
-                stmtMatriculaDisc.setInt(3, semestre); // <-- semestreCursado
+                stmtMatriculaDisc.setString(3, semestreInicioTexto); // <-- semestreCursado
                 stmtMatriculaDisc.setInt(4, 0); // <-- faltas (inicia com 0)
                 stmtMatriculaDisc.setFloat(5, 0.0f); // <-- nota (inicia com 0.0)
                 stmtMatriculaDisc.addBatch(); 
@@ -422,7 +428,7 @@ public class DadosPessoais extends JPanel {
             conn.commit(); 
             JOptionPane.showMessageDialog(this,
                     "Aluno registrado com sucesso!\n" +
-                    "Matrícula realizada no " + semestreInicioTexto + ".\n" +
+                    "Matrícula realizada no semestre " + semestreInicioTexto + ".\n" +
                     idsDisciplinas.size() + " disciplinas associadas.",
                     "Cadastro Concluído",
                     JOptionPane.INFORMATION_MESSAGE);
@@ -458,11 +464,134 @@ public class DadosPessoais extends JPanel {
      * Método de Ação do Botão "Salvar Alterações" (idAluno > 0).
      */
     private void salvarAlteracoes(ActionEvent e) {
-        // TODO: Implementar a lógica de UPDATE
-        JOptionPane.showMessageDialog(this, 
-            "Lógica para SALVAR ALTERAÇÕES (UPDATE) no idAluno=" + idAluno + " ainda não implementada.",
-            "Aviso", JOptionPane.INFORMATION_MESSAGE);
+        try {
+            // --- 1. Obter dados da interface ---
+            String ra = txtRa.getText();
+            String nome = txtNome.getText();
+            String dataNascString = txtDataNasc.getText();
+            String cpf = txtCpf.getText();
+            String email = txtEmail.getText();
+            String endereco = txtEndereco.getText();
+            String municipio = txtMunicipio.getText();
+            String uf = (String) jcbUf.getSelectedItem();
+            String celular = txtCelular.getText();
+            Curso cursoSelecionado = (Curso) jcbCursos.getSelectedItem();
+
+            // --- Validação simples ---
+            if (nome.isEmpty() || ra.isEmpty() || cpf.equals("   .   .   -  ") || cursoSelecionado == null) {
+                JOptionPane.showMessageDialog(this, 
+                    "Preencha pelo menos RA, Nome, CPF e selecione um Curso.", 
+                    "Campos Obrigatórios", 
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // --- Conversão da Data ---
+            String dataNascFormatada = null;
+            if (!dataNascString.equals("  /  /    ") && !dataNascString.trim().isEmpty()) {
+                try {
+                    DateTimeFormatter formatoBrasileiro = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                    LocalDate dataNascimentoObj = LocalDate.parse(dataNascString, formatoBrasileiro);
+                    dataNascFormatada = dataNascimentoObj.toString(); // converte para "yyyy-MM-dd" para o banco
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Formato de Data de Nascimento inválido. Use dd/MM/yyyy.",
+                        "Erro", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+
+            // --- 2. Criar objeto Aluno ---
+            Aluno aluno = new Aluno();
+            aluno.setIdAluno(idAluno); // importante para o UPDATE
+            aluno.setRa(ra);
+            aluno.setNome(nome);
+            aluno.setDataNascimento(dataNascFormatada);
+            aluno.setCpf(cpf);
+            aluno.setEmail(email);
+            aluno.setEndereco(endereco);
+            aluno.setMunicipio(municipio);
+            aluno.setUf(uf);
+            aluno.setCelular(celular);
+            aluno.setAtivo(true);
+
+            // --- 3. Atualizar no banco ---
+            AlunoDAO alunoDAO = new AlunoDAO();
+            alunoDAO.atualizar(aluno);
+
+            JOptionPane.showMessageDialog(this, 
+                "Dados do aluno atualizados com sucesso!",
+                "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                "Erro ao atualizar aluno: " + ex.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+        }
     }
+
+    
+    //carrega os dados do aluno selecionado
+    private void carregarDadosAluno(int idAluno) {
+        try {
+            AlunoDAO alunoDAO = new AlunoDAO();
+            Aluno aluno = alunoDAO.buscarPorId(idAluno);
+
+            if (aluno != null) {
+                // Preencher dados básicos
+                txtRa.setText(aluno.getRa());
+                txtNome.setText(aluno.getNome());
+                
+                String dataDoBanco = aluno.getDataNascimento(); // exemplo: "2000-05-21"
+                if (dataDoBanco != null && !dataDoBanco.isEmpty()) {
+                    // Converte de "yyyy-MM-dd" para LocalDate
+                    LocalDate data = LocalDate.parse(dataDoBanco); // por padrão usa ISO "yyyy-MM-dd"
+                    
+                    // Formata para "dd/MM/yyyy" para o campo JFormattedTextField
+                    DateTimeFormatter formatoBrasileiro = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                    txtDataNasc.setText(data.format(formatoBrasileiro));
+                }
+
+
+                txtCpf.setText(aluno.getCpf());
+                txtEmail.setText(aluno.getEmail());
+                txtEndereco.setText(aluno.getEndereco());
+                txtMunicipio.setText(aluno.getMunicipio());
+                txtCelular.setText(aluno.getCelular());
+                jcbUf.setSelectedItem(aluno.getUf());
+
+                // --- Buscar matrícula ativa e curso ---
+                int idMatricula = alunoDAO.buscarIdMatricula(idAluno);
+                if (idMatricula > 0) {
+                    Matricula matricula = alunoDAO.buscarMatriculaPorId(idMatricula); // implementar método para retornar Matricula completa
+                    if (matricula != null) {
+                        int idCurso = matricula.getIdCurso();
+
+                        // Percorrer JComboBox e selecionar o curso correspondente
+                        for (int i = 0; i < jcbCursos.getItemCount(); i++) {
+                            Curso c = (Curso) jcbCursos.getItemAt(i);
+                            if (c.getIdCurso() == idCurso) {
+                                jcbCursos.setSelectedIndex(i);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Ajustar botões
+                btnRegistrar.setVisible(false);
+                btnSalvar.setVisible(true);
+            }
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Erro ao carregar dados do aluno: " + e.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
     
     /**
      * Método auxiliar para limpar todos os campos do formulário
@@ -494,5 +623,12 @@ public class DadosPessoais extends JPanel {
             telaPrincipal.trocarPainelConteudo(painelListagem);
             telaPrincipal.ativarBotaoMenuListarAlunos(); 
         } 
+    }
+    
+    private String calcularSemestreAtual() {
+        java.time.LocalDate hoje = java.time.LocalDate.now();
+        int ano = hoje.getYear();
+        int semestre = (hoje.getMonthValue() <= 6) ? 1 : 2;
+        return ano + "/" + semestre;
     }
 }
