@@ -421,7 +421,7 @@ public class AlunoDAO {
 
         public int buscarIdMatricula(int idAluno) throws Exception {
             int idMatricula = -1;
-            String SQL = "SELECT idMatricula FROM matricula WHERE idAluno = ? AND ativo = 1 ORDER BY idMatricula DESC LIMIT 1";
+            String SQL = "SELECT idMatricula FROM matricula WHERE idAluno = ? ORDER BY idMatricula DESC LIMIT 1";
             
             Connection conn = null;
             PreparedStatement ps = null;

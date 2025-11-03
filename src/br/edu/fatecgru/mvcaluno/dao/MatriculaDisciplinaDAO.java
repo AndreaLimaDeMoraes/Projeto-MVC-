@@ -146,7 +146,7 @@ public class MatriculaDisciplinaDAO {
 
     public MatriculaDisciplina buscarNotaFaltas(int idMatricula, int idDisciplina, String semestreCursado) throws Exception {
         MatriculaDisciplina md = null;
-        String SQL = "SELECT * FROM matriculaDisciplina WHERE idMatricula=? AND idDisciplina=? AND semestreCursado=?";  
+        String SQL = "SELECT * FROM matriculaDisciplina WHERE idMatricula=? AND idDisciplina=? AND semestreCursado=?"; 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement ps = conn.prepareStatement(SQL)) {
             ps.setInt(1, idMatricula);
@@ -216,7 +216,6 @@ public class MatriculaDisciplinaDAO {
         }
         return detalhes;
     }
-
     // ===========================================
     // MÉTODOS NOVOS PARA SUA VIEW
     // ===========================================
