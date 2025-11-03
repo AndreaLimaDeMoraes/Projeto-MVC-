@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
@@ -145,9 +146,19 @@ public class TelaDisciplina extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 try {
                     salvarDisciplina();
+                } catch (SQLIntegrityConstraintViolationException ex) {
+                    // Caso específico: tentativa de salvar disciplina duplicada
+                    JOptionPane.showMessageDialog(null, 
+                        "Esta disciplina já está cadastrada.",
+                        "Aviso",
+                        JOptionPane.WARNING_MESSAGE);
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(null, "Erro ao salvar disciplina: " + ex.getMessage());
-                    ex.printStackTrace();
+                    // Erro genérico
+                    JOptionPane.showMessageDialog(null, 
+                        "Ocorreu um erro ao salvar a disciplina. Tente novamente.",
+                        "Erro",
+                        JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace(); // mantém log no console pra você debugar
                 }
             }
         });
