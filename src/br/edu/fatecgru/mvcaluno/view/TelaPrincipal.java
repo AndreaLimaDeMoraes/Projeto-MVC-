@@ -129,7 +129,7 @@ public class TelaPrincipal extends JFrame {
         separator = new JSeparator();
         mnNewMenu.add(separator);
         mntmNewMenuItem_4 = new JMenuItem("Sair");
-        mntmNewMenuItem_4.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.SHIFT_DOWN_MASK));
+        mntmNewMenuItem_4.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK));
         mnNewMenu.add(mntmNewMenuItem_4);
 
         // Menu "Notas e Faltas" com itens Salvar, Alterar, Excluir e Consultar
