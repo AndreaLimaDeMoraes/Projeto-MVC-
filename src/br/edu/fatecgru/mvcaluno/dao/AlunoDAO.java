@@ -139,12 +139,11 @@ public class AlunoDAO {
         List<AlunoView> lista = new ArrayList<>();
         
         String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus, " +
-                "COALESCE((SELECT MAX(md.semestreCursado) FROM matriculaDisciplina md WHERE md.idMatricula = m.idMatricula AND md.status = 'Cursando' AND md.ativo = TRUE), 'N/A') AS semestreAtual, " +
+                "COALESCE((SELECT MAX(md.semestreCursado) FROM matriculaDisciplina md WHERE md.idMatricula = m.idMatricula AND md.status = 'Cursando' AND md.ativo = TRUE), 'Formado') AS semestreAtual, " +
                 "m.idCurso " +
                 "FROM aluno a " +
                 "INNER JOIN matricula m ON a.idAluno = m.idAluno AND m.idMatricula = (" +
-                "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = a.idAluno" +
-                ") AND m.ativo = TRUE " +  // <-- ALTERAÇÃO: Filtrar apenas matrículas ativas
+                "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = a.idAluno) " +
                 "INNER JOIN curso c ON m.idCurso = c.idCurso " +
                 "GROUP BY a.idAluno, a.ra, a.nome, a.dataNascimento, a.cpf, a.email, a.endereco, a.municipio, a.uf, a.celular, a.ativo, c.nome, c.campus, semestreAtual, m.idCurso " +
                 "ORDER BY a.nome";
@@ -172,7 +171,7 @@ public class AlunoDAO {
                         rs.getBoolean("ativo"),
                         rs.getString("nomeCurso"),
                         rs.getString("campus"),
-                        rs.getString("semestreAtual"),  // <-- ALTERAÇÃO: Usar o alias correto
+                        rs.getString("semestreAtual"),
                         rs.getInt("idCurso")
                 );
                 lista.add(aluno);
@@ -185,22 +184,19 @@ public class AlunoDAO {
         return lista;
     }
            
- // Método listarPorFiltro (AJUSTADO: Permite alunos inativos e matrículas inativas para incluir alunos que terminaram o curso)
     public List<AlunoView> listarPorFiltro(String filtro) throws Exception {
         List<AlunoView> lista = new ArrayList<>();
         
         String filtroSQL = "%" + filtro + "%";
-        // ALTERAÇÃO: Mudança para LEFT JOIN para incluir alunos mesmo sem matrículas ativas
-        // Remoção de filtros de ativo para permitir alunos inativos
         String SQL = "SELECT a.*, c.nome AS nomeCurso, c.campus, " +
                 "COALESCE((SELECT MAX(md.semestreCursado) FROM matriculaDisciplina md WHERE md.idMatricula = m.idMatricula AND md.status = 'Cursando' AND md.ativo = TRUE), 'N/A') AS semestreAtual, " +
                 "m.idCurso " +
                 "FROM aluno a " +
-                "LEFT JOIN matricula m ON a.idAluno = m.idAluno AND m.idMatricula = (" +  // LEFT JOIN para incluir alunos sem matrículas
+                "LEFT JOIN matricula m ON a.idAluno = m.idAluno AND m.idMatricula = (" +  
                 "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = a.idAluno" +
-                ") " +  // Removido filtro de m.ativo = TRUE para incluir matrículas inativas
-                "LEFT JOIN curso c ON m.idCurso = c.idCurso " +  // LEFT JOIN para incluir alunos sem curso vinculado (se matrícula for nula)
-                "WHERE a.nome LIKE ? OR a.ra LIKE ? OR CONVERT(a.idAluno, CHAR) LIKE ? " +  // Sem filtro de a.ativo = TRUE
+                ") " +
+                "LEFT JOIN curso c ON m.idCurso = c.idCurso " + 
+                "WHERE a.nome LIKE ? OR a.ra LIKE ? OR CONVERT(a.idAluno, CHAR) LIKE ? " +
                 "GROUP BY a.idAluno, a.ra, a.nome, a.dataNascimento, a.cpf, a.email, a.endereco, a.municipio, a.uf, a.celular, a.ativo, c.nome, c.campus, semestreAtual, m.idCurso " +
                 "ORDER BY a.nome LIMIT 50";
         
@@ -223,7 +219,7 @@ public class AlunoDAO {
                 String campus = rs.getString("campus");
                 String semestreAtual = rs.getString("semestreAtual");
                 Integer idCurso = rs.getInt("idCurso");
-                if (rs.wasNull()) {  // Se idCurso for nulo, definir valores padrão
+                if (rs.wasNull()) {
                     nomeCurso = "N/A";
                     campus = "N/A";
                     semestreAtual = "N/A";
@@ -256,10 +252,6 @@ public class AlunoDAO {
         }
         return lista;
     }
-
-    // Os outros métodos (buscarDadosBoletimAluno e buscarHistoricoEscolar) já estão corretos,
-    // pois não filtram a.ativo = TRUE, permitindo alunos inativos.
-
     
         // Método listarPorCurso
     public List<AlunoView> listarPorCurso(String nomeCurso) throws Exception {
@@ -272,8 +264,7 @@ public class AlunoDAO {
                 "m.idCurso " +
                 "FROM aluno a " +
                 "INNER JOIN matricula m ON a.idAluno = m.idAluno AND m.idMatricula = (" +
-                "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = a.idAluno" +
-                ") AND m.ativo = TRUE " +  // <-- ALTERAÇÃO: Filtrar apenas matrículas ativas
+                "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = a.idAluno) " + 
                 "INNER JOIN curso c ON m.idCurso = c.idCurso " +
                 "WHERE a.ativo = true AND c.nome = ? " +
                 "GROUP BY a.idAluno, a.ra, a.nome, a.dataNascimento, a.cpf, a.email, a.endereco, a.municipio, a.uf, a.celular, a.ativo, c.nome, c.campus, semestreAtual, m.idCurso " +
@@ -299,7 +290,7 @@ public class AlunoDAO {
                         rs.getBoolean("ativo"),
                         rs.getString("nomeCurso"),  
                         rs.getString("campus"),
-                        rs.getString("semestreAtual"),  // <-- ALTERAÇÃO: Usar o alias correto
+                        rs.getString("semestreAtual"), 
                         rs.getInt("idCurso")
                 );
                 listaAlunos.add(aluno);
@@ -316,12 +307,11 @@ public class AlunoDAO {
     public BoletimAluno buscarDadosBoletimAluno(int idAluno) throws Exception {
         BoletimAluno dados = null;
         
-        // CORREÇÃO: Adicionado espaço após "?" para evitar erro de sintaxe SQL
         String SQL = "SELECT a.idAluno, a.ra, a.nome, c.nome AS nomeCurso, c.campus " +
                      "FROM aluno a " +
                      "JOIN matricula m ON a.idAluno = m.idAluno " +
                      "JOIN curso c ON m.idCurso = c.idCurso " +
-                     "WHERE a.idAluno = ? " +  // <-- ESPAÇO ADICIONADO AQUI
+                     "WHERE a.idAluno = ? " +  
                      "ORDER BY m.idMatricula DESC LIMIT 1";
      
         Connection conn = null;
@@ -353,15 +343,14 @@ public class AlunoDAO {
     public List<DisciplinaBoletim> buscarDisciplinasBoletim(int idAluno) throws Exception {
         List<DisciplinaBoletim> disciplinas = new ArrayList<>();
         
-        // O boletim agora mostra TODAS as disciplinas ativas (ativo = TRUE) do aluno,
-        // independentemente do semestre ou status. Se quiser filtrar por semestre atual,
-        // descomente as linhas abaixo e ajuste o PreparedStatement.
+        // O boletim mostra TODAS as disciplinas ativas (ativo = TRUE) do aluno,
+        // independentemente do semestre ou status. 
         String SQL = "SELECT d.nome AS nomeDisciplina, md.nota, md.faltas, md.status, md.semestreCursado AS semestreAtual " +
                      "FROM aluno a " +
                      "JOIN matricula m ON a.idAluno = m.idAluno " +  
                      "JOIN matriculaDisciplina md ON m.idMatricula = md.idMatricula " +
                      "JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
-                     "WHERE a.idAluno = ? AND m.ativo = TRUE AND md.ativo = TRUE " +  // Filtro: Apenas disciplinas ativas
+                     "WHERE a.idAluno = ? AND m.ativo = TRUE AND md.ativo = TRUE " + 
                      "ORDER BY d.nome";
         
         Connection conn = null;
@@ -372,8 +361,6 @@ public class AlunoDAO {
             conn = ConnectionFactory.getConnection();
             ps = conn.prepareStatement(SQL);
             ps.setInt(1, idAluno);
-            // Se quiser filtrar por semestre atual, descomente:
-            // ps.setString(2, calcularSemestreAtual());
             rs = ps.executeQuery();
             
             while (rs.next()) {
@@ -397,8 +384,6 @@ public class AlunoDAO {
     public List<DisciplinaBoletim> buscarHistoricoEscolar(int idAluno) throws Exception {
         List<DisciplinaBoletim> disciplinas = new ArrayList<>();
 
-        // O histórico inclui TODAS as disciplinas cursadas (mesmo inativas),
-        // para mostrar o histórico completo.
         String SQL = "SELECT d.nome AS nomeDisciplina, md.nota, md.faltas, md.status, md.semestreCursado " +
                      "FROM matriculaDisciplina md " +
                      "INNER JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
@@ -458,20 +443,96 @@ public class AlunoDAO {
             return idMatricula;
         }
         
-        public List<String> listarSemestresPorAluno(int idAluno) throws Exception {
+
+     // NOVO SQL (Substitua no AlunoDAO)
+        public List<AlunoView> listarPorCursoECampusEFiltro(String nomeCurso, String campus, String filtro) throws Exception {
+            List<AlunoView> listaAlunos = new ArrayList<>();
+            
+            // Otimizando a query para buscar dados completos da AlunoView
+            String sql = "SELECT A.idAluno, A.ra, A.nome, A.dataNascimento, A.cpf, A.email, A.endereco, A.municipio, A.uf, A.celular, A.ativo, " +
+                         "C.idCurso, C.nome AS nomeCurso, C.campus, C.periodo, " +
+                         // Usando a matrícula mais recente, independentemente do status M.ativo
+                         "COALESCE((SELECT MAX(md.semestreCursado) FROM matriculaDisciplina md WHERE md.idMatricula = M.idMatricula AND md.status = 'Cursando' AND md.ativo = TRUE), 'N/A') AS semestreAtual " +
+                         "FROM aluno A " +
+                         "JOIN matricula M ON A.idAluno = M.idAluno AND M.idMatricula = (" + // Pega a última matrícula
+                         "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = A.idAluno" +
+                         ") " + // REMOVIDO: AND M.ativo = TRUE
+                         "JOIN curso C ON M.idCurso = C.idCurso " +     
+                         // Cláusula WHERE principal
+                         "WHERE C.nome = ? AND C.campus = ? "; 
+            
+            boolean aplicarFiltroTexto = filtro != null && !filtro.trim().isEmpty();
+            
+            if (aplicarFiltroTexto) {
+                sql += "AND (A.nome LIKE ? OR A.ra LIKE ?)"; 
+            }
+            
+            // O filtro de aluno A.ativo = TRUE também pode ser removido, dependendo da sua regra de negócio
+            // Para listar TODOS os alunos (ativos ou inativos), mas apenas cursos ativos:
+            sql += " AND C.ativo = TRUE"; 
+            // Se quiser garantir que SÓ alunos ativos apareçam, mantenha: sql += " AND A.ativo = TRUE"; 
+            
+            sql += " ORDER BY A.nome"; 
+            
+            // ... (O restante da sua lógica de PreparedStatement e ResultSet continua a mesma)
+            // Lembre-se de mapear todos os campos do Aluno base no seu construtor de AlunoView!
+            // Você pode usar o construtor completo ou setters, mas garanta que A.ativo seja lido.
+            
+            // ... (código de PreparedStatement, que está correto)
+
+            try (Connection conn = ConnectionFactory.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                 
+                int indice = 1;
+                stmt.setString(indice++, nomeCurso); 
+                stmt.setString(indice++, campus); 
+                
+                if (aplicarFiltroTexto) {
+                    String filtroFormatado = "%" + filtro.trim() + "%";
+                    stmt.setString(indice++, filtroFormatado);
+                    stmt.setString(indice++, filtroFormatado);
+                }
+                
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        // Ao buscar mais campos, use o construtor completo do AlunoView (boa prática)
+                        AlunoView aluno = new AlunoView(
+                            rs.getInt("idAluno"),
+                            rs.getString("ra"),
+                            rs.getString("nome"),
+                            rs.getString("dataNascimento"),
+                            rs.getString("cpf"),
+                            rs.getString("email"),
+                            rs.getString("endereco"),
+                            rs.getString("municipio"),
+                            rs.getString("uf"),
+                            rs.getString("celular"),
+                            rs.getBoolean("ativo"),
+                            rs.getString("nomeCurso"),
+                            rs.getString("campus"),
+                            rs.getString("semestreAtual"),
+                            rs.getInt("idCurso")
+                        );
+                        listaAlunos.add(aluno);
+                    }
+                }
+            }
+            return listaAlunos;
+        }
+        
+            public List<String> listarSemestresPorAluno(int idAluno) throws Exception {
             List<String> semestres = new ArrayList<>();
             
-            // A correção simplificada usa o campo md.semestreCursado, que já está no formato 'YYYY/S'
             String SQL = "SELECT DISTINCT md.semestreCursado AS semestre " +
                          "FROM matricula m " +
                          "JOIN matriculaDisciplina md ON m.idMatricula = md.idMatricula " +
-                         "WHERE m.idAluno = ? AND m.ativo = 1 AND md.ativo = 1 " +
+                         "WHERE m.idAluno = ? " +
                          "ORDER BY semestre";
 
             try (Connection conn = ConnectionFactory.getConnection();
                  PreparedStatement ps = conn.prepareStatement(SQL)) {
 
-                ps.setInt(1, idAluno); // Agora só precisa de um parâmetro
+                ps.setInt(1, idAluno);
                 
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {

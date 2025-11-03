@@ -6,6 +6,10 @@ public class AlunoView extends Aluno {
     private String campus;
     private String semestreAtual;
     private int idCurso;
+    
+    public AlunoView() {
+        super(); // Chama o construtor padrão de Aluno (que existe)
+    }
 
     public AlunoView(int idAluno, String ra, String nome, String dataNascimento, String cpf, String email, 
             String endereco, String municipio, String uf, String celular, boolean ativo, 

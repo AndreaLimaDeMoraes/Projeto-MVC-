@@ -115,16 +115,31 @@ public class ListarAlunos extends JPanel {
                 realizarBusca();
             }
             
+         // Na classe ListarAlunos (MÉTODO MODIFICADO, dentro do DocumentListener)
             private void realizarBusca() {
                 String textoBusca = txtBuscar.getText();
                 final String HINT_TEXT = "Informe nome ou RA do aluno";
                 
                 if (textoBusca.equals(HINT_TEXT) || textoBusca.trim().isEmpty()) {
-                    carregarTabelaAlunos(null); 
+                    textoBusca = null;
+                }
+                
+                String cursoSelecionado = (String) cmbCurso.getSelectedItem();
+                
+                if (cursoSelecionado == null || cursoSelecionado.equals("Todos os Cursos")) {
+                    carregarTabelaAlunos(textoBusca); 
                 } else {
-                    carregarTabelaAlunos(textoBusca);
+                    // AGORA EXTRAI NOME E CAMPUS
+                    String[] dadosCurso = extrairNomeCursoECampus(cursoSelecionado);
+                    String nomeCurso = dadosCurso[0];
+                    String campus = dadosCurso[1]; 
+
+                    // CHAMA O NOVO MÉTODO
+                    carregarTabelaAlunosPorCursoECampusEFiltro(nomeCurso, campus, textoBusca);
                 }
             }
+
+            
         });
                 
         lblCurso = new JLabel("Curso:");
@@ -180,20 +195,25 @@ public class ListarAlunos extends JPanel {
         adicionarEventoCliqueTabela();
     }
     
+ // Na classe ListarAlunos (MÉTODO MODIFICADO)
     private void aplicarFiltroCurso() {
         String itemSelecionado = (String) cmbCurso.getSelectedItem();
         
+        String textoBusca = txtBuscar.getText();
+        final String HINT_TEXT = "Informe nome ou RA do aluno";
+        if (textoBusca.equals(HINT_TEXT) || textoBusca.trim().isEmpty()) {
+            textoBusca = null; 
+        }
+
         if (itemSelecionado == null || itemSelecionado.equals("Todos os Cursos")) {
-            carregarTabelaAlunos(null); 
+            carregarTabelaAlunos(textoBusca); 
         } else {
-            String nomeCurso = itemSelecionado;
-            int indexParenteses = nomeCurso.lastIndexOf(" (");
-            
-            if (indexParenteses != -1) {
-                nomeCurso = nomeCurso.substring(0, indexParenteses);
-            }
-            
-            carregarTabelaAlunosPorCurso(nomeCurso); 
+            // AGORA EXTRAI NOME E CAMPUS
+            String[] dadosCurso = extrairNomeCursoECampus(itemSelecionado);
+            String nomeCurso = dadosCurso[0];
+            String campus = dadosCurso[1]; 
+
+            carregarTabelaAlunosPorCursoECampusEFiltro(nomeCurso, campus, textoBusca); 
         }
     }
     
@@ -332,6 +352,47 @@ public class ListarAlunos extends JPanel {
             JOptionPane.showMessageDialog(this, 
                 "Aluno ID " + idAluno + " selecionado. A tela de Edição/Exclusão seria aberta aqui.", 
                 "Teste de Clique", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+    
+ // Na classe ListarAlunos
+    private String[] extrairNomeCursoECampus(String itemSelecionado) {
+        String nomeCurso;
+        String campus;
+        int indexParenteses = itemSelecionado.lastIndexOf(" (");
+        int indexFechamento = itemSelecionado.lastIndexOf(")");
+        
+        if (indexParenteses != -1 && indexFechamento != -1 && indexFechamento > indexParenteses) {
+            nomeCurso = itemSelecionado.substring(0, indexParenteses).trim();
+            campus = itemSelecionado.substring(indexParenteses + 2, indexFechamento).trim();
+        } else {
+            // Caso não esteja no formato esperado, retorna null para o campus
+            nomeCurso = itemSelecionado.trim();
+            campus = null; 
+        }
+        return new String[]{nomeCurso, campus};
+    }
+    
+
+    private void carregarTabelaAlunosPorCursoECampusEFiltro(String nomeCurso, String campus, String filtroTexto) {
+        if (campus == null) {
+            JOptionPane.showMessageDialog(this, "Erro: Não foi possível identificar o Campus selecionado.", "Erro de Filtro", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        try {
+            AlunoDAO dao = new AlunoDAO();
+            
+            // Chamada AGORA ESTÁ CORRETA com os 3 parâmetros
+            List<AlunoView> listaAlunos = dao.listarPorCursoECampusEFiltro(nomeCurso, campus, filtroTexto); 
+            
+            tblListaAlunos.setModel(new AlunoTableModelSimplificado(listaAlunos));
+            configurarVisualTabela();
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, 
+                "Erro ao filtrar alunos por curso, campus e texto: " + e.getMessage(), 
+                "Erro de Conexão", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
         }
     }
 }
