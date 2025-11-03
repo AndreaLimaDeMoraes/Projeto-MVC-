@@ -1,6 +1,6 @@
 package br.edu.fatecgru.mvcaluno.view;
 
-// Imports do seu esqueleto 1
+// Imports do seu esqueleto
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Font;
