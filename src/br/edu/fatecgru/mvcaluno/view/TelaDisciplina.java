@@ -297,6 +297,25 @@ public class TelaDisciplina extends JPanel {
             return;
         }
 
+        
+        DisciplinaDAO dao2 = new DisciplinaDAO();
+        Disciplina disciplinaExistente = dao2.buscarPorNomeECurso(nomeDisciplina, curso.getIdCurso());
+
+        if (disciplinaExistente != null) {
+            if (!disciplinaExistente.isAtivo()) {
+                // reativa a disciplina
+                dao2.reativarDisciplina(disciplinaExistente.getIdDisciplina());
+                JOptionPane.showMessageDialog(this, "Disciplina reativada com sucesso!");
+            } else {
+                JOptionPane.showMessageDialog(this, "Esta disciplina já está cadastrada e ativa.");
+            }
+            
+            filtrarDisciplinasPorCurso();
+            return;
+        }
+        
+        
+        // se não existir, cria uma nova
         Disciplina disciplina = new Disciplina();
         disciplina.setIdCurso(curso.getIdCurso());
         disciplina.setNome(nomeDisciplina);
