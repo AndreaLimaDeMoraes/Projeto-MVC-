@@ -141,12 +141,12 @@ public class MatriculaDisciplinaDAO {
     }
 
     public void finalizarNotaFaltas(MatriculaDisciplina md) throws Exception {
-        atribuirTemporariamenteNotaFaltas(md); // mesmo comportamento
+        atribuirTemporariamenteNotaFaltas(md);
     }
 
     public MatriculaDisciplina buscarNotaFaltas(int idMatricula, int idDisciplina, String semestreCursado) throws Exception {
         MatriculaDisciplina md = null;
-        String SQL = "SELECT * FROM matriculaDisciplina WHERE idMatricula=? AND idDisciplina=? AND semestreCursado=? AND ativo=TRUE";
+        String SQL = "SELECT * FROM matriculaDisciplina WHERE idMatricula=? AND idDisciplina=? AND semestreCursado=?";  
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement ps = conn.prepareStatement(SQL)) {
             ps.setInt(1, idMatricula);
@@ -175,8 +175,11 @@ public class MatriculaDisciplinaDAO {
 
     public List<String> listarSemestresCursados(int idAluno) throws Exception {
         List<String> semestres = new ArrayList<>();
-        String sql = "SELECT DISTINCT semestreCursado FROM matriculaDisciplina " +
-                     "WHERE idMatricula = ? AND ativo = TRUE ORDER BY semestreCursado";
+        String sql = "SELECT DISTINCT md.semestreCursado " +
+                     "FROM matriculaDisciplina md " +
+                     "JOIN matricula m ON md.idMatricula = m.idMatricula " +
+                     "WHERE m.idAluno = ? " +  // Filtra pelo idAluno via JOIN
+                     "ORDER BY md.semestreCursado";
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idAluno);
@@ -189,14 +192,13 @@ public class MatriculaDisciplinaDAO {
         return semestres;
     }
 
-
     public List<MatriculaDisciplinaDetalhe> listarDisciplinasParaAlunoNoSemestre(int idAluno, String semestre) throws Exception {
         List<MatriculaDisciplinaDetalhe> detalhes = new ArrayList<>();
         String SQL = "SELECT D.idDisciplina, D.nome AS nomeDisciplina, MD.idMatriculaDisciplina " +
                      "FROM matriculaDisciplina MD " +
                      "JOIN matricula M ON MD.idMatricula = M.idMatricula " +
                      "JOIN Disciplina D ON MD.idDisciplina = D.idDisciplina " +
-                     "WHERE M.idAluno=? AND MD.semestreCursado=? AND MD.ativo=TRUE " +
+                     "WHERE M.idAluno=? AND MD.semestreCursado=? " +
                      "ORDER BY D.nome";
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement ps = conn.prepareStatement(SQL)) {
