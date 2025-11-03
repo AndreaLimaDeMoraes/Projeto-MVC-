@@ -347,4 +347,97 @@ public class ListarAlunos extends JPanel {
             frameTeste.setVisible(true);
         });
     }
+
+    /**
+     * Método público para excluir aluno selecionado - chamado pelo menu
+     */
+    public void excluirAlunoSelecionado() {
+        int linhaSelecionada = tblListaAlunos.getSelectedRow();
+        
+        if (linhaSelecionada == -1) {
+            JOptionPane.showMessageDialog(this, 
+                "Selecione um aluno na lista para excluir!", 
+                "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        try {
+            // Obtém o aluno selecionado da tabela
+            AlunoTableModelSimplificado model = (AlunoTableModelSimplificado) tblListaAlunos.getModel();
+            AlunoView aluno = model.getAlunoAt(linhaSelecionada);
+            
+            int idAluno = aluno.getIdAluno();
+            String nomeAluno = aluno.getNome();
+            String raAluno = aluno.getRa();
+            
+            System.out.println("Tentando excluir aluno - ID: " + idAluno + ", Nome: " + nomeAluno);
+            
+            // Confirmação antes de excluir
+            int confirm = JOptionPane.showConfirmDialog(this,
+                "Tem certeza que deseja excluir o aluno?\n\n" +
+                "Nome: " + nomeAluno + "\n" +
+                "RA: " + raAluno + "\n" +
+                "ID: " + idAluno,
+                "Confirmar Exclusão", 
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                System.out.println("Usuário confirmou exclusão do aluno ID: " + idAluno);
+                
+                // Executa a exclusão no banco de dados
+                AlunoDAO alunoDAO = new AlunoDAO();
+                alunoDAO.excluir(idAluno);
+                
+                JOptionPane.showMessageDialog(this, 
+                    "Aluno excluído com sucesso!\n" +
+                    "Nome: " + nomeAluno + "\n" +
+                    "RA: " + raAluno, 
+                    "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                
+                // Recarrega a tabela para refletir a exclusão
+                recarregarTabela();
+                
+            } else {
+                System.out.println("Usuário cancelou a exclusão");
+            }
+            
+        } catch (Exception e) {
+            System.out.println("Erro ao excluir aluno: " + e.getMessage());
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                "Erro ao excluir aluno: " + e.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Método auxiliar para recarregar a tabela após exclusão
+     */
+    private void recarregarTabela() {
+        String textoBusca = txtBuscar.getText();
+        final String HINT_TEXT = "Informe nome ou RA do aluno";
+        
+        // Verifica se o texto é apenas o placeholder
+        if (textoBusca.equals(HINT_TEXT) || textoBusca.trim().isEmpty()) {
+            textoBusca = null;
+        }
+        
+        String cursoSelecionado = (String) cmbCurso.getSelectedItem();
+        
+        try {
+            if (cursoSelecionado == null || cursoSelecionado.equals("Todos os Cursos")) {
+                carregarTabelaAlunos(textoBusca);
+            } else {
+                String[] dadosCurso = extrairNomeCursoECampus(cursoSelecionado);
+                carregarTabelaAlunosPorCursoECampusEFiltro(dadosCurso[0], dadosCurso[1], textoBusca);
+            }
+            System.out.println("Tabela recarregada após exclusão");
+        } catch (Exception e) {
+            System.out.println("Erro ao recarregar tabela: " + e.getMessage());
+            JOptionPane.showMessageDialog(this,
+                "Erro ao recarregar lista de alunos: " + e.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 }
