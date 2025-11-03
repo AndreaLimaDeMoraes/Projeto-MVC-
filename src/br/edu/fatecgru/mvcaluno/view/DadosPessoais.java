@@ -356,15 +356,8 @@ public class DadosPessoais extends JPanel {
         String sqlInsertAluno = "INSERT INTO aluno (ra, nome, dataNascimento, cpf, email, endereco, municipio, uf, celular, ativo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         String sqlInsertMatricula = "INSERT INTO matricula (idAluno, idCurso, ativo) VALUES (?, ?, 1)";
         String sqlSelectDisciplinas = "SELECT idDisciplina FROM disciplina WHERE idCurso = ? AND semestre = ?"; 
-        
-        // ========================================================
-        // --- CORREÇÃO APLICADA (nota) ---
-        // ========================================================
-        // Adicionamos a coluna 'nota' ao INSERT
         String sqlInsertMatriculaDisc = "INSERT INTO matriculaDisciplina (idMatricula, idDisciplina, semestreCursado, faltas, nota) VALUES (?, ?, ?, ?, ?)";
-        // ========================================================
-        // --- FIM DA CORREÇÃO ---
-        // ========================================================
+        
 
 
         try {
@@ -441,20 +434,12 @@ public class DadosPessoais extends JPanel {
             // --- ETAPA D: Inserir na tabela 'matriculaDisciplina' (em lote) ---
             stmtMatriculaDisc = conn.prepareStatement(sqlInsertMatriculaDisc);
             for (int idDisciplina : idsDisciplinas) {
-                
-                // ========================================================
-                // --- CORREÇÃO APLICADA (nota) ---
-                // ========================================================
-                // Adicionamos o valor '0.0f' para a coluna 'nota'
                 stmtMatriculaDisc.setInt(1, idMatriculaGerada);
                 stmtMatriculaDisc.setInt(2, idDisciplina);
                 stmtMatriculaDisc.setString(3, semestreInicioTexto); // <-- semestreCursado
                 stmtMatriculaDisc.setInt(4, 0); // <-- faltas (inicia com 0)
                 stmtMatriculaDisc.setFloat(5, 0.0f); // <-- nota (inicia com 0.0)
-                stmtMatriculaDisc.addBatch(); 
-                // ========================================================
-                // --- FIM DA CORREÇÃO ---
-                // ========================================================
+                stmtMatriculaDisc.addBatch();              
             }
             stmtMatriculaDisc.executeBatch(); 
 
@@ -691,9 +676,7 @@ public class DadosPessoais extends JPanel {
         jcbCursos.setSelectedIndex(0);
     }
 
-    // ===================================
-    // LÓGICA DE NAVEGAÇÃO (do seu esqueleto)
-    // ===================================
+
     /**
      * Lógica para voltar para o painel de Listagem de Alunos e reativar o foco no menu.
      */
@@ -706,6 +689,7 @@ public class DadosPessoais extends JPanel {
         } 
     }
     
+    // Método para calcular o semestre atual no formato "AAAA/S"
     private String calcularSemestreAtual() {
         java.time.LocalDate hoje = java.time.LocalDate.now();
         int ano = hoje.getYear();

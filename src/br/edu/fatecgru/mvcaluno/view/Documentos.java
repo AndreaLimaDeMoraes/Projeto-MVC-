@@ -69,7 +69,7 @@ public class Documentos extends JPanel {
     private BoletimAluno dadosAluno;  // Para o PDF
     private List<DisciplinaBoletim> disciplinas;  // Para o PDF
     
-    // Novos componentes
+    // Componentes para exibição/ geração do documento
     private JButton btnGerarDocumento;
     private JButton btnExportarPDF;
     private JTable tableDisciplinas;
@@ -203,6 +203,7 @@ public class Documentos extends JPanel {
         tableDisciplinas.setPreferredScrollableViewportSize(new Dimension(600, 200));
     }
     
+    // Inicializa os componentes do autocomplete
     private void inicializarAutocomplete() {
         popupSugestoes = new JPopupMenu();
         popupSugestoes.setFocusable(false);
@@ -225,7 +226,8 @@ public class Documentos extends JPanel {
         JScrollPane scrollPaneSugestoes = new JScrollPane(listaSugestoes);
         popupSugestoes.add(scrollPaneSugestoes);
     }
-
+    
+    // Adiciona os listeners aos componentes
     private void adicionarListeners() {
         final String HINT_TEXT = "Informe ID, Nome ou RA do Aluno";
         final Color HINT_COLOR = Color.LIGHT_GRAY;
@@ -295,6 +297,7 @@ public class Documentos extends JPanel {
         });
     }
 
+    // Atualiza as sugestões com base no texto digitado
     private void atualizarSugestoes() {
         String textoDigitado = txtBuscar.getText().trim();
 
@@ -322,6 +325,7 @@ public class Documentos extends JPanel {
         }
     }
 
+    // Seleciona o aluno sugerido na lista ao clicar
     private void selecionarAlunoSugerido() {
         alunoSelecionado = listaSugestoes.getSelectedValue();
         if (alunoSelecionado != null) {
@@ -331,6 +335,7 @@ public class Documentos extends JPanel {
         }
     }
 
+    // Gera o boletim do aluno selecionado
     private void gerarBoletim(int idAluno) {
         try {
             BoletimAluno dados = alunoDAO.buscarDadosBoletimAluno(idAluno);
@@ -347,6 +352,7 @@ public class Documentos extends JPanel {
         }
     }
 
+    // Gera o histórico escolar do aluno selecionado
     private void gerarHistoricoEscolar(int idAluno) {
         try {
             BoletimAluno dados = alunoDAO.buscarDadosBoletimAluno(idAluno);
@@ -362,7 +368,8 @@ public class Documentos extends JPanel {
             JOptionPane.showMessageDialog(this, "Erro ao gerar histórico: " + e.getMessage());
         }
     }
- 
+    
+    // Exibe o documento (boletim ou histórico) na interface
     private void exibirDocumento(BoletimAluno dadosAlunoParam, List<DisciplinaBoletim> disciplinasParam, String tipo) {
         BoletimAluno dadosAlunoLocal = dadosAlunoParam;
         List<DisciplinaBoletim> disciplinasLocal = disciplinasParam;
@@ -495,6 +502,7 @@ public class Documentos extends JPanel {
 
     }
     
+    // Gera o PDF do documento (boletim ou histórico)
     private void gerarPDF(BoletimAluno dados, List<DisciplinaBoletim> disciplinasList, String tipo) {
         try {
             // Pasta Documentos do usuário
@@ -604,19 +612,5 @@ public class Documentos extends JPanel {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erro ao gerar PDF: " + e.getMessage());
         }
-    }
-
-
-   
-
-    public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            JFrame frame = new JFrame("Tela de Documentos");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1000, 600);
-            Documentos painel = new Documentos();
-            frame.setContentPane(painel);
-            frame.setVisible(true);
-        });
     }
 }
