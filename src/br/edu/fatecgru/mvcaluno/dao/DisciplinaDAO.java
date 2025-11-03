@@ -126,6 +126,7 @@ public class DisciplinaDAO {
         }
     }
 
+    // Buscar disciplina por nome e curso
     public Disciplina buscarPorNomeECurso(String nome, int idCurso) throws Exception {
         String sql = "SELECT * FROM disciplina WHERE nome = ? AND idCurso = ?";
         Disciplina disciplina = null;
@@ -154,7 +155,7 @@ public class DisciplinaDAO {
         return disciplina;
     }
 
-
+    // Reativar disciplina
     public void reativarDisciplina(int idDisciplina) throws Exception {
         String sql = "UPDATE disciplina SET ativo = 1 WHERE idDisciplina = ?";
 

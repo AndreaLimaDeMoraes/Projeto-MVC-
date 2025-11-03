@@ -152,7 +152,7 @@ public class CursoDAO {
         }
     }
 
-    // Listar por filtro
+    // Lista cursos por filtro
     public List<Curso> listarPorFiltro(String filtro) throws Exception {
         List<Curso> lista = new ArrayList<>();
         Connection conn = null; // Conexão local
