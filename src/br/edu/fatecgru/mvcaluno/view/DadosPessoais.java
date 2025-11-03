@@ -712,4 +712,27 @@ public class DadosPessoais extends JPanel {
         int semestre = (hoje.getMonthValue() <= 6) ? 1 : 2;
         return ano + "/" + semestre;
     }
+    
+    /**
+     * Método público para salvar aluno - chamado pelo menu
+     */
+    public void salvarAlunoSelecionado() {
+        if (idAluno > 0) {
+            // Modo edição
+            System.out.println("Salvando alterações do aluno ID: " + idAluno);
+            java.awt.event.ActionEvent evento = 
+                new java.awt.event.ActionEvent(this, java.awt.event.ActionEvent.ACTION_PERFORMED, "");
+            salvarAlteracoes(evento);
+        } else {
+            // Modo cadastro  
+            System.out.println("Registrando novo aluno");
+            java.awt.event.ActionEvent evento = 
+                new java.awt.event.ActionEvent(this, java.awt.event.ActionEvent.ACTION_PERFORMED, "");
+            registrarAluno(evento);
+        }
+    }
+
+    
+    
+    
 }

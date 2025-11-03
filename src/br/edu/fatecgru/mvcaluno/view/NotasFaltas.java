@@ -595,4 +595,83 @@ public class NotasFaltas extends JPanel {
         }
     }
 
+    /**
+     * Método público para salvar notas e faltas - chamado pelo menu
+     */
+    public void salvarNotasFaltasSelecionado() {
+        try {
+            System.out.println("Salvando notas e faltas...");
+            
+            // Aqui você implementa a lógica de salvar notas e faltas
+            atribuirNotaFalta(); 
+
+            // Por enquanto, vamos mostrar uma mensagem
+            JOptionPane.showMessageDialog(this,
+                "Notas e faltas salvas com sucesso!",
+                "Salvar Notas e Faltas",
+                JOptionPane.INFORMATION_MESSAGE);
+                
+        } catch (Exception e) {
+            System.out.println("Erro ao salvar notas e faltas: " + e.getMessage());
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                "Erro ao salvar notas e faltas: " + e.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public void alterarNotasFaltasSelecionado() {
+        if (idAlunoSelecionado == -1) {
+            JOptionPane.showMessageDialog(this, "Selecione um aluno primeiro.");
+            return;
+        }
+        
+        // Habilita edição e usa o mesmo método de salvar
+        txtNota.setEnabled(true);
+        txtFalta.setEnabled(true);
+        atribuirNotaFalta();
+    }
+    
+    /**
+     * Método público para excluir notas e faltas - chamado pelo menu
+     */
+    public void excluirNotasFaltasSelecionado() {
+        if (idAlunoSelecionado == -1) {
+            JOptionPane.showMessageDialog(this, "Selecione um aluno primeiro.");
+            return;
+        }
+        
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            "Limpar notas e faltas?", "Confirmar", JOptionPane.YES_NO_OPTION);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            txtNota.setText("");
+            txtFalta.setText("");
+            txtStatus.setText("Cursando");
+            atribuirNotaFalta(); // Salva os campos vazios
+        }
+    }
+    
+    /**
+     * Método público para consultar notas e faltas - chamado pelo menu
+     */
+    public void consultarNotasFaltasSelecionado() {
+        if (idAlunoSelecionado == -1) {
+            JOptionPane.showMessageDialog(this, "Selecione um aluno primeiro.");
+            return;
+        }
+        
+        // Mostra informações básicas
+        String info = "Aluno: " + (alunoSelecionado != null ? alunoSelecionado.getNome() : "N/A") + "\n" +
+                      "Disciplina: " + (cmbDisciplina.getSelectedItem() != null ? cmbDisciplina.getSelectedItem().toString() : "N/A") + "\n" +
+                      "Nota: " + txtNota.getText() + "\n" +
+                      "Faltas: " + txtFalta.getText() + "\n" +
+                      "Status: " + txtStatus.getText();
+        
+        JOptionPane.showMessageDialog(this, info, "Consulta", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+
+    
+    
 }

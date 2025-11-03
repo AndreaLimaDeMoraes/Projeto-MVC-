@@ -129,7 +129,7 @@ public class TelaPrincipal extends JFrame {
         separator = new JSeparator();
         mnNewMenu.add(separator);
         mntmNewMenuItem_4 = new JMenuItem("Sair");
-        mntmNewMenuItem_4.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK));
+        mntmNewMenuItem_4.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK));
         mnNewMenu.add(mntmNewMenuItem_4);
 
         // Menu "Notas e Faltas" com itens Salvar, Alterar, Excluir e Consultar
@@ -365,20 +365,48 @@ public class TelaPrincipal extends JFrame {
     // MÉTODOS PÚBLICOS PARA O MENU
     // =============================================
 
+   
     /**
      * Método público para salvar aluno - chamado pelo menu
      */
     public void salvarAluno() {
         System.out.println("Menu Salvar acionado");
-        JOptionPane.showMessageDialog(this, "Funcionalidade Salvar Aluno");
+        
+        // Verifica se há uma tela de DadosPessoais aberta
+        if (pnlConteudoAluno.getComponentCount() > 0) {
+            Component primeiroComponente = pnlConteudoAluno.getComponent(0);
+            if (primeiroComponente instanceof DadosPessoais) {
+                DadosPessoais telaDados = (DadosPessoais) primeiroComponente;
+                telaDados.salvarAlunoSelecionado();
+                return;
+            }
+        }
+        
+        JOptionPane.showMessageDialog(this, 
+            "Abra a tela de Dados Pessoais primeiro para salvar um aluno", 
+            "Aviso", JOptionPane.WARNING_MESSAGE);
     }
 
+    
     /**
      * Método público para alterar aluno - chamado pelo menu  
      */
     public void alterarAluno() {
         System.out.println("Menu Alterar acionado");
-        JOptionPane.showMessageDialog(this, "Funcionalidade Alterar Aluno");
+        
+        // Verifica se há uma lista de alunos aberta
+        if (pnlConteudoAluno.getComponentCount() > 0) {
+            Component primeiroComponente = pnlConteudoAluno.getComponent(0);
+            if (primeiroComponente instanceof ListarAlunos) {
+                ListarAlunos lista = (ListarAlunos) primeiroComponente;
+                lista.alterarAlunoSelecionado();
+                return;
+            }
+        }
+        
+        JOptionPane.showMessageDialog(this, 
+            "Abra a lista de alunos primeiro para alterar um aluno", 
+            "Aviso", JOptionPane.WARNING_MESSAGE);
     }
 
    
@@ -418,7 +446,20 @@ public class TelaPrincipal extends JFrame {
      */
     public void salvarNotasFaltas() {
         System.out.println("Menu Salvar Notas e Faltas acionado");
-        JOptionPane.showMessageDialog(this, "Funcionalidade Salvar Notas e Faltas");
+        
+        // Verifica se há uma tela de NotasFaltas aberta
+        if (pnlConteudoAluno.getComponentCount() > 0) {
+            Component primeiroComponente = pnlConteudoAluno.getComponent(0);
+            if (primeiroComponente instanceof NotasFaltas) {
+                NotasFaltas telaNotas = (NotasFaltas) primeiroComponente;
+                telaNotas.salvarNotasFaltasSelecionado();
+                return;
+            }
+        }
+        
+        JOptionPane.showMessageDialog(this, 
+            "Abra a tela de Notas e Faltas primeiro para salvar", 
+            "Aviso", JOptionPane.WARNING_MESSAGE);
     }
 
     /**
@@ -426,7 +467,20 @@ public class TelaPrincipal extends JFrame {
      */
     public void alterarNotasFaltas() {
         System.out.println("Menu Alterar Notas e Faltas acionado");
-        JOptionPane.showMessageDialog(this, "Funcionalidade Alterar Notas e Faltas");
+        
+        // Verifica se há uma tela de NotasFaltas aberta
+        if (pnlConteudoAluno.getComponentCount() > 0) {
+            Component primeiroComponente = pnlConteudoAluno.getComponent(0);
+            if (primeiroComponente instanceof NotasFaltas) {
+                NotasFaltas telaNotas = (NotasFaltas) primeiroComponente;
+                telaNotas.alterarNotasFaltasSelecionado();
+                return;
+            }
+        }
+        
+        JOptionPane.showMessageDialog(this, 
+            "Abra a tela de Notas e Faltas primeiro para alterar", 
+            "Aviso", JOptionPane.WARNING_MESSAGE);
     }
 
     /**
@@ -434,7 +488,20 @@ public class TelaPrincipal extends JFrame {
      */
     public void excluirNotasFaltas() {
         System.out.println("Menu Excluir Notas e Faltas acionado");
-        JOptionPane.showMessageDialog(this, "Funcionalidade Excluir Notas e Faltas");
+        
+        // Verifica se há uma tela de NotasFaltas aberta
+        if (pnlConteudoAluno.getComponentCount() > 0) {
+            Component primeiroComponente = pnlConteudoAluno.getComponent(0);
+            if (primeiroComponente instanceof NotasFaltas) {
+                NotasFaltas telaNotas = (NotasFaltas) primeiroComponente;
+                telaNotas.excluirNotasFaltasSelecionado();
+                return;
+            }
+        }
+        
+        JOptionPane.showMessageDialog(this, 
+            "Abra a tela de Notas e Faltas primeiro para excluir", 
+            "Aviso", JOptionPane.WARNING_MESSAGE);
     }
 
     /**
@@ -442,7 +509,21 @@ public class TelaPrincipal extends JFrame {
      */
     public void consultarNotasFaltas() {
         System.out.println("Menu Consultar Notas e Faltas acionado");
-        JOptionPane.showMessageDialog(this, "Funcionalidade Consultar Notas e Faltas");
+        
+        // Verifica se há uma tela de NotasFaltas aberta
+        if (pnlConteudoAluno.getComponentCount() > 0) {
+            Component primeiroComponente = pnlConteudoAluno.getComponent(0);
+            if (primeiroComponente instanceof NotasFaltas) {
+                NotasFaltas telaNotas = (NotasFaltas) primeiroComponente;
+                telaNotas.consultarNotasFaltasSelecionado();
+                return;
+            }
+        }
+        
+        // Se não há tela aberta, abre uma nova
+        ativarBotaoMenu(btnNotasFaltas);
+        NotasFaltas telaNotas = new NotasFaltas(this, 1); // Modo consulta
+        trocarPainelConteudo(telaNotas);
     }
 
     private void mostrarSobre() {

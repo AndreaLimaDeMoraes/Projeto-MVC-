@@ -440,4 +440,39 @@ public class ListarAlunos extends JPanel {
                 "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
+
+    /**
+     * Método público para alterar aluno - chamado pelo menu
+     */
+    public void alterarAlunoSelecionado() {
+        int linhaSelecionada = tblListaAlunos.getSelectedRow();
+        
+        if (linhaSelecionada == -1) {
+            JOptionPane.showMessageDialog(this, 
+                "Selecione um aluno na lista para alterar!", 
+                "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        try {
+            // Obtém o aluno selecionado da tabela
+            AlunoTableModelSimplificado model = (AlunoTableModelSimplificado) tblListaAlunos.getModel();
+            AlunoView aluno = model.getAlunoAt(linhaSelecionada);
+            
+            int idAluno = aluno.getIdAluno();
+            String nomeAluno = aluno.getNome();
+            
+            System.out.println("Abrindo aluno para alteração - ID: " + idAluno + ", Nome: " + nomeAluno);
+            
+            // Abre a tela de edição do aluno
+            abrirTelaDadosPessoais(idAluno);
+            
+        } catch (Exception e) {
+            System.out.println("Erro ao abrir aluno para alteração: " + e.getMessage());
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                "Erro ao abrir aluno para alteração: " + e.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 }
