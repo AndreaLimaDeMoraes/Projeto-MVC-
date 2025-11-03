@@ -465,21 +465,16 @@ public class AlunoDAO {
         }
 
 
-     // NOVO SQL (Substitua no AlunoDAO)
         public List<AlunoView> listarPorCursoECampusEFiltro(String nomeCurso, String campus, String filtro) throws Exception {
             List<AlunoView> listaAlunos = new ArrayList<>();
             
-            // Otimizando a query para buscar dados completos da AlunoView
             String sql = "SELECT A.idAluno, A.ra, A.nome, A.dataNascimento, A.cpf, A.email, A.endereco, A.municipio, A.uf, A.celular, A.ativo, " +
                          "C.idCurso, C.nome AS nomeCurso, C.campus, C.periodo, " +
-                         // Usando a matrícula mais recente, independentemente do status M.ativo
                          "COALESCE((SELECT MAX(md.semestreCursado) FROM matriculaDisciplina md WHERE md.idMatricula = M.idMatricula AND md.status = 'Cursando' AND md.ativo = TRUE), 'N/A') AS semestreAtual " +
                          "FROM aluno A " +
-                         "JOIN matricula M ON A.idAluno = M.idAluno AND M.idMatricula = (" + // Pega a última matrícula
-                         "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = A.idAluno" +
-                         ") " + // REMOVIDO: AND M.ativo = TRUE
+                         "JOIN matricula M ON A.idAluno = M.idAluno AND M.idMatricula = (" +
+                         "    SELECT MAX(idMatricula) FROM matricula m_max WHERE m_max.idAluno = A.idAluno) " +
                          "JOIN curso C ON M.idCurso = C.idCurso " +     
-                         // Cláusula WHERE principal
                          "WHERE C.nome = ? AND C.campus = ? "; 
             
             boolean aplicarFiltroTexto = filtro != null && !filtro.trim().isEmpty();
@@ -488,19 +483,9 @@ public class AlunoDAO {
                 sql += "AND (A.nome LIKE ? OR A.ra LIKE ?)"; 
             }
             
-            // O filtro de aluno A.ativo = TRUE também pode ser removido, dependendo da sua regra de negócio
-            // Para listar TODOS os alunos (ativos ou inativos), mas apenas cursos ativos:
-            sql += " AND C.ativo = TRUE"; 
-            // Se quiser garantir que SÓ alunos ativos apareçam, mantenha: sql += " AND A.ativo = TRUE"; 
+            sql += " AND C.ativo = TRUE";             
+            sql += " ORDER BY A.nome";             
             
-            sql += " ORDER BY A.nome"; 
-            
-            // ... (O restante da sua lógica de PreparedStatement e ResultSet continua a mesma)
-            // Lembre-se de mapear todos os campos do Aluno base no seu construtor de AlunoView!
-            // Você pode usar o construtor completo ou setters, mas garanta que A.ativo seja lido.
-            
-            // ... (código de PreparedStatement, que está correto)
-
             try (Connection conn = ConnectionFactory.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
                  
@@ -516,7 +501,6 @@ public class AlunoDAO {
                 
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        // Ao buscar mais campos, use o construtor completo do AlunoView (boa prática)
                         AlunoView aluno = new AlunoView(
                             rs.getInt("idAluno"),
                             rs.getString("ra"),

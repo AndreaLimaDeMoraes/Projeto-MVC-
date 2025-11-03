@@ -601,11 +601,11 @@ public int calcularMaxSemestreAprovado(Set<Integer> idsAprovadas, int idCurso) t
         }
         return count;
     }
-
+    
     public String obterSemestreAtualAluno(int idAluno) throws Exception {
         String sql = "SELECT semestreCursado FROM matriculaDisciplina md " +
                      "JOIN matricula m ON md.idMatricula = m.idMatricula " +
-                     "WHERE m.idAluno = ? AND md.ativo = TRUE " +
+                     "WHERE m.idAluno = ? " +
                      "ORDER BY md.semestreCursado DESC LIMIT 1";
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -616,8 +616,9 @@ public int calcularMaxSemestreAprovado(Set<Integer> idsAprovadas, int idCurso) t
                 }
             }
         }
-        return calcularSemestreAtual(); // fallback
+        return calcularSemestreAtual();
     }
+
     
     public String calcularProximoSemestreDoAluno(int idMatricula) throws Exception {
         String sql = "SELECT MAX(semestreCursado) AS ultimoSemestre FROM matriculaDisciplina WHERE idMatricula=? AND ativo=TRUE";

@@ -1,27 +1,9 @@
 package br.edu.fatecgru.mvcaluno.view;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.EventQueue;
-import java.awt.Font;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.*;
+import java.awt.event.*;
 import java.util.List;
-
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -29,22 +11,32 @@ import javax.swing.table.DefaultTableCellRenderer;
 import br.edu.fatecgru.mvcaluno.dao.AlunoDAO;
 import br.edu.fatecgru.mvcaluno.dao.CursoDAO;
 import br.edu.fatecgru.mvcaluno.model.AlunoTableModelSimplificado;
-import br.edu.fatecgru.mvcaluno.model.AlunoView; 
+import br.edu.fatecgru.mvcaluno.model.AlunoView;
 
+/**
+ * Classe responsável por exibir a tela de listagem de alunos.
+ * 
+ * Possui filtros por nome/RA e por curso, além de permitir abrir o cadastro
+ * (novo ou existente) ao clicar em um aluno.
+ */
 public class ListarAlunos extends JPanel {
 
     private static final long serialVersionUID = 1L;
-    private JLabel lblNewLabel;
+
+    // --- Componentes de UI ---
+    private JLabel lblBuscar;
     private JTextField txtBuscar;
     private JLabel lblCurso;
     private JComboBox<String> cmbCurso;
     private JTable tblListaAlunos;
     private JPanel panelFiltros;
     private JButton btnNovoAluno;
-    
-    private JFrame framePai; 
-    private int idAluno; 
 
+    // --- Referências e controle ---
+    private JFrame framePai; // Tela principal (para trocar painéis)
+    private int idAluno;     // Usado ao abrir tela de edição
+
+    // --- Construtores ---
     public ListarAlunos(JFrame framePai) {
         this.framePai = framePai;
         setupLayout();
@@ -53,34 +45,38 @@ public class ListarAlunos extends JPanel {
     public ListarAlunos() {
         setupLayout();
     }
-    
+
+    /**
+     * Método principal de configuração da tela.
+     * Cria todos os componentes, define eventos e carrega dados iniciais.
+     */
     private void setupLayout() {
-        
+
+        // --- Constantes para o campo de busca ---
         final String HINT_TEXT = "Informe nome ou RA do aluno";
         final Color HINT_COLOR = Color.LIGHT_GRAY;
         final Color TEXT_COLOR = Color.BLACK;
 
-        setLayout(new BorderLayout(5, 5)); 
+        setLayout(new BorderLayout(5, 5));
 
-        panelFiltros = new JPanel();
-        panelFiltros.setLayout(null);
+        // Painel de filtros superior
+        panelFiltros = new JPanel(null);
         panelFiltros.setPreferredSize(new Dimension(950, 75));
-        
-        lblNewLabel = new JLabel("Buscar:");
-        lblNewLabel.setBounds(10, 33, 68, 35);
-        panelFiltros.add(lblNewLabel);
-        lblNewLabel.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        
-        txtBuscar = new JTextField(); 
-        txtBuscar.setBounds(66, 38, 325, 27);		
-        txtBuscar.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        txtBuscar.setColumns(10);
 
-        txtBuscar.setText(HINT_TEXT);
+        // Label "Buscar"
+        lblBuscar = new JLabel("Buscar:");
+        lblBuscar.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        lblBuscar.setBounds(10, 33, 68, 35);
+        panelFiltros.add(lblBuscar);
+
+        // Campo de busca com hint
+        txtBuscar = new JTextField(HINT_TEXT);
+        txtBuscar.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        txtBuscar.setBounds(66, 38, 325, 27);
         txtBuscar.setForeground(HINT_COLOR);
-        
         panelFiltros.add(txtBuscar);
 
+        // --- Placeholder (hint) control ---
         txtBuscar.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
@@ -89,6 +85,7 @@ public class ListarAlunos extends JPanel {
                     txtBuscar.setForeground(TEXT_COLOR);
                 }
             }
+
             @Override
             public void focusLost(FocusEvent e) {
                 if (txtBuscar.getText().isEmpty()) {
@@ -97,302 +94,257 @@ public class ListarAlunos extends JPanel {
                 }
             }
         });
-        
+
+        // --- Atualiza busca dinamicamente ---
         txtBuscar.getDocument().addDocumentListener(new DocumentListener() {
-            
             @Override
-            public void insertUpdate(DocumentEvent e) {
-                realizarBusca();
-            }
-            
+            public void insertUpdate(DocumentEvent e) { realizarBusca(); }
             @Override
-            public void removeUpdate(DocumentEvent e) {
-                realizarBusca();
-            }
-            
+            public void removeUpdate(DocumentEvent e) { realizarBusca(); }
             @Override
-            public void changedUpdate(DocumentEvent e) {
-                realizarBusca();
-            }
-            
-         // Na classe ListarAlunos (MÉTODO MODIFICADO, dentro do DocumentListener)
+            public void changedUpdate(DocumentEvent e) { realizarBusca(); }
+
             private void realizarBusca() {
                 String textoBusca = txtBuscar.getText();
-                final String HINT_TEXT = "Informe nome ou RA do aluno";
-                
+
                 if (textoBusca.equals(HINT_TEXT) || textoBusca.trim().isEmpty()) {
                     textoBusca = null;
                 }
-                
-                String cursoSelecionado = (String) cmbCurso.getSelectedItem();
-                
-                if (cursoSelecionado == null || cursoSelecionado.equals("Todos os Cursos")) {
-                    carregarTabelaAlunos(textoBusca); 
-                } else {
-                    // AGORA EXTRAI NOME E CAMPUS
-                    String[] dadosCurso = extrairNomeCursoECampus(cursoSelecionado);
-                    String nomeCurso = dadosCurso[0];
-                    String campus = dadosCurso[1]; 
 
-                    // CHAMA O NOVO MÉTODO
-                    carregarTabelaAlunosPorCursoECampusEFiltro(nomeCurso, campus, textoBusca);
+                String cursoSelecionado = (String) cmbCurso.getSelectedItem();
+
+                if (cursoSelecionado == null || cursoSelecionado.equals("Todos os Cursos")) {
+                    carregarTabelaAlunos(textoBusca);
+                } else {
+                    String[] dadosCurso = extrairNomeCursoECampus(cursoSelecionado);
+                    carregarTabelaAlunosPorCursoECampusEFiltro(dadosCurso[0], dadosCurso[1], textoBusca);
                 }
             }
-
-            
         });
-                
+
+        // Label "Curso"
         lblCurso = new JLabel("Curso:");
+        lblCurso.setFont(new Font("Tahoma", Font.PLAIN, 15));
         lblCurso.setBounds(415, 31, 54, 35);
         panelFiltros.add(lblCurso);
-        lblCurso.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        
+
+        // ComboBox de cursos
         cmbCurso = new JComboBox<>();
-        cmbCurso.setBounds(466, 36, 274, 27); 
+        cmbCurso.setBounds(466, 36, 274, 27);
         popularComboCursos();
         panelFiltros.add(cmbCurso);
-        
+
+        // Botão "Novo Aluno"
         btnNovoAluno = new JButton(" Novo aluno");
-        btnNovoAluno.setHorizontalAlignment(SwingConstants.LEFT);
         btnNovoAluno.setIcon(new ImageIcon(getClass().getResource("/Resources/imagens/adicionar-usuario.png")));
-        btnNovoAluno.setForeground(Color.black);
         btnNovoAluno.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        btnNovoAluno.setForeground(Color.BLACK);
+        btnNovoAluno.setHorizontalAlignment(SwingConstants.LEFT);
         btnNovoAluno.setBounds(762, 25, 167, 40);
-        btnNovoAluno.setContentAreaFilled(false); 
+        btnNovoAluno.setContentAreaFilled(false);
         btnNovoAluno.setFocusPainted(false);
         panelFiltros.add(btnNovoAluno);
-        
-        cmbCurso.addActionListener(e -> {
-            aplicarFiltroCurso();
-        });
-        
-        btnNovoAluno.addActionListener(e -> {
-            
-            if (framePai instanceof TelaPrincipal) {
-                
-                TelaPrincipal telaPrincipal = (TelaPrincipal) framePai;
-                
-                DadosPessoais telaCadastro = new DadosPessoais(telaPrincipal, 0); 
-                telaPrincipal.trocarPainelConteudo(
-                	    telaPrincipal.getPnlConteudoAluno(),
-                	    (JPanel) telaCadastro
-                	);
-                telaPrincipal.ativarBotaoMenuDadosPessoais();
-                
-            } else {
-                JOptionPane.showMessageDialog(this, 
-                    "Clique em 'Novo Aluno'. O formulário de cadastro seria aberto aqui.", 
-                    "Teste de Cadastro", JOptionPane.INFORMATION_MESSAGE);
-            }
-        });
-        
+
+        // --- Eventos de ação ---
+        cmbCurso.addActionListener(e -> aplicarFiltroCurso());
+        btnNovoAluno.addActionListener(e -> abrirTelaNovoAluno());
+
+        // Adiciona painel superior
         add(panelFiltros, BorderLayout.NORTH);
-        
+
+        // Tabela de alunos
         tblListaAlunos = new JTable();
         JScrollPane scrollPane = new JScrollPane(tblListaAlunos);
         add(scrollPane, BorderLayout.CENTER);
-        carregarTabelaAlunos(null); 
+
+        // Carrega dados iniciais
+        carregarTabelaAlunos(null);
         adicionarEventoCliqueTabela();
     }
-    
- // Na classe ListarAlunos (MÉTODO MODIFICADO)
+
+    // ============================================================
+    // MÉTODOS DE APOIO À BUSCA E FILTROS
+    // ============================================================
+
     private void aplicarFiltroCurso() {
         String itemSelecionado = (String) cmbCurso.getSelectedItem();
-        
+
         String textoBusca = txtBuscar.getText();
         final String HINT_TEXT = "Informe nome ou RA do aluno";
+
         if (textoBusca.equals(HINT_TEXT) || textoBusca.trim().isEmpty()) {
-            textoBusca = null; 
+            textoBusca = null;
         }
 
         if (itemSelecionado == null || itemSelecionado.equals("Todos os Cursos")) {
-            carregarTabelaAlunos(textoBusca); 
+            carregarTabelaAlunos(textoBusca);
         } else {
-            // AGORA EXTRAI NOME E CAMPUS
             String[] dadosCurso = extrairNomeCursoECampus(itemSelecionado);
-            String nomeCurso = dadosCurso[0];
-            String campus = dadosCurso[1]; 
-
-            carregarTabelaAlunosPorCursoECampusEFiltro(nomeCurso, campus, textoBusca); 
+            carregarTabelaAlunosPorCursoECampusEFiltro(dadosCurso[0], dadosCurso[1], textoBusca);
         }
     }
-    
+
     private void popularComboCursos() {
         try {
             CursoDAO dao = new CursoDAO();
             List<String> listaCursosFormatada = dao.listarCursosParaCombo();
-
             cmbCurso.removeAllItems();
+
             for (String cursoFormatado : listaCursosFormatada) {
                 cmbCurso.addItem(cursoFormatado);
             }
-            
+
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, 
-                "Erro ao carregar cursos para filtro: " + e.getMessage(), 
+            JOptionPane.showMessageDialog(this,
+                "Erro ao carregar cursos: " + e.getMessage(),
                 "Erro de Dados", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
-    }    
-    
-    private void carregarTabelaAlunosPorCurso(String nomeCurso) {
-        try {
-            AlunoDAO dao = new AlunoDAO();
-            List<AlunoView> listaAlunos = dao.listarPorCurso(nomeCurso);
-            
-            tblListaAlunos.setModel(new AlunoTableModelSimplificado(listaAlunos));
-            configurarVisualTabela();
-            
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, 
-                "Erro ao filtrar alunos por curso: " + e.getMessage(), 
-                "Erro de Conexão", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
         }
     }
 
+    /**
+     * Divide a string do ComboBox em nome e campus.
+     * Ex: "ADS (Guarulhos)" → ["ADS", "Guarulhos"]
+     */
+    private String[] extrairNomeCursoECampus(String itemSelecionado) {
+        int indexParenteses = itemSelecionado.lastIndexOf(" (");
+        int indexFechamento = itemSelecionado.lastIndexOf(")");
+
+        if (indexParenteses != -1 && indexFechamento > indexParenteses) {
+            String nomeCurso = itemSelecionado.substring(0, indexParenteses).trim();
+            String campus = itemSelecionado.substring(indexParenteses + 2, indexFechamento).trim();
+            return new String[]{nomeCurso, campus};
+        }
+        return new String[]{itemSelecionado.trim(), null};
+    }
+
+    // ============================================================
+    // MÉTODOS DE CARREGAMENTO DE TABELA
+    // ============================================================
+
+    private void carregarTabelaAlunos(String filtro) {
+        try {
+            AlunoDAO dao = new AlunoDAO();
+            List<AlunoView> listaAlunos = 
+                (filtro == null || filtro.trim().isEmpty())
+                ? dao.listarTodos()
+                : dao.listarPorFiltro(filtro);
+
+            tblListaAlunos.setModel(new AlunoTableModelSimplificado(listaAlunos));
+            configurarVisualTabela();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Erro ao carregar alunos: " + e.getMessage(),
+                "Erro de Conexão", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void carregarTabelaAlunosPorCursoECampusEFiltro(String nomeCurso, String campus, String filtroTexto) {
+        if (campus == null) {
+            JOptionPane.showMessageDialog(this,
+                "Erro: Não foi possível identificar o Campus selecionado.",
+                "Erro de Filtro", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        try {
+            AlunoDAO dao = new AlunoDAO();
+            List<AlunoView> listaAlunos = dao.listarPorCursoECampusEFiltro(nomeCurso, campus, filtroTexto);
+            tblListaAlunos.setModel(new AlunoTableModelSimplificado(listaAlunos));
+            configurarVisualTabela();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Erro ao filtrar alunos: " + e.getMessage(),
+                "Erro de Conexão", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Define tamanho, fontes e alinhamento das colunas.
+     */
     private void configurarVisualTabela() {
         tblListaAlunos.setFont(new Font("Tahoma", Font.PLAIN, 15));
         tblListaAlunos.getTableHeader().setFont(new Font("Tahoma", Font.BOLD, 15));
         tblListaAlunos.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        
-        DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
-        leftRenderer.setHorizontalAlignment(SwingConstants.LEFT);
-        
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        
-        tblListaAlunos.getColumnModel().getColumn(0).setCellRenderer(leftRenderer);
-        tblListaAlunos.getColumnModel().getColumn(1).setCellRenderer(leftRenderer);
-        tblListaAlunos.getColumnModel().getColumn(2).setCellRenderer(leftRenderer);
-        tblListaAlunos.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
-        tblListaAlunos.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);
 
-        tblListaAlunos.getColumnModel().getColumn(0).setPreferredWidth(100); 
-        tblListaAlunos.getColumnModel().getColumn(1).setPreferredWidth(255); 
-        tblListaAlunos.getColumnModel().getColumn(2).setPreferredWidth(300); 
-        tblListaAlunos.getColumnModel().getColumn(3).setPreferredWidth(180); 
-        tblListaAlunos.getColumnModel().getColumn(4).setPreferredWidth(117); 
-        
+        DefaultTableCellRenderer left = new DefaultTableCellRenderer();
+        left.setHorizontalAlignment(SwingConstants.LEFT);
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(SwingConstants.CENTER);
+
+        tblListaAlunos.getColumnModel().getColumn(0).setCellRenderer(left);
+        tblListaAlunos.getColumnModel().getColumn(1).setCellRenderer(left);
+        tblListaAlunos.getColumnModel().getColumn(2).setCellRenderer(left);
+        tblListaAlunos.getColumnModel().getColumn(3).setCellRenderer(center);
+        tblListaAlunos.getColumnModel().getColumn(4).setCellRenderer(center);
+
+        tblListaAlunos.getColumnModel().getColumn(0).setPreferredWidth(100);
+        tblListaAlunos.getColumnModel().getColumn(1).setPreferredWidth(255);
+        tblListaAlunos.getColumnModel().getColumn(2).setPreferredWidth(300);
+        tblListaAlunos.getColumnModel().getColumn(3).setPreferredWidth(180);
+        tblListaAlunos.getColumnModel().getColumn(4).setPreferredWidth(117);
     }
-    
-    public static void main(String[] args) {
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                try {
-                    JFrame frameTeste = new JFrame("Teste Listar Alunos");
-                    frameTeste.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                    frameTeste.setBounds(100, 100, 800, 600); 
-                    ListarAlunos painelAlunos = new ListarAlunos();
-                    frameTeste.setContentPane(painelAlunos);
-                    frameTeste.setVisible(true);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
-    
-    private void carregarTabelaAlunos(String filtro) {
-        try {
-            AlunoDAO dao = new AlunoDAO();
-            List<AlunoView> listaAlunos; 
-            
-            if (filtro == null || filtro.trim().isEmpty()) {
-                listaAlunos = dao.listarTodos(); 
-            } else {
-                listaAlunos = dao.listarPorFiltro(filtro);
-            }
-            
-            tblListaAlunos.setModel(new AlunoTableModelSimplificado(listaAlunos));
-            configurarVisualTabela();
-            
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, 
-                "Erro ao carregar lista de alunos: " + e.getMessage(), 
-                "Erro de Conexão", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
-    }
-    
+
+    // ============================================================
+    // EVENTOS
+    // ============================================================
+
     private void adicionarEventoCliqueTabela() {
         tblListaAlunos.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                // Clique duplo abre a tela de edição do aluno
                 if (e.getClickCount() == 2) {
                     int linhaSelecionada = tblListaAlunos.getSelectedRow();
                     if (linhaSelecionada != -1) {
                         AlunoTableModelSimplificado model = (AlunoTableModelSimplificado) tblListaAlunos.getModel();
                         AlunoView aluno = model.getAlunoAt(linhaSelecionada);
-                        int idAluno = aluno.getIdAluno();
-
-                        abrirTelaDadosPessoais(idAluno);
+                        abrirTelaDadosPessoais(aluno.getIdAluno());
                     }
                 }
             }
         });
     }
 
-    private void abrirTelaDadosPessoais(int idAluno) {
-        
-        if (framePai instanceof TelaPrincipal) {
-            
-            TelaPrincipal telaPrincipal = (TelaPrincipal) framePai;
-            
-            DadosPessoais telaEdicao = new DadosPessoais(telaPrincipal, idAluno); 
-            
-            telaPrincipal.trocarPainelConteudo(
-            	    telaPrincipal.getPnlConteudoAluno(),
-            	    (JPanel) telaEdicao
-            	);
+    private void abrirTelaNovoAluno() {
+    	if (framePai instanceof TelaPrincipal) {
+    	    TelaPrincipal telaPrincipal = (TelaPrincipal) framePai;
 
-            	telaPrincipal.ativarBotaoMenuDadosPessoais();
-            
-        } else {
-            JOptionPane.showMessageDialog(this, 
-                "Aluno ID " + idAluno + " selecionado. A tela de Edição/Exclusão seria aberta aqui.", 
+    	    DadosPessoais telaCadastro = new DadosPessoais(telaPrincipal, 0);
+    	    telaPrincipal.trocarPainelConteudo(telaPrincipal.getPnlConteudoAluno(), telaCadastro);
+    	    telaPrincipal.ativarBotaoMenuDadosPessoais();
+    	}else {
+            JOptionPane.showMessageDialog(this,
+                "Clique em 'Novo Aluno'. O formulário de cadastro seria aberto aqui.",
+                "Teste de Cadastro", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private void abrirTelaDadosPessoais(int idAluno) {
+    	if (framePai instanceof TelaPrincipal) {
+    	    TelaPrincipal telaPrincipal = (TelaPrincipal) framePai;
+
+    	    DadosPessoais telaEdicao = new DadosPessoais(telaPrincipal, idAluno);
+    	    telaPrincipal.trocarPainelConteudo(telaPrincipal.getPnlConteudoAluno(), telaEdicao);
+    	    telaPrincipal.ativarBotaoMenuDadosPessoais();
+    	} else {
+            JOptionPane.showMessageDialog(this,
+                "Aluno ID " + idAluno + " selecionado. A tela de edição seria aberta aqui.",
                 "Teste de Clique", JOptionPane.INFORMATION_MESSAGE);
         }
     }
-    
- // Na classe ListarAlunos
-    private String[] extrairNomeCursoECampus(String itemSelecionado) {
-        String nomeCurso;
-        String campus;
-        int indexParenteses = itemSelecionado.lastIndexOf(" (");
-        int indexFechamento = itemSelecionado.lastIndexOf(")");
-        
-        if (indexParenteses != -1 && indexFechamento != -1 && indexFechamento > indexParenteses) {
-            nomeCurso = itemSelecionado.substring(0, indexParenteses).trim();
-            campus = itemSelecionado.substring(indexParenteses + 2, indexFechamento).trim();
-        } else {
-            // Caso não esteja no formato esperado, retorna null para o campus
-            nomeCurso = itemSelecionado.trim();
-            campus = null; 
-        }
-        return new String[]{nomeCurso, campus};
-    }
-    
 
-    private void carregarTabelaAlunosPorCursoECampusEFiltro(String nomeCurso, String campus, String filtroTexto) {
-        if (campus == null) {
-            JOptionPane.showMessageDialog(this, "Erro: Não foi possível identificar o Campus selecionado.", "Erro de Filtro", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        try {
-            AlunoDAO dao = new AlunoDAO();
-            
-            // Chamada AGORA ESTÁ CORRETA com os 3 parâmetros
-            List<AlunoView> listaAlunos = dao.listarPorCursoECampusEFiltro(nomeCurso, campus, filtroTexto); 
-            
-            tblListaAlunos.setModel(new AlunoTableModelSimplificado(listaAlunos));
-            configurarVisualTabela();
-            
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, 
-                "Erro ao filtrar alunos por curso, campus e texto: " + e.getMessage(), 
-                "Erro de Conexão", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
+    // ============================================================
+    // MÉTODO MAIN PARA TESTE INDEPENDENTE
+    // ============================================================
+
+    public static void main(String[] args) {
+        EventQueue.invokeLater(() -> {
+            JFrame frameTeste = new JFrame("Teste Listar Alunos");
+            frameTeste.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frameTeste.setBounds(100, 100, 900, 600);
+            frameTeste.setContentPane(new ListarAlunos());
+            frameTeste.setVisible(true);
+        });
     }
 }
