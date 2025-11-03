@@ -2,6 +2,7 @@ package br.edu.fatecgru.mvcaluno.view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Toolkit;
@@ -16,6 +17,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JTabbedPane;
@@ -143,11 +145,31 @@ public class TelaPrincipal extends JFrame {
         mntmNewMenuItem_8 = new JMenuItem("Consultar");
         mnNewMenu_1.add(mntmNewMenuItem_8);
         
-       // Menu "Ajuda" com item Sobre
+        // Menu "Ajuda" com item Sobre
         mnNewMenu_2 = new JMenu("Ajuda");
         menuBar.add(mnNewMenu_2);
         mntmNewMenuItem_9 = new JMenuItem("Sobre");
         mnNewMenu_2.add(mntmNewMenuItem_9);
+
+        // =============================================
+        // CONEXÃO DOS MENUS (ADICIONE ESTE BLOCO)
+        // =============================================
+
+        // Listeners para o menu "Aluno"
+        mntmNewMenuItem.addActionListener(e -> salvarAluno());
+        mntmNewMenuItem_1.addActionListener(e -> alterarAluno());
+        mntmNewMenuItem_2.addActionListener(e -> consultarAluno());
+        mntmNewMenuItem_3.addActionListener(e -> excluirAluno());
+        mntmNewMenuItem_4.addActionListener(e -> System.exit(0));
+
+        // Listeners para o menu "Notas e Faltas"
+        mntmNewMenuItem_5.addActionListener(e -> salvarNotasFaltas());
+        mntmNewMenuItem_7.addActionListener(e -> alterarNotasFaltas());
+        mntmNewMenuItem_6.addActionListener(e -> excluirNotasFaltas());
+        mntmNewMenuItem_8.addActionListener(e -> consultarNotasFaltas());
+
+        // Listener para o menu "Ajuda"
+        mntmNewMenuItem_9.addActionListener(e -> mostrarSobre());
 
         // Painel principal que contém o tabbedPane
         contentPane = new JPanel();
@@ -337,10 +359,97 @@ public class TelaPrincipal extends JFrame {
             pnlConteudoFaculdade.revalidate();
             pnlConteudoFaculdade.repaint();
         });
-        
-        
     }
+
+    // =============================================
+    // MÉTODOS PÚBLICOS PARA O MENU
+    // =============================================
+
+    /**
+     * Método público para salvar aluno - chamado pelo menu
+     */
+    public void salvarAluno() {
+        System.out.println("Menu Salvar acionado");
+        JOptionPane.showMessageDialog(this, "Funcionalidade Salvar Aluno");
+    }
+
+    /**
+     * Método público para alterar aluno - chamado pelo menu  
+     */
+    public void alterarAluno() {
+        System.out.println("Menu Alterar acionado");
+        JOptionPane.showMessageDialog(this, "Funcionalidade Alterar Aluno");
+    }
+
+   
+    
+    /**
+     * Método público para excluir aluno - chamado pelo menu
+     */
+    public void excluirAluno() {
+        System.out.println("Menu Excluir acionado");
         
+        // Verifica se há uma lista de alunos aberta
+        if (pnlConteudoAluno.getComponentCount() > 0) {
+            Component primeiroComponente = pnlConteudoAluno.getComponent(0);
+            if (primeiroComponente instanceof ListarAlunos) {
+                ListarAlunos lista = (ListarAlunos) primeiroComponente;
+                lista.excluirAlunoSelecionado();
+                return;
+            }
+        }
+        
+        JOptionPane.showMessageDialog(this, 
+            "Abra a lista de alunos primeiro para excluir um aluno", 
+            "Aviso", JOptionPane.WARNING_MESSAGE);
+    }
+    
+
+    /**
+     * Método público para consultar aluno - chamado pelo menu
+     */
+    public void consultarAluno() {
+        System.out.println("Menu Consultar acionado");
+        JOptionPane.showMessageDialog(this, "Funcionalidade Consultar Aluno");
+    }
+
+    /**
+     * Método público para salvar notas e faltas - chamado pelo menu
+     */
+    public void salvarNotasFaltas() {
+        System.out.println("Menu Salvar Notas e Faltas acionado");
+        JOptionPane.showMessageDialog(this, "Funcionalidade Salvar Notas e Faltas");
+    }
+
+    /**
+     * Método público para alterar notas e faltas - chamado pelo menu
+     */
+    public void alterarNotasFaltas() {
+        System.out.println("Menu Alterar Notas e Faltas acionado");
+        JOptionPane.showMessageDialog(this, "Funcionalidade Alterar Notas e Faltas");
+    }
+
+    /**
+     * Método público para excluir notas e faltas - chamado pelo menu
+     */
+    public void excluirNotasFaltas() {
+        System.out.println("Menu Excluir Notas e Faltas acionado");
+        JOptionPane.showMessageDialog(this, "Funcionalidade Excluir Notas e Faltas");
+    }
+
+    /**
+     * Método público para consultar notas e faltas - chamado pelo menu
+     */
+    public void consultarNotasFaltas() {
+        System.out.println("Menu Consultar Notas e Faltas acionado");
+        JOptionPane.showMessageDialog(this, "Funcionalidade Consultar Notas e Faltas");
+    }
+
+    private void mostrarSobre() {
+        JOptionPane.showMessageDialog(this, 
+            "Sistema MVC Aluno\nVersão 1.0", 
+            "Sobre", JOptionPane.INFORMATION_MESSAGE);
+    }
 
     /**
      * Ativa o botão clicado e desativa os outros, mudando a cor de fundo
