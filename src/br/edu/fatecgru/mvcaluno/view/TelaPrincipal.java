@@ -534,7 +534,7 @@ public class TelaPrincipal extends JFrame {
             "\n\nDesenvolvedores:" +
             "\n\b Andrea Moraes (RA 1670482412033)      " +
             "\n\b Ayla Rossi (RA 1670482412034)       " +
-            "\n\b Angelo Christofero      " +
+            "\n\b Angelo Christofero (RA 1670482412029      " +
             "\n\b Fernando Domingos (RA 1670482412014)      " +
             "\n\b Ilie Martins (RA 1670482322006)      " +
             "\n\b Lucas Barros (RA 1670482412001)      " +
