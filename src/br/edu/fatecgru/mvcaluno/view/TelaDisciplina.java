@@ -360,15 +360,29 @@ public class TelaDisciplina extends JPanel {
         panelEdicao.add(cmbEditarSemestre);
 
         btnSalvarEdicao = new JButton("Salvar");
-        btnSalvarEdicao.setBounds(450, 26, 80, 26);
+        btnSalvarEdicao.setFont(new Font("Tahoma", Font.BOLD, 11));
+        btnSalvarEdicao.setIcon(new ImageIcon(TelaCurso.class.getResource("/Resources/imagens/salve-.png")));
+        btnSalvarEdicao.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent arg0) {
+        	}
+        });
+        btnSalvarEdicao.setBounds(450, 17, 117, 41);
         panelEdicao.add(btnSalvarEdicao);
 
         btnCancelarEdicao = new JButton("Cancelar");
-        btnCancelarEdicao.setBounds(540, 26, 80, 26);
+        btnCancelarEdicao.setFont(new Font("Tahoma", Font.BOLD, 11));
+        btnCancelarEdicao.setIcon(new ImageIcon(TelaCurso.class.getResource("/Resources/imagens/cancelarAction.png")));
+        btnCancelarEdicao.setBounds(571, 17, 122, 41);
         panelEdicao.add(btnCancelarEdicao);
 
         btnExcluirEdicao = new JButton("Excluir");
-        btnExcluirEdicao.setBounds(630, 26, 80, 26);
+        btnExcluirEdicao.setFont(new Font("Tahoma", Font.BOLD, 11));
+        btnExcluirEdicao.setIcon(new ImageIcon(TelaCurso.class.getResource("/Resources/imagens/excluirCurso.png")));
+        btnExcluirEdicao.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent arg0) {
+        	}
+        });
+        btnExcluirEdicao.setBounds(699, 17, 117, 41);
         panelEdicao.add(btnExcluirEdicao);
 
         btnCancelarEdicao.addActionListener(e -> panelEdicao.setVisible(false));
