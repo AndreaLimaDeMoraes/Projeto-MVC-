@@ -54,11 +54,6 @@ public class MatriculaDisciplinaDAO {
             }
         }
 
-        // Se o aluno já está no semestre 3, não cria mais matrículas
-        if (semestreAtual >= 6) {
-            return -1; // ou 0 para indicar "fim do curso"
-        }
-
         return semestreAtual + 1; //retorna o próximo semestre do curso
     }
 
@@ -400,7 +395,7 @@ public class MatriculaDisciplinaDAO {
 	            ps.setInt(1, idMatricula);
 	            ps.setString(2, semestreAtualAluno);
 	            ps.executeUpdate();
-	        }
+	        }  
 	
 	        // Calcula próximo semestre letivo (ex: "2025/1" → "2025/2")
 	        String proximoSemestreLetivo = calcularProximoSemestreLetivo(semestreAtualAluno);
@@ -422,6 +417,19 @@ public class MatriculaDisciplinaDAO {
 	
 	        // Determina diciplinas para matrícula (AVANÇA E REPETE PENDÊNCIAS)
 	        List<Integer> disciplinasParaMatricular = new ArrayList<>();
+	        
+		     // ===============================================
+		     // REINSCRIÇÃO AUTOMÁTICA EM DISCIPLINAS REPROVADAS
+		     // ===============================================
+		     for (Integer idDisc : idsReprovadas) {
+		         if (!idsAprovadas.contains(idDisc) &&
+		             !disciplinasParaMatricular.contains(idDisc) &&
+		             !jaMatriculado(idMatricula, idDisc, proximoSemestreLetivo)) {
+	
+		             disciplinasParaMatricular.add(idDisc);
+		             System.out.println("ADICIONANDO DISCIPLINA REPROVADA PARA REPETIÇÃO: ID Disciplina " + idDisc);
+		         }
+		     }
 	
 	        // Se proximoSemestreCurso é 3, o semestre alvo para busca de pendências é 3, 
 	        // o que significa que devemos verificar os semestres 1 e 2.
