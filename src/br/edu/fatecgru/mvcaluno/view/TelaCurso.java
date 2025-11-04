@@ -636,8 +636,8 @@ public class TelaCurso extends JPanel {
                 int duracao;
                 try {
                     duracao = Integer.parseInt(txtDuracao.getText().trim());
-                    if (duracao < 2) {
-                        JOptionPane.showMessageDialog(this, "Duração deve ser maior que um semestre!");
+                    if (duracao < 2 || duracao > 10) {
+                        JOptionPane.showMessageDialog(this, "Duração deve estar entre 2 e 10 semestres. Valor informado: " + duracao);
                         return;
                     }
                 } catch (NumberFormatException e) {
@@ -706,8 +706,8 @@ public class TelaCurso extends JPanel {
         
         try {
             int duracao = Integer.parseInt(txtDuracao.getText().trim());
-            if (duracao < 2) {
-                JOptionPane.showMessageDialog(this, "Duração deve ser maior que um!", "Validação", JOptionPane.WARNING_MESSAGE);
+            if (duracao < 2 || duracao > 10) {
+                JOptionPane.showMessageDialog(this, "Duração deve estar entre 2 e 10 semestres. Valor informado: " + duracao, "Validação", JOptionPane.WARNING_MESSAGE);
                 txtDuracao.requestFocus();
                 return false;
             }

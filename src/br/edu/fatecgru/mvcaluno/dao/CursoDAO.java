@@ -20,13 +20,13 @@ public class CursoDAO {
     public void salvar(Curso curso) throws Exception {
         if (curso == null)
             throw new Exception("O valor passado não pode ser nulo");
-
+        
         Connection conn = null; // Conexão local
         PreparedStatement ps = null;
         
         String SQL = "INSERT INTO curso (nome, campus, periodo, duracao, ativo) "
                    + "VALUES (?, ?, ?, ?, ?)";
-
+        
         try {
             conn = ConnectionFactory.getConnection(); // Nova conexão
             ps = conn.prepareStatement(SQL);
