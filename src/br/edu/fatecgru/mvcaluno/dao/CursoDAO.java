@@ -135,13 +135,13 @@ public class CursoDAO {
 
     // Remover curso
     public void excluir(int idCurso) throws Exception {
-        Connection conn = null; // Conexão local
+        Connection conn = null;
         PreparedStatement ps = null;
 
         String SQL = "UPDATE curso SET ativo = false WHERE idCurso=?";
 
         try {
-            conn = ConnectionFactory.getConnection(); // Nova conexão
+            conn = ConnectionFactory.getConnection();
             ps = conn.prepareStatement(SQL);
             ps.setInt(1, idCurso);
             ps.executeUpdate();
@@ -155,7 +155,7 @@ public class CursoDAO {
     // Lista cursos por filtro
     public List<Curso> listarPorFiltro(String filtro) throws Exception {
         List<Curso> lista = new ArrayList<>();
-        Connection conn = null; // Conexão local
+        Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
 
@@ -163,7 +163,7 @@ public class CursoDAO {
         String SQL = "SELECT * FROM curso WHERE ativo = true AND (nome LIKE ? OR campus LIKE ?) ORDER BY nome";
 
         try {
-            conn = ConnectionFactory.getConnection(); // Nova conexão
+            conn = ConnectionFactory.getConnection();
             ps = conn.prepareStatement(SQL);
             ps.setString(1, filtroSQL);
             ps.setString(2, filtroSQL);
@@ -190,14 +190,14 @@ public class CursoDAO {
 
     // Verifica se curso já existe
     public boolean existeCurso(String nome) throws Exception {
-        Connection conn = null; // Conexão local
+        Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
 
         String SQL = "SELECT COUNT(*) FROM curso WHERE nome = ? AND ativo = true";
 
         try {
-            conn = ConnectionFactory.getConnection(); // Nova conexão
+            conn = ConnectionFactory.getConnection();
             ps = conn.prepareStatement(SQL);
             ps.setString(1, nome);
             rs = ps.executeQuery();

@@ -225,10 +225,7 @@ public class MatriculaDisciplinaDAO {
         }
         return detalhes;
     }
-    // ===========================================
-    // MÉTODOS NOVOS VIEW
-    // ===========================================
-
+    
     // Verifica se existem disciplinas com status 'Cursando' para a matrícula informada
     public boolean verificarPendencias(int idMatricula) throws Exception {
         String SQL = "SELECT COUNT(*) FROM matriculaDisciplina WHERE idMatricula=? AND status='Cursando' AND ativo=TRUE";
@@ -245,11 +242,9 @@ public class MatriculaDisciplinaDAO {
     // Lista as disciplinas de uma matrícula por status (Cursando, Aprovado, Reprovado)
     public List<MatriculaDisciplina> listarDisciplinasPorStatus(int idMatricula, String status) throws Exception {
         List<MatriculaDisciplina> lista = new ArrayList<>();
-        
-        // <-- ALTERAÇÃO: Remover filtro ativo para 'Aprovado' e 'Reprovado' (histórico/status final)
-        String sql = "SELECT * FROM matriculaDisciplina WHERE idMatricula = ? AND status = ?";
+                String sql = "SELECT * FROM matriculaDisciplina WHERE idMatricula = ? AND status = ?";
         if (!"Aprovado".equals(status) && !"Reprovado".equals(status)) {
-            sql += " AND ativo = TRUE";  // Manter filtro ativo apenas para 'Cursando'
+            sql += " AND ativo = TRUE";
         }
         
         try (Connection conn = ConnectionFactory.getConnection(); 
@@ -350,7 +345,7 @@ public class MatriculaDisciplinaDAO {
 
     /** Verifica se o aluno concluiu todas as disciplinas obrigatórias do curso. */
     public boolean alunoConcluiuCurso(int idMatricula, int idCurso) throws Exception {
-    	// 1. Contar total de disciplinas obrigatórias do curso
+    	//Conta total de disciplinas obrigatórias do curso
     	String sqlTotal = "SELECT COUNT(*) FROM disciplina WHERE idCurso = ? AND ativo = TRUE";
     	int totalDisciplinas = 0;
     	try (Connection conn = ConnectionFactory.getConnection();
@@ -364,7 +359,7 @@ public class MatriculaDisciplinaDAO {
     	}
 
 
-    	// 2. Contar disciplinas aprovadas pelo aluno (status 'Aprovado', independente de ativo)
+    	//Conta disciplinas aprovadas pelo aluno (status 'Aprovado', independente de ativo)
     	String sqlAprovadas = "SELECT COUNT(DISTINCT md.idDisciplina) FROM matriculaDisciplina md " +
                      "JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +
                      "WHERE md.idMatricula = ? AND d.idCurso = ? AND md.status = 'Aprovado'";
@@ -379,7 +374,7 @@ public class MatriculaDisciplinaDAO {
     			}
     		}
     	}
-    	// 3. Se total de aprovadas == total de disciplinas do curso, concluiu
+    	// Se total de aprovadas == total de disciplinas do curso, concluiu
     	return totalAprovadas == totalDisciplinas;
     }
 
@@ -390,7 +385,7 @@ public class MatriculaDisciplinaDAO {
 	    Connection conn = null;
 	
 	    try {
-	        // 0️ VERIFICAÇÃO DE PENDÊNCIAS
+	        // VERIFICAÇÃO DE PENDÊNCIAS
 	        if (verificarPendenciasNoSemestre(idMatricula, semestreAtualAluno)) {
 	            throw new Exception("Não é possível finalizar o semestre. Existem disciplinas pendentes ('Cursando') sem nota ou falta atribuídas.");
 	        }
@@ -398,7 +393,7 @@ public class MatriculaDisciplinaDAO {
 	        conn = ConnectionFactory.getConnection();
 	        conn.setAutoCommit(false); // Inicia a transação
 	
-	        // 1️ Inativar (ativo = FALSE) as disciplinas já avaliadas (Aprovado/Reprovado) do semestre encerrado
+	        // Inativa (ativo = FALSE) as disciplinas já avaliadas (Aprovado/Reprovado) do semestre encerrado
 	        String sqlUpdateStatus = "UPDATE matriculaDisciplina SET ativo = FALSE " +
 	                                 "WHERE idMatricula = ? AND semestreCursado = ? AND ativo = TRUE AND status IN ('Aprovado', 'Reprovado')";
 	        try (PreparedStatement ps = conn.prepareStatement(sqlUpdateStatus)) {
@@ -407,25 +402,25 @@ public class MatriculaDisciplinaDAO {
 	            ps.executeUpdate();
 	        }
 	
-	        // 2️ Calcular próximo semestre letivo (ex: "2025/1" → "2025/2")
+	        // Calcula próximo semestre letivo (ex: "2025/1" → "2025/2")
 	        String proximoSemestreLetivo = calcularProximoSemestreLetivo(semestreAtualAluno);
 	
-	        // 3️ Buscar disciplinas reprovadas (que precisam ser repetidas)
+	        // Busca disciplinas reprovadas (que precisam ser repetidas)
 	        List<MatriculaDisciplina> reprovadas = listarDisciplinasPorStatus(idMatricula, "Reprovado");
 	        Set<Integer> idsReprovadas = reprovadas.stream()
 	                .map(MatriculaDisciplina::getIdDisciplina)
 	                .collect(Collectors.toSet());
 	
-	        // 4️ Buscar disciplinas aprovadas (para evitar matrícula duplicada)
+	        // Busca disciplinas aprovadas (para evitar matrícula duplicada)
 	        List<MatriculaDisciplina> aprovadas = listarDisciplinasPorStatus(idMatricula, "Aprovado");
 	        Set<Integer> idsAprovadas = aprovadas.stream()
 	                .map(MatriculaDisciplina::getIdDisciplina)
 	                .collect(Collectors.toSet());
 	
-	        // 5️ Determinar qual é o próximo semestre da grade curricular do curso
+	        // Determina qual é o próximo semestre da grade curricular do curso
 	        int proximoSemestreCurso = calcularProximoSemestreCurso(idMatricula);
 	
-	        // 6️ Determinar disciplinas para matrícula (AVANÇA E REPETE PENDÊNCIAS)
+	        // Determina diciplinas para matrícula (AVANÇA E REPETE PENDÊNCIAS)
 	        List<Integer> disciplinasParaMatricular = new ArrayList<>();
 	
 	        // Se proximoSemestreCurso é 3, o semestre alvo para busca de pendências é 3, 
@@ -435,7 +430,7 @@ public class MatriculaDisciplinaDAO {
 	
 	
 	        // ===============================================
-	        // 6.1: Adiciona TODAS as disciplinas pendentes de semestres anteriores (REPETIÇÃO/PENDÊNCIAS)
+	        // Adiciona TODAS as disciplinas pendentes de semestres anteriores (REPETIÇÃO/PENDÊNCIAS)
 	        // ===============================================
 	
 	        // Busca todas as IDs de disciplinas obrigatórias dos semestres anteriores ao alvo.
@@ -454,7 +449,7 @@ public class MatriculaDisciplinaDAO {
 	
 	
 	        // ===============================================
-	        // 6.2: Adiciona as NOVAS disciplinas da grade (AVANÇO)
+	        // Adiciona as NOVAS disciplinas da grade (AVANÇO)
 	        // ===============================================
 	        if (proximoSemestreCurso != -1) {
 	            List<Integer> disciplinasProxSemestre =
@@ -462,9 +457,9 @@ public class MatriculaDisciplinaDAO {
 	
 	            for (Integer idDisc : disciplinasProxSemestre) {
 	                // Matrícula na disciplina nova, desde que não tenha sido aprovada
-	                // E (principalmente) não tenha sido adicionada como Pendência no Passo 6.1 (caso seja uma reprovação do último semestre)
+	                // E (principalmente) não tenha sido adicionada como Pendência (caso seja uma reprovação do último semestre)
 	                if (!idsAprovadas.contains(idDisc) &&
-	                    !disciplinasParaMatricular.contains(idDisc) && // <- Verificação crucial
+	                    !disciplinasParaMatricular.contains(idDisc) &&
 	                    !jaMatriculado(idMatricula, idDisc, proximoSemestreLetivo)) {
 	                    
 	                    disciplinasParaMatricular.add(idDisc);
@@ -472,7 +467,7 @@ public class MatriculaDisciplinaDAO {
 	            }
 	        }
 	
-	        // <-- LOG TEMPORÁRIO: Verificar valores antes da condição
+	        //LOG para verifica valores antes da condição
 	        System.out.println("proximoSemestreCurso: " + proximoSemestreCurso);
 	        System.out.println("disciplinasParaMatricular.size(): " + disciplinasParaMatricular.size());
 	
@@ -491,7 +486,7 @@ public class MatriculaDisciplinaDAO {
 	       
 	        }
 	
-	        // 7️ Matricular as disciplinas selecionadas
+	        // Matricula as disciplinas selecionadas
 	        if (!disciplinasParaMatricular.isEmpty()) {
 	            String sqlInsert = "INSERT INTO matriculaDisciplina " +
 	                    "(idMatricula, idDisciplina, semestreCursado, faltas, nota, status, ativo) " +
@@ -506,7 +501,7 @@ public class MatriculaDisciplinaDAO {
 	                ps.executeBatch(); // Executa todas as inserções
 	            }
 	
-	            // Retornar nomes das disciplinas matriculadas para exibir na interface
+	            // Retorna nomes das disciplinas matriculadas para exibir na interface
 	            String sqlNomes = "SELECT nome FROM disciplina WHERE idDisciplina IN (" +
 	                    disciplinasParaMatricular.stream().map(String::valueOf).collect(Collectors.joining(",")) + ")";
 	            try (PreparedStatement ps = conn.prepareStatement(sqlNomes);
@@ -591,8 +586,8 @@ public class MatriculaDisciplinaDAO {
     }
 
     /** Conta quantas disciplinas dos semestres anteriores (1 até N-1) o aluno JÁ APROVOU. */
-    private int totalAprovadasDisciplinasAnteriores(int idMatricula, int idCurso, int semestreAlvo) throws Exception { // MUDADO PARA throws Exception
-        int count = 0;
+    private int totalAprovadasDisciplinasAnteriores(int idMatricula, int idCurso, int semestreAlvo) throws Exception {
+    	int count = 0;
         String sql = "SELECT COUNT(DISTINCT d.idDisciplina) " +
                      "FROM matriculaDisciplina md " +
                      "JOIN disciplina d ON md.idDisciplina = d.idDisciplina " +

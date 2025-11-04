@@ -22,7 +22,7 @@ public class DisciplinaDAO {
         if (disciplina == null)
             throw new Exception("O valor passado não pode ser nulo");
 
-        Connection conn = null; // Conexão local
+        Connection conn = null;
         PreparedStatement ps = null;
         
         String SQL = "INSERT INTO disciplina (idCurso, nome, semestre, ativo) VALUES (?, ?, ?, ?)";
@@ -108,9 +108,6 @@ public class DisciplinaDAO {
         Connection conn = null;
         PreparedStatement ps = null;
 
-        //  excluir de vez, use DELETE
-        // String SQL = "DELETE FROM disciplina WHERE idDisciplina = ?";
-
         // apenas desativar (para manter histórico)
         String SQL = "UPDATE disciplina SET ativo = false WHERE idDisciplina = ?";
 
@@ -149,7 +146,7 @@ public class DisciplinaDAO {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            throw e; // opcional — deixa o método propagar o erro pra quem chamou
+            throw e;
         }
 
         return disciplina;
@@ -167,7 +164,7 @@ public class DisciplinaDAO {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            throw e; // opcional: propaga o erro para o método que chamou
+            throw e;
         }
     }
 
