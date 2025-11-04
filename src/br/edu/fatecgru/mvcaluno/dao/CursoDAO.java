@@ -132,23 +132,38 @@ public class CursoDAO {
             ConnectionFactory.closeConnection(conn, ps);
         }
     }
-
+    
     // Remover curso
     public void excluir(int idCurso) throws Exception {
         Connection conn = null;
         PreparedStatement ps = null;
-
-        String SQL = "UPDATE curso SET ativo = false WHERE idCurso=?";
+        ResultSet rs = null;
 
         try {
             conn = ConnectionFactory.getConnection();
+
+            // 1️⃣ Verifica se há matrículas associadas ao curso
+            String sqlVerificaMatriculas = "SELECT COUNT(*) FROM matricula WHERE idCurso = ?";
+            ps = conn.prepareStatement(sqlVerificaMatriculas);
+            ps.setInt(1, idCurso);
+            rs = ps.executeQuery();
+
+            if (rs.next() && rs.getInt(1) > 0) {
+                throw new Exception("Não é possível excluir o curso: existem matrículas associadas a ele.");
+            }
+
+            ConnectionFactory.closeConnection(null, ps, rs); // fecha antes de reutilizar
+
+            // Se não há matrículas, realiza a exclusão lógica
+            String SQL = "UPDATE curso SET ativo = false WHERE idCurso = ?";
             ps = conn.prepareStatement(SQL);
             ps.setInt(1, idCurso);
             ps.executeUpdate();
+
         } catch (SQLException e) {
             throw new Exception("Erro ao excluir curso: " + e.getMessage());
         } finally {
-            ConnectionFactory.closeConnection(conn, ps);
+            ConnectionFactory.closeConnection(conn, ps, rs);
         }
     }
 
