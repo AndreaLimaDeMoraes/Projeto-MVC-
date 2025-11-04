@@ -285,7 +285,7 @@ public class DadosPessoais extends JPanel {
      */
     private void carregarCursos() {
         
-        String sql = "SELECT idCurso, nome FROM curso ORDER BY nome";
+        String sql = "SELECT idCurso, nome FROM curso WHERE ativo = true ORDER BY nome";
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
