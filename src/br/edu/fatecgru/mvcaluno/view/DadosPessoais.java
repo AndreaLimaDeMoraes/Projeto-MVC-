@@ -353,7 +353,7 @@ public class DadosPessoais extends JPanel {
 
         String sqlInsertAluno = "INSERT INTO aluno (ra, nome, dataNascimento, cpf, email, endereco, municipio, uf, celular, ativo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         String sqlInsertMatricula = "INSERT INTO matricula (idAluno, idCurso, ativo) VALUES (?, ?, 1)";
-        String sqlSelectDisciplinas = "SELECT idDisciplina FROM disciplina WHERE idCurso = ? AND semestre = ?"; 
+        String sqlSelectDisciplinas = "SELECT idDisciplina FROM disciplina WHERE idCurso = ? AND semestre = ? AND ativo = TRUE"; 
         String sqlInsertMatriculaDisc = "INSERT INTO matriculaDisciplina (idMatricula, idDisciplina, semestreCursado, faltas, nota) VALUES (?, ?, ?, ?, ?)";
         
 
