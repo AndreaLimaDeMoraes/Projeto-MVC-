@@ -670,8 +670,4 @@ public class NotasFaltas extends JPanel {
         
         JOptionPane.showMessageDialog(this, info, "Consulta", JOptionPane.INFORMATION_MESSAGE);
     }
-    
-
-    
-    
 }

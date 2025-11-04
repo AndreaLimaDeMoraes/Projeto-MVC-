@@ -24,7 +24,7 @@ public class MatriculaDisciplinaDAO {
     // CÁLCULOS DE SEMESTRE
     // ===========================================
     
-    //calcula o próximo semestre letivo baseado no semestre atual
+    //calcula o próximo semestre letivo baseado no semestre atual do aluno
     public String calcularProximoSemestreLetivo(String semestreAtual) {
         if (semestreAtual == null || !semestreAtual.contains("/")) {
             return LocalDate.now().getYear() + "/2";

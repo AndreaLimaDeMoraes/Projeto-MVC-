@@ -528,8 +528,18 @@ public class TelaPrincipal extends JFrame {
 
     private void mostrarSobre() {
         JOptionPane.showMessageDialog(this, 
-            "Sistema MVC Aluno\nVersão 1.0", 
-            "Sobre", JOptionPane.INFORMATION_MESSAGE);
+            "\n\nO Sistema de Cadastro de Alunos é uma aplicação "
+            + "\ndesenvolvida em Java com banco de dados MySQL,"
+            + "\nvoltada para o gerenciamento de informações acadêmicas." +
+            "\n\nDesenvolvedores:" +
+            "\n\b Andrea Moraes (RA 1670482412033)      " +
+            "\n\b Ayla Rossi (RA 1670482412034)       " +
+            "\n\b Angelo Christofero      " +
+            "\n\b Fernando Domingos (RA 1670482412014)      " +
+            "\n\b Ilie Martins (RA 1670482322006)      " +
+            "\n\b Lucas Barros (RA 1670482412001)      " +
+            "\n\nFatec Guarulhos - 11/2025\n\n"
+            ,"Sobre", JOptionPane.INFORMATION_MESSAGE);
     }
 
     /**
