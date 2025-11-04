@@ -1,6 +1,5 @@
 package br.edu.fatecgru.mvcaluno.view;
 
-// Imports do seu esqueleto
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -13,10 +12,9 @@ import javax.swing.border.EmptyBorder;
 
 import br.edu.fatecgru.mvcaluno.dao.AlunoDAO;
 import br.edu.fatecgru.mvcaluno.model.Aluno;
-// --- IMPORTS ADICIONADOS DO NOVO FORMULÁRIO ---
 import br.edu.fatecgru.mvcaluno.model.Curso;
 import br.edu.fatecgru.mvcaluno.model.Matricula;
-import br.edu.fatecgru.mvcaluno.util.ConnectionFactory; // Sua classe de conexão
+import br.edu.fatecgru.mvcaluno.util.ConnectionFactory;
 
 import javax.swing.*;
 import javax.swing.text.MaskFormatter;
@@ -29,7 +27,7 @@ import java.sql.Statement;
 import java.text.ParseException;
 import java.util.ArrayList;
 
-// --- IMPORTS ADICIONADOS PARA CORREÇÃO DA DATA ---
+// --- IMPORTS PARA CORREÇÃO DA DATA ---
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -38,21 +36,21 @@ public class DadosPessoais extends JPanel {
 
     private static final long serialVersionUID = 1L;
     
-    // --- Variáveis de Navegação (do seu esqueleto) ---
+    // --- Variáveis de Navegação ---
     private JFrame framePai;
     private int idAluno;
 
-    // --- COMPONENTES DO FORMULÁRIO (Corrigidos com RA) ---
+    // --- COMPONENTES DO FORMULÁRIO ---
     private JLabel lblRa, lblNome, lblDataNasc, lblCpf, lblEmail, lblEndereco, lblMunicipio, lblUf, lblCelular, lblCurso;
     private JTextField txtRa, txtNome, txtEmail, txtEndereco, txtMunicipio;
     private JFormattedTextField txtDataNasc, txtCpf, txtCelular;
     private JComboBox<String> jcbUf;
     private JComboBox<Curso> jcbCursos;
-    private JButton btnRegistrar; // Botão de Registrar (Novo)
-    private JButton btnSalvar;    // Botão de Salvar (Edição)
+    private JButton btnRegistrar; // Botão de Registrar
+    private JButton btnSalvar;    // Botão de Salvar
 
     // ===================================
-      // Construtor ---
+    // Construtor 
     // ===================================
     public DadosPessoais(JFrame framePai, int idAluno) {
         this.framePai = framePai;
@@ -71,18 +69,18 @@ public class DadosPessoais extends JPanel {
     // LAYOUT E COMPONENTES
     // ===================================
     private void setupLayout() {
-        // 1. Configuração do Painel Principal
+        // Configuração do Painel Principal
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(15, 15, 15, 15)); 
         
-        // 2. Título
+        // Título
         String titulo = (idAluno > 0) ? "EM EDIÇÃO: Dados Pessoais do Aluno ID: " + idAluno : "CADASTRAR NOVO ALUNO";
         JLabel lblTitulo = new JLabel(titulo);
         lblTitulo.setFont(new Font("Tahoma", Font.BOLD, 20));
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         add(lblTitulo, BorderLayout.NORTH);
         
-        // 3. Painel de Conteúdo
+        // Painel de Conteúdo
         JPanel pnlConteudo = new JPanel();
         pnlConteudo.setBackground(new Color(230, 230, 230));
         
@@ -102,7 +100,7 @@ public class DadosPessoais extends JPanel {
         txtRa.setEditable(false); // o usuário não pode editar, RA é gerado automaticamente
         	
         // --- Gerar RA automático se for novo aluno ---
-        if (idAluno == 0) { // novo aluno
+        if (idAluno == 0) {
             try {
                 AlunoDAO alunoDAO = new AlunoDAO();
                 txtRa.setText(alunoDAO.gerarProximoRA());
@@ -220,7 +218,7 @@ public class DadosPessoais extends JPanel {
         scrollPane.setBorder(BorderFactory.createEmptyBorder()); 
         add(scrollPane, BorderLayout.CENTER);
 
-        // 4. Painel de Botões com Excluir à esquerda
+        // Painel de Botões com Excluir à esquerda
         JPanel pnlBotoes = new JPanel(new BorderLayout());
 
         // Painel Esquerdo -> Excluir
@@ -324,7 +322,7 @@ public class DadosPessoais extends JPanel {
      * Método de Ação do Botão "Registrar Aluno" (idAluno == 0).
      */
     private void registrarAluno(ActionEvent e) {
-        // --- 1. Obter dados da interface ---
+        // --- Obter dados da interface ---
         String ra = txtRa.getText(); 
         String nome = txtNome.getText();
         String dataNascString = txtDataNasc.getText(); 
@@ -346,7 +344,7 @@ public class DadosPessoais extends JPanel {
         }
 
         int idCurso = cursoSelecionado.getIdCurso();
-        int semestre = 1; // Assumindo que todo novo aluno entra no 1º semestre
+        int semestre = 1; // todo novo aluno entra no 1º semestre
 
         // --- 2. Lógica de Transação no Banco de Dados ---
         Connection conn = null;
@@ -396,7 +394,7 @@ public class DadosPessoais extends JPanel {
 
             // --- ETAPA B: Inserir na tabela 'matricula' ---
             
-            // LÓGICA PARA PEGAR O SEMESTRE CORRETO (ex: "2025/1")
+            // LÓGICA PARA PEGAR O SEMESTRE CORRETO
             String anoAtual = java.time.Year.now().toString();
             String semestreInicioTexto = null;
 			try {
@@ -419,7 +417,7 @@ public class DadosPessoais extends JPanel {
             // --- ETAPA C: Buscar disciplinas do 1º semestre do curso ---
             stmtDisciplinas = conn.prepareStatement(sqlSelectDisciplinas);
             stmtDisciplinas.setInt(1, idCurso);
-            stmtDisciplinas.setInt(2, semestre); // Aqui está correto usar o INT 1
+            stmtDisciplinas.setInt(2, semestre);
             
             rsDisciplinas = stmtDisciplinas.executeQuery();
             
@@ -436,9 +434,9 @@ public class DadosPessoais extends JPanel {
             for (int idDisciplina : idsDisciplinas) {
                 stmtMatriculaDisc.setInt(1, idMatriculaGerada);
                 stmtMatriculaDisc.setInt(2, idDisciplina);
-                stmtMatriculaDisc.setString(3, semestreInicioTexto); // <-- semestreCursado
-                stmtMatriculaDisc.setInt(4, 0); // <-- faltas (inicia com 0)
-                stmtMatriculaDisc.setFloat(5, 0.0f); // <-- nota (inicia com 0.0)
+                stmtMatriculaDisc.setString(3, semestreInicioTexto); 
+                stmtMatriculaDisc.setInt(4, 0); 
+                stmtMatriculaDisc.setFloat(5, 0.0f);
                 stmtMatriculaDisc.addBatch();              
             }
             stmtMatriculaDisc.executeBatch(); 
@@ -556,8 +554,8 @@ public class DadosPessoais extends JPanel {
             }
 
             // --- 3. Atualizar disciplinas da matrícula ---
-            String semestreAtual = calcularSemestreAtual(); // seu método existente
-            String sqlSelectDisciplinas = "SELECT idDisciplina FROM disciplina WHERE idCurso=? AND semestre=1"; // assume semestre 1
+            String semestreAtual = calcularSemestreAtual(); 
+            String sqlSelectDisciplinas = "SELECT idDisciplina FROM disciplina WHERE idCurso=? AND semestre=1";
             psSelectDisciplinas = conn.prepareStatement(sqlSelectDisciplinas);
             psSelectDisciplinas.setInt(1, idCurso);
             rsDisciplinas = psSelectDisciplinas.executeQuery();
@@ -630,7 +628,7 @@ public class DadosPessoais extends JPanel {
                 // --- Buscar matrícula ativa e curso ---
                 int idMatricula = alunoDAO.buscarIdMatricula(idAluno);
                 if (idMatricula > 0) {
-                    Matricula matricula = alunoDAO.buscarMatriculaPorId(idMatricula); // implementar método para retornar Matricula completa
+                    Matricula matricula = alunoDAO.buscarMatriculaPorId(idMatricula); // implementa método para retornar Matricula completa
                     if (matricula != null) {
                         int idCurso = matricula.getIdCurso();
 
@@ -666,7 +664,7 @@ public class DadosPessoais extends JPanel {
     private void limparCampos() {
         txtRa.setText(""); 
         txtNome.setText("");
-        txtDataNasc.setValue(null); // Limpa o campo formatado
+        txtDataNasc.setValue(null);
         txtCpf.setValue(null);
         txtEmail.setText("");
         txtEndereco.setText("");
@@ -674,9 +672,20 @@ public class DadosPessoais extends JPanel {
         txtCelular.setValue(null);
         jcbUf.setSelectedIndex(0);
         jcbCursos.setSelectedIndex(0);
+        
+        // --- Regenerar RA automático se for novo aluno ---
+        if (idAluno == 0) {
+            try {
+                AlunoDAO alunoDAO = new AlunoDAO();
+                txtRa.setText(alunoDAO.gerarProximoRA());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Erro ao gerar RA automático: " + ex.getMessage(),
+                                              "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
-
-
+    
     /**
      * Lógica para voltar para o painel de Listagem de Alunos e reativar o foco no menu.
      */
@@ -715,8 +724,6 @@ public class DadosPessoais extends JPanel {
             registrarAluno(evento);
         }
     }
-
-    
-    
+  
     
 }

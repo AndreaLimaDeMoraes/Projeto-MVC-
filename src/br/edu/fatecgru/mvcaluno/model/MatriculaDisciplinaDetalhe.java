@@ -3,12 +3,10 @@ package br.edu.fatecgru.mvcaluno.model;
 public class MatriculaDisciplinaDetalhe extends MatriculaDisciplina {
     private String nomeDisciplina;
 
-    // Construtor padrão e super()
     public MatriculaDisciplinaDetalhe() {
         super();
     }
     
-    // Construtor completo
     public MatriculaDisciplinaDetalhe(int idMatriculaDisciplina, int idMatricula, int idDisciplina,
                                String semestreCursado, int faltas, double nota,
                                String status, boolean ativo, String nomeDisciplina) {
@@ -16,8 +14,6 @@ public class MatriculaDisciplinaDetalhe extends MatriculaDisciplina {
         this.nomeDisciplina = nomeDisciplina;
     }
 
-
-    // Getters e Setters
     public String getNomeDisciplina() {
         return nomeDisciplina;
     }

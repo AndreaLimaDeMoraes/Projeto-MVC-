@@ -40,7 +40,7 @@ public class AlunoView extends Aluno {
         this.idCurso = idCurso; 
     }
 
-    // Getters e setters padrão para cada campo adicional
+    // Getters e setters
     
     public String getNomeCurso() {
         return nomeCurso;

@@ -251,7 +251,7 @@ public class Boletim extends JPanel {
             // Exibe dados do aluno
             JPanel panelInfo = new JPanel(new GridLayout(4, 2));
             
-            // 🚨 GARANTIA DE QUE ESTAMOS USANDO O CAMPO CORRETO DO MODELO
+            // GARANTIA DE QUE ESTAMOS USANDO O CAMPO CORRETO DO MODELO
             panelInfo.add(new JLabel("Campus:"));
             panelInfo.add(new JLabel(dadosAluno.getCampus()));         
             
@@ -279,7 +279,6 @@ public class Boletim extends JPanel {
             panelBoletim.revalidate();
             panelBoletim.repaint();
 
-            // Opcional: Cálculo de média 
             if (!disciplinas.isEmpty()) {
                 double media = disciplinas.stream().mapToDouble(DisciplinaBoletim::getNota).average().orElse(0.0);
             }

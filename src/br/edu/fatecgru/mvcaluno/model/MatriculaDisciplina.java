@@ -7,7 +7,7 @@ public class MatriculaDisciplina {
     private String semestreCursado;
     private int faltas;
     private double nota;
-    private String status; // Valores possíveis: "Cursando", "Aprovado", "Reprovado"
+    private String status; //"Cursando", "Aprovado", "Reprovado"
     private boolean ativo;
 
     // ===============================================
@@ -19,16 +19,6 @@ public class MatriculaDisciplina {
      */
     public MatriculaDisciplina() {}
 
-    /**
-     * Construtor completo para inicializar todos os campos.
-     * @param idMatriculaDisciplina ID único da matrícula em disciplina.
-     * @param idMatricula ID da matrícula do aluno.
-     * @param idDisciplina ID da disciplina.
-     * @param faltas Número de faltas.
-     * @param nota Nota do aluno.
-     * @param status Status da matrícula (ex.: "Cursando").
-     * @param ativo Indica se o registro está ativo.
-     */
     public MatriculaDisciplina(int idMatriculaDisciplina, int idMatricula, int idDisciplina, String semestreCursado, int faltas, double nota, String status, boolean ativo) {
 		this.idMatriculaDisciplina = idMatriculaDisciplina;
 		this.idMatricula = idMatricula;
@@ -68,12 +58,10 @@ public class MatriculaDisciplina {
         this.idDisciplina = idDisciplina;
     }
 
-    // NOVO GETTER
     public String getSemestreCursado() {
         return semestreCursado;
     }
 
-    // NOVO SETTER
     public void setSemestreCursado(String semestreCursado) {
         this.semestreCursado = semestreCursado;
     }
@@ -83,8 +71,8 @@ public class MatriculaDisciplina {
     }
 
     public void setFaltas(int faltas) {
-        if (faltas < 0) {
-            throw new IllegalArgumentException("Faltas não podem ser negativas.");
+        if (faltas < 0 || faltas > 60) {
+            throw new IllegalArgumentException("Faltas deve estar entre 0 e 80.");
         }
         this.faltas = faltas;
     }

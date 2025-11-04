@@ -7,10 +7,8 @@ public class DisciplinaBoletim {
     private String status;
     private String semestreAtual;
 
-    // Construtor padrão
     public DisciplinaBoletim() {}
 
-    // Construtor completo (usado no DAO)
     public DisciplinaBoletim(String nomeDisciplina, double nota, int faltas, String status, String semestreAtual) {
         this.nomeDisciplina = nomeDisciplina;
         this.nota = nota;
@@ -19,7 +17,6 @@ public class DisciplinaBoletim {
         this.semestreAtual = semestreAtual;
     }
 
-    // Getters e Setters
     public String getNomeDisciplina() {
         return nomeDisciplina;
     }
